@@ -75,12 +75,16 @@ class VerbExtractor:
                                 obj_w = self.num_chunk(token.head.i - 4, *doc)  # 内部の調査をする -> 内部を　調査する
                                 verb_w = doc[token.head.i - 2].orth_ + doc[token.head.i - 1].orth_ + token.head.lemma_
                                 rule_id = 2
-                            elif (doc[token.head.i - 3].pos_ == 'NOUN' and doc[
-                                token.head.i - 2].tag_ == '名詞-普通名詞-サ変可能'):
+                            elif (doc[token.head.i - 3].pos_ == 'NOUN' and doc[token.head.i - 2].tag_ == '名詞-普通名詞-サ変可能'):
                                 obj_w = self.num_chunk(token.head.i - 3, *doc)  # 内部調査をする -> 内部を　調査する
                                 verb_w = doc[token.head.i - 2].orth_ + doc[token.head.i - 1].orth_ + token.head.lemma_
                                 #                verb_w = doc[token.head.i - 2].orth_  + token.head.lemma_
                                 rule_id = 3
+                            elif (doc[token.head.i - 3].pos_ == 'VERB' and doc[token.head.i - 3].head.i == doc[token.head.i - 3].i):
+                                obj_w = self.num_chunk(token.head.i - 3, *doc)  # 内部調査をする -> 内部を　調査する
+                                verb_w = doc[token.head.i - 2].orth_ + doc[token.head.i - 1].orth_ + token.head.lemma_
+                                #                verb_w = doc[token.head.i - 2].orth_  + token.head.lemma_
+                                rule_id = 30
                             #
                             #             述部が  名詞＋を＋する（調査をする　など）
                             #
@@ -93,15 +97,15 @@ class VerbExtractor:
                         #             述部が  形容詞＋する（少なくする　など）
                         #
                         elif (doc[token.head.i - 1].pos_ == 'AUX'):
-                            if (token.head.i - 4 >= 4 and doc[token.head.i - 1].tag_ == '接尾辞-形容詞的' and doc[
-                                token.head.i - 2].pos_ == 'VERB'):
+                            if (token.head.i - 4 >= 4 and (doc[token.head.i - 1].tag_ == '接尾辞-形容詞的'  or doc[token.head.i - 1].tag_ == '助動詞' )and doc[token.head.i - 2].pos_ == 'VERB'):
                                 obj_w = self.num_chunk(token.i, *doc)
                                 verb_w = doc[token.head.i - 2].orth_ + doc[
                                     token.head.i - 1].orth_ + token.head.lemma_  # ○○を使いやすくする -> 使いやすくする
                                 rule_id = 5
+                            else:
+                                obj_w = ''
                         elif (doc[token.head.i - 1].pos_ == 'ADJ'):
-                            if (token.head.i - 4 >= 4 and doc[token.head.i - 1].tag_ == '形容詞-非自立可能' and doc[
-                                token.head.i - 2].pos_ == 'NOUN'):
+                            if (token.head.i - 4 >= 4 and doc[token.head.i - 1].tag_ == '形容詞-非自立可能' and doc[token.head.i - 2].pos_ == 'NOUN'):
                                 obj_w = self.num_chunk(token.head.i - 4, *doc)
                                 verb_w = doc[token.head.i - 2].orth_ + doc[
                                     token.head.i - 1].orth_ + token.head.lemma_  # ○○を余儀なくする -> 余儀なくする
@@ -110,11 +114,12 @@ class VerbExtractor:
                                 obj_w = self.num_chunk(token.i, *doc)
                                 verb_w = doc[token.head.i - 1].orth_ + token.head.lemma_  # ○○を少なくるする -> 少なくする
                                 rule_id = 7
+                            obj_w = ''
                     #
                     #           ○○する　以外の動詞
                     #
                     else:
-                        if (doc[token.head.i + 1].tag_ == '動詞-非自立可能'):
+                        if (doc[token.head.i + 1].tag_ == '動詞-非自立可能'):          # 動詞　＋　補助動詞
                             verb_w = token.head.lemma_ + doc[token.head.i + 1].lemma_
                             rule_id = 8
                         else:
@@ -131,14 +136,16 @@ class VerbExtractor:
                 #
                 # 最終述部でない場合
                 #
-                elif (doc[token.head.i].pos_ == "VERB" and doc[token.head.i].head.i == doc[token.head.i].head.head.i and
-                      doc[token.head.i].head.pos_ == "VERB"):  # 最後の動詞を修飾する動詞？
+                elif (doc[token.head.i].pos_ == "VERB" and doc[token.head.i].head.i == doc[token.head.i].head.head.i and doc[token.head.i].head.pos_ == "VERB"):  # 最後の動詞を修飾する動詞？
                     #            print(doc[token.head.i].head.lemma_ , doc[doc[token.head.i].head.i - 1].lemma_)
-                    if (doc[token.head.i].head.lemma_ == 'する' and doc[
-                        doc[token.head.i].head.i - 1].lemma_ != 'を'):  # かかり先の動詞が　○○をする　ではなく　○○する
+                    if (doc[token.head.i].head.lemma_ == 'する' and doc[doc[token.head.i].head.i - 1].lemma_ != 'を'):  # かかり先の動詞が　○○をする　ではなく　○○する
                         obj_w = self.num_chunk(token.i, *doc)
                         verb_w = token.head.lemma_
                         rule_id = 11
+                elif (token.head.head.head.lemma_ == "する" and doc[token.head.i + 1].lemma_ == '決定'):
+                    verb_w = token.head.lemma_
+                    obj_w = self.num_chunk(token.i, *doc)
+                    rule_id = 12
                 if (obj_w):
                     print(text)
                     print('【', obj_w, verb_w, '】 rule_id =', rule_id)
