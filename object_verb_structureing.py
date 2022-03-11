@@ -29,7 +29,7 @@ class VerbExtractor:
     def verb_chunk(self, pt, *doc):
         ret = doc[pt].orth_
         for i in reversed(range(0, pt)):
-            if pt == doc[i].head.i :
+            if pt == doc[i].head.i and doc[i].pos_ != 'PUNCT':
                 ret = doc[i].orth_ + ret
             else:
                 break
@@ -69,7 +69,7 @@ class VerbExtractor:
                     break
             for token in doc[pt+1:]:
                 if (pt == token.head.i):
-                    if (token.pos_ == 'AUX' or token.pos_ == 'AUX' or token.pos_ == 'ADP'):
+                    if (token.pos_ == 'ADP'):
 #                           if (token.orth_ == 'を'):       # 名詞の名詞　は接続させたい
                             break
                     ret = ret + token.orth_
@@ -103,7 +103,7 @@ class VerbExtractor:
                         verb_w = self.verb_chunk(token.head.i - 2, *doc) + doc[token.head.i - 1].orth_ + token.head.lemma_
                         obj_w = self.num_chunk(token.i, *doc)
                         if (doc[token.head.i - 2].tag_ == '補助記号-括弧閉'):
-                            verb_w = self.verb_chunk(token.head.i - 3, *doc) + token.head.lemma_
+                            verb_w = self.verb_chunk(token.head.i - 3, *doc) + doc[token.head.i - 1].orth_ + token.head.lemma_
                         rule_id = 1
                     #
                     #             述部が  ○○の＋名詞＋を＋する（調査をする　など）、　名詞＋サ変名詞＋する（内部調査をする　など）
@@ -204,16 +204,16 @@ class VerbExtractor:
                         verb_w = token.head.lemma_
                         rule_id = 9
                     obj_w = self.num_chunk(token.i, *doc)
-                    obj_w = ''  # デバッグ用
+#                    obj_w = ''  # デバッグ用
 
                 ##########################################################################################################################################
                 #    メイン述部の判断
                 #              目的語のかかる先が　メイン述部　か　メイン述部＋補助述部　かの判断
                 #              出力は　目的語　＋　メイン術部　にする
                 ##########################################################################################################################################
-#                if (obj_w ):
-#                    print(text)
-#                    print('all = 【', obj_w, verb_w, '】 rule_id =', rule_id)
+                if (obj_w ):
+                    print(text)
+                    print('all = 【', obj_w, verb_w, '】 rule_id =', rule_id)
 
                 main_verb = False
                 if (token.head.i == token.head.head.i and
