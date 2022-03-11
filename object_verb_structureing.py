@@ -57,8 +57,10 @@ class VerbExtractor:
         else:
             for i in reversed(range(0, pt)):
                 if (doc[i].pos_ != 'VERB' and doc[i].pos_ != 'AUX' and doc[i].pos_ != 'SCONJ' and doc[i].tag_ != '補助記号-読点' and doc[i].tag_ != '補助記号-句点'and
-                        (doc[i].pos_ != 'ADP' or doc[i].orth_ == 'の' or doc[i].orth_ == 'や' or doc[i].orth_ == 'など')):
-                    if (doc[i].orth_ == 'の' and (doc[i - 1].orth_ == 'で' or doc[i - 1].orth_ == 'へ' or doc[i - 1].orth_ == 'と')):
+                        (doc[i].pos_ != 'ADP' or doc[i].orth_ == 'の' or doc[i].orth_ == 'や' or
+                         (doc[i].orth_ == 'など' and doc[i + 1].orth_ == 'の') or
+                         (doc[i].orth_ == 'まで' and doc[i + 1].orth_ == 'の'))):
+                    if (doc[i].orth_ == 'の' and (doc[i - 1].orth_ == 'で' or doc[i - 1].orth_ == 'へ' or doc[i - 1].orth_ == 'と' )):
                         break
                     ret = doc[i].orth_ + ret
                 else:
