@@ -56,25 +56,38 @@ class VerbExtractor:
                     break
         else:
             for i in reversed(range(0, pt)):
-                if (doc[i].pos_ != 'VERB' and doc[i].pos_ != 'AUX' and doc[i].pos_ != 'SCONJ' and doc[i].tag_ != '補助記号-読点' and doc[i].tag_ != '補助記号-句点'and
-                        (doc[i].pos_ != 'ADP' or doc[i].orth_ == 'の' or doc[i].orth_ == 'や' or
-                         (doc[i].orth_ == 'など' and doc[i + 1].orth_ == 'の') or
-                         (doc[i].orth_ == 'から' and doc[i + 1].orth_ == 'の') or
-                         (doc[i].orth_ == 'まで' and doc[i + 1].orth_ == 'の'))):
-                    if (doc[i].orth_ == 'の' and (doc[i - 1].orth_ == 'で' or doc[i - 1].orth_ == 'へ' or doc[i - 1].orth_ == 'と' or doc[i - 1].orth_ == 'も' or
-                                                 (doc[i - 1].orth_ == 'まで' and (doc[i - 2].pos_ == 'VERB' or doc[i - 2].pos_ == 'AUX')))):
+                if (doc[i].pos_ != 'VERB' and doc[i].pos_ != 'AUX' and doc[i].pos_ != 'SCONJ' and doc[i].tag_ != '補助記号-読点' and doc[i].tag_ != '補助記号-句点' and
+                        (doc[i].pos_ != 'ADP' or doc[i].orth_ == 'の' or doc[i].orth_ == 'や' or  # 名詞　＋　の[や]　＋　〇〇
+                         (doc[i].pos_ == 'ADP' and doc[i + 1].orth_ == 'の'))):   # 名詞 +  格助詞　＋　の　＋　〇〇
+                    if (doc[i].orth_ == 'の' and (doc[i - 1].pos_ == 'ADP' or doc[i - 1].pos_ == 'SCONJ') and (doc[i - 2].pos_ == 'VERB' or doc[i - 2].pos_ == 'AUX')):  # 動詞 +  助詞　＋　の　/　〇〇     前が動詞の場合は「〜の」の連体修飾では繋げない
                         break
                     ret = doc[i].orth_ + ret
+                elif((doc[i].pos_ == 'VERB' and doc[i + 1].pos_ == 'AUX' and doc[i + 2].orth_ == 'か') or
+                    ((doc[i].pos_ == 'AUX' or doc[i].pos_ == 'VERB')  and doc[i + 1].orth_ == 'か')):  # 〇〇か〇〇
+                    ret = doc[i].orth_ + ret
+                elif(doc[i].pos_ == 'PUNCT' and doc[i + 1].i == doc[i - 1].head.i):     # 〇〇、〇〇　の場合はまとめる
+                    ret = doc[i].orth_ + ret
                 else:
-                    break
+                     break
             for token in doc[pt+1:]:
                 if (pt == token.head.i):
-                    if (token.pos_ == 'ADP'):
+                    if (token.pos_ == 'ADP' and token.lemma_ != 'か'):
 #                           if (token.orth_ == 'を'):       # 名詞の名詞　は接続させたい
                             break
                     ret = ret + token.orth_
             #      print(doc[pt].orth_)
             #      return doc[pt].orth_
+        return ret
+
+    """
+      「の」 で表現する目的語の取得
+    """
+    def no_obj_get(self, pt, *doc):
+        ret = ''
+
+        for i in reversed(range(0, pt)):
+            if doc[i].lemma_ == 'の':
+                ret = self.num_chunk(i - 1, *doc)
         return ret
 
     """
@@ -90,7 +103,7 @@ class VerbExtractor:
         for token in doc:
             obj_w = ''
             rule_id = 0
-            if token.dep_ == "obj":  # トークンが目的語なら
+            if (token.dep_ == "obj" and token.head.dep_ != "obj"):  # トークンが目的語なら
                 if(doc[token.i + 1].orth_ == 'に'):      #　〇〇には〇〇の などの文は「を」でなくてもobjで解析される場合がある
                     continue
                 obj_w = self.num_chunk(token.i, *doc)
@@ -177,14 +190,27 @@ class VerbExtractor:
                     elif (doc[token.head.i - 1].pos_ == 'ADV'):
                         verb_w = self.verb_chunk(token.head.i - 1, *doc) + token.head.lemma_
                         rule_id = 43
+                    #
+                    #   〇〇の〇〇を〇〇で（と、から..）する　　　「…をする」の変形版　　→　〇〇の〇〇を〇〇する　と同じ処理　目的語は　更に前の　「〇〇の」
+                    #
+                    elif (doc[token.head.i - 1].pos_ == 'ADP' and doc[token.head.i - 1].lemma_ != 'を'):
+                        find = 0
+                        verb_w = ''
+                        for word in obj_w:
+                            if (find):
+                                verb_w = verb_w + word
+                            if(word == 'の'):
+                                find = 1
+                        obj_w = self.no_obj_get(token.i, *doc)
+                        rule_id = 44
                 #
                 #   普通名詞 + する　のかたちの最終述部
                 #
-                elif (token.head.pos_ == 'NOUN' or token.head.pos_ == 'VERB') and token.head.dep_ == 'ROOT' and doc[token.head.i + 1].lemma_ == 'する':
-                    obj_w = self.num_chunk(token.i, *doc)
-                    verb_w = self.verb_chunk(token.head.i, *doc) + doc[token.head.i + 1].lemma_
-                    rule_id = 41
-                    obj_w = ''  # デバッグ用
+                elif doc_len > token.head.i + 1 and (token.head.pos_ == 'NOUN' or token.head.pos_ == 'VERB') and token.head.dep_ == 'ROOT' and doc[token.head.i + 1].lemma_ == 'する':
+                        obj_w = self.num_chunk(token.i, *doc)
+                        verb_w = self.verb_chunk(token.head.i, *doc) + doc[token.head.i + 1].lemma_
+                        rule_id = 41
+                        obj_w = ''  # デバッグ用
 
                 #
                 #           ○○する　以外の一般の動詞
@@ -197,23 +223,28 @@ class VerbExtractor:
                         else:
                             verb_w = token.head.lemma_
                             rule_id = 52
-                    elif (doc[token.head.i + 1].tag_ == '動詞-非自立可能'):          # 動詞　＋　補助動詞
+                    elif  doc_len > token.head.i + 1 and (doc[token.head.i + 1].tag_ == '動詞-非自立可能'):          # 動詞　＋　補助動詞
                         verb_w = token.head.lemma_ + doc[token.head.i + 1].lemma_
                         rule_id = 8
                     else:                                                           # 単独の動詞
                         verb_w = token.head.lemma_
                         rule_id = 9
                     obj_w = self.num_chunk(token.i, *doc)
-#                    obj_w = ''  # デバッグ用
+                    obj_w = ''  # デバッグ用
+
+                ###########################################################
+                ##   TBD 慣用句処理  　（「日の目を見る」など）　#############
+                ###########################################################
+
 
                 ##########################################################################################################################################
                 #    メイン述部の判断
                 #              目的語のかかる先が　メイン述部　か　メイン述部＋補助述部　かの判断
                 #              出力は　目的語　＋　メイン術部　にする
                 ##########################################################################################################################################
-                if (obj_w ):
-                    print(text)
-                    print('all = 【', obj_w, verb_w, '】 rule_id =', rule_id)
+#                if (obj_w ):
+#                    print(text)
+#                    print('all = 【', obj_w, verb_w, '】 rule_id =', rule_id)
 
                 main_verb = False
                 if (token.head.i == token.head.head.i and
@@ -224,8 +255,7 @@ class VerbExtractor:
                     #           〇〇したと〇〇した　（一時停止したと明らかにした）
                     #           誤解析により補助術部に対して目的語がかかっている場合の処理
                     #
-                    if (doc[token.i + 2].head.i == token.head.i and doc[token.i + 2].pos_ == 'VERB' and
-                            doc[token.i + 3].lemma_ == "する"):
+                    if doc_len > token.head.i + 3 and (doc[token.i + 2].head.i == token.head.i and doc[token.i + 2].pos_ == 'VERB' and doc[token.i + 3].lemma_ == "する"):
                         verb_w = doc[token.i + 2].lemma_
                         rule_id = 40
                         obj_w = ''  # デバッグ用
@@ -236,7 +266,10 @@ class VerbExtractor:
                     #            print(doc[token.head.i].head.lemma_ , doc[doc[token.head.i].head.i - 1].lemma_)
                     if (doc[token.head.i].head.lemma_ == 'する' and doc[doc[token.head.i].head.i - 1].pos_ != 'ADP'):  # かかり先の動詞が　○○をする　ではなく　単独の動詞か○○する
                         obj_w = self.num_chunk(token.i, *doc)
-                        verb_w = token.head.lemma_
+                        if(doc[token.head.i + 1].lemma_ == 'する'):
+                            verb_w = token.head.lemma_ + doc[token.head.i + 1].lemma_
+                        else:
+                            verb_w = token.head.lemma_
                         rule_id = 11
                         main_verb = True
                     else:
@@ -249,7 +282,10 @@ class VerbExtractor:
                     obj_w = self.num_chunk(token.i, *doc)
                     rule_id = 12
                     main_verb = True
-
+                #
+                #   目的語がない場合は文脈（前の文）から目的語を持ってくる
+                #
+                #
                 if (obj_w and main_verb):
                     print(text)
                     print('【', obj_w, verb_w, '】 rule_id =', rule_id)
