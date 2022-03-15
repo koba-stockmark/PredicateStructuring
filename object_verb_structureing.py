@@ -210,7 +210,7 @@ class VerbExtractor:
                         obj_w = self.num_chunk(token.i, *doc)
                         verb_w = self.verb_chunk(token.head.i, *doc) + doc[token.head.i + 1].lemma_
                         rule_id = 41
-                        obj_w = ''  # デバッグ用
+#                        obj_w = ''  # デバッグ用
 
                 #
                 #           ○○する　以外の一般の動詞
@@ -230,7 +230,7 @@ class VerbExtractor:
                         verb_w = token.head.lemma_
                         rule_id = 9
                     obj_w = self.num_chunk(token.i, *doc)
-                    obj_w = ''  # デバッグ用
+#                    obj_w = ''  # デバッグ用
 
                 ###########################################################
                 ##   TBD 慣用句処理  　（「日の目を見る」など）　#############
@@ -242,9 +242,9 @@ class VerbExtractor:
                 #              目的語のかかる先が　メイン述部　か　メイン述部＋補助述部　かの判断
                 #              出力は　目的語　＋　メイン術部　にする
                 ##########################################################################################################################################
-#                if (obj_w ):
-#                    print(text)
-#                    print('all = 【', obj_w, verb_w, '】 rule_id =', rule_id)
+                if (obj_w ):
+                    print(text)
+                    print('all = 【', obj_w, verb_w, '】 rule_id =', rule_id)
 
                 main_verb = False
                 if (token.head.i == token.head.head.i and
@@ -258,7 +258,7 @@ class VerbExtractor:
                     if doc_len > token.head.i + 3 and (doc[token.i + 2].head.i == token.head.i and doc[token.i + 2].pos_ == 'VERB' and doc[token.i + 3].lemma_ == "する"):
                         verb_w = doc[token.i + 2].lemma_
                         rule_id = 40
-                        obj_w = ''  # デバッグ用
+#                        obj_w = ''  # デバッグ用
                 #
                 # 最終述部でない場合 (最終術部が補助術部かを判断して補助術部の場合は最終術部でなくても主述部として扱う)
                 #
