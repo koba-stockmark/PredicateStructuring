@@ -25,7 +25,7 @@ match_patterns = [
 # 完了
 #####
 
-kanryou_rule1 = [    # 書いた
+kanryou_rule = [    # 書いた
     [
         {"TAG": {"REGEX": "^動詞"}},
         {
@@ -61,7 +61,7 @@ kanryou_rule1 = [    # 書いた
     ]
 ]
 
-kanryou_rule = [
+kanryou_rule1 = [
     [
         {"MORPH": "五段-マ行;連用形-撥音便"}
 #        {"MORTH": "形態素", "_": {"Inflection": "連用形"}}

@@ -7,6 +7,9 @@ knp = KNP()     # Default is JUMAN++. If you use JUMAN, use KNP(jumanpp=False)
 #result = knp.parse("下鴨神社の参道は暗かった。")
 text = '人工知能を活用した人材評価サービスを手掛けるInstitution　for　a　Global　Societyが29日、東証マザーズに上場した。'
 #text = '実家の母や兄と食事をしながら「新しい会社の名前をどうしようか。マルチメディアのようなかっこつけたものでなく、直球がいいのだけど」と問うと、兄の元道が「スマイル」を口にしたのです。'
+text = "書く。書いた。書く本。書きます。書きました。書こう。書きたい。書ければよい。本を読んだ。部屋がきれいだ。学校だ。学校で勉強した。学校で勉強したかった。太郎が遊ぶ"
+text ='太郎が花子に叩かれる。太郎が学校で本を読む。'
+
 result = knp.parse(text)
 
 print("文節")
@@ -23,3 +26,4 @@ print("形態素")
 for mrph in result.mrph_list(): # 各形態素へのアクセス
     print("\tID:%d, 見出し:%s, 読み:%s, 原形:%s, 品詞:%s, 品詞細分類:%s, 活用型:%s, 活用形:%s, 意味情報:%s, 代表表記:%s" \
             % (mrph.mrph_id, mrph.midasi, mrph.yomi, mrph.genkei, mrph.hinsi, mrph.bunrui, mrph.katuyou1, mrph.katuyou2, mrph.imis, mrph.repname))
+
