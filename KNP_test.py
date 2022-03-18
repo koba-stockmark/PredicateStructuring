@@ -2,6 +2,9 @@
 
 # coding: utf-8
 from __future__ import unicode_literals # It is not necessary when you use python3.
+
+import re
+
 from pyknp import KNP
 knp = KNP()     # Default is JUMAN++. If you use JUMAN, use KNP(jumanpp=False)
 #result = knp.parse("下鴨神社の参道は暗かった。")
@@ -9,6 +12,9 @@ text = '人工知能を活用した人材評価サービスを手掛けるInstit
 #text = '実家の母や兄と食事をしながら「新しい会社の名前をどうしようか。マルチメディアのようなかっこつけたものでなく、直球がいいのだけど」と問うと、兄の元道が「スマイル」を口にしたのです。'
 text = "書く。書いた。書く本。書きます。書きました。書こう。書きたい。書ければよい。本を読んだ。部屋がきれいだ。学校だ。学校で勉強した。学校で勉強したかった。太郎が遊ぶ"
 text ='太郎が花子に叩かれる。太郎が学校で本を読む。'
+text = '作れます。作ることができます。'
+text = '電気事業連合会の池辺和弘会長は17日、2021年~22年冬にかけての電力需給対策について、「燃料の確保や火力発電所の保安を徹底し、電力の安定供給に支障をきたさないようにする」と話した。'
+text = 'ホンダは二足歩行の人型ロボット「ASIMO」に代表されるロボティクス技術の開発を長年行ってきた。'
 
 result = knp.parse(text)
 
@@ -21,6 +27,9 @@ print("基本句")
 for tag in result.tag_list(): # 各基本句へのアクセス
     print("\tID:%d, 見出し:%s, 係り受けタイプ:%s, 親基本句ID:%d, 素性:%s" \
             % (tag.tag_id, "".join(mrph.midasi for mrph in tag.mrph_list()), tag.dpndtype, tag.parent_id, tag.fstring))
+#    ret = re.findall("<時制.+?>",tag.fstring)
+#    print("時制=", ret)
+
 
 print("形態素")
 for mrph in result.mrph_list(): # 各形態素へのアクセス
