@@ -4,6 +4,9 @@ import spacy
 import json
 import time
 import mojimoji
+from object_verb_structureing import VerbExtractor
+
+model = VerbExtractor() # KeywordExtractorのクラスのインスタンス化
 
 nlp = spacy.load('ja_ginza_electra')  # Ginzaのロード　tranceferモデル
 
@@ -12,6 +15,20 @@ text = '開発陣は経営危機、新型コロナウイルス禍などいくつ
 
 articles = json.load(open('nikkei_5000.json'))
 
+print("O-V-GET start")
+out_file = open('result.txt', 'w')
+start = time.time()
+for doc in articles:
+    for sep_doc in doc.splitlines():
+        keyword_list = model.v_o_get(sep_doc)  # キーワードの候補の抽出
+        out_file.write(keyword_list)
+out_file.close()
+elapsed_time = time.time() - start
+print ("elapsed_time:{0}".format(elapsed_time) + "[sec]")
+
+"""
+
+print ("elapsed_time:{0}".format(elapsed_time) + "[sec]")
 print("KNP start")
 start = time.time()
 for doc in articles:
@@ -29,7 +46,7 @@ for doc in articles:
 elapsed_time = time.time() - start
 
 print ("elapsed_time:{0}".format(elapsed_time) + "[sec]")
-
+"""
 
 
 """
