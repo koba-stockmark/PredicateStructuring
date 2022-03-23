@@ -74,7 +74,8 @@ class VerbExtractor:
         pre = ''
         for i in reversed(range(0, pt)):
             if (pt == doc[i].head.i or pt == doc[i].head.head.i) and doc[i].pos_ != 'PUNCT' and (doc[i].pos_ != 'AUX' or doc[i].orth_ == 'する') and\
-                    (doc[i].pos_ != 'ADP' or (doc[i].tag_ == '助詞-副助詞' and doc[i].lemma_ != 'まで')) and doc[i].pos_ != 'ADV' and doc[i].pos_ != 'SCONJ' and doc[i].tag_ != '名詞-普通名詞-副詞可能':
+                    (doc[i].pos_ != 'ADP' or (doc[i].tag_ == '助詞-副助詞' and doc[i].lemma_ != 'まで')) and doc[i].pos_ != 'ADV' and doc[i].pos_ != 'SCONJ' and \
+                    doc[i].tag_ != '名詞-普通名詞-副詞可能' and doc[i].tag_ != '名詞-普通名詞-助数詞可能' and doc[i].tag_ != '接尾辞-名詞的-助数詞':
                 pre = doc[i].orth_ + pre
                 start_pt = i
             elif(doc[i].tag_ == '補助記号-読点' and doc[i - 1].head.i == doc[i].i + 1):      # 〇〇、〇〇する　などの並列術部
@@ -178,7 +179,7 @@ class VerbExtractor:
             for token in doc[pt+1:]:
 #                if (pt == token.head.i):
                 if (self.head_connect_check(pt, token.head.i, *doc)):
-                    if (token.pos_ == 'ADP' and (token.lemma_ == 'を' or token.lemma_ == 'は' or token.lemma_ == 'が' or token.lemma_ == 'で' or token.lemma_ == 'も')):  # 名詞の名詞　は接続させたい
+                    if (token.pos_ == 'ADP' and (token.lemma_ == 'を' or token.lemma_ == 'は' or token.lemma_ == 'が' or token.lemma_ == 'で' or token.lemma_ == 'も' or token.lemma_ == 'にて')):  # 名詞の名詞　は接続させたい
                         break
                     if token.tag_ == '補助記号-括弧閉':
                         punc_c_f = True
@@ -255,7 +256,7 @@ class VerbExtractor:
                     ((doc[i].pos_ == 'AUX' or doc[i].pos_ == 'VERB') and doc[i + 1].orth_ == 'か')):  # 〇〇か〇〇
                     start_pt = i
                     ret = doc[i].orth_ + ret
-                elif(doc[i].pos_ == 'PUNCT' and doc[i - 1].pos_ != 'VERB'  and doc[i - 1].pos_ != 'ADV' and
+                elif(doc[i].pos_ == 'PUNCT' and doc[i - 1].pos_ != 'VERB'  and doc[i - 1].pos_ != 'ADV'  and doc[i - 1].pos_ != 'ADP' and
                      (doc[i - 1].head.i == doc[i + 1].head.i or doc[i - 1].head.i == pt or doc[i - 1].head.i == i + 1)):     # 〇〇、〇〇　の場合はまとめる
                     start_pt = i
                     ret = doc[i].orth_ + ret
