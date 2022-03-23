@@ -35,6 +35,20 @@ class VerbExtractor:
             ret = ret + re.findall("<モダリティ.+?>", tag.fstring)
         return ret
     """
+    headでつながるかのチェック
+    """
+    def head_connect_check(self, h_pt, c_pt, *doc):
+        if h_pt == c_pt:
+            return True
+        head_pt = doc[c_pt].head.i
+        while doc[head_pt].i != doc[head_pt].head.i:
+            if h_pt == head_pt:
+                return True
+            else:
+                head_pt = doc[head_pt].head.i
+        return False
+
+    """
     表層格の獲得
     """
     def case_get(self, pt, *doc):
@@ -125,18 +139,28 @@ class VerbExtractor:
         end_pt = pt
         ret = doc[pt].orth_
         if doc[pt].lemma_ == 'こと' or doc[pt].lemma_ == '人' or doc[pt].lemma_ == 'もの' or doc[pt].lemma_ == 'とき' or doc[pt].lemma_ == 'ため':
-            for i in reversed(range(0, pt)):
-                if doc[i].pos_ != 'ADP' and doc[i].pos_ != 'SCONJ' and doc[i].tag_ != '補助記号-読点' and doc[i].tag_ != '補助記号-句点':
-                    ret = doc[i].orth_ + ret
+            if doc[pt + 1].tag_ == '補助記号-括弧閉' and doc[pt + 1].head.i == doc[pt].i:
+                ret = ret + doc[pt + 1].orth_
+                for i in reversed(range(0, pt)):
+                    if doc[i].tag_ == '補助記号-括弧開':
+                        start_pt = i
+                        ret = doc[i].orth_ + ret
+                        break
                     start_pt = i
-                elif (doc[i].orth_ == 'の' or (doc[i].orth_ == 'に' and doc[i + 1].lemma_ == 'する')):
                     ret = doc[i].orth_ + ret
-                    start_pt = i
-                elif doc[i].orth_ == 'て' and doc[i + 1].tag_ == '動詞-非自立可能':     # 〜していること
-                    ret = doc[i].orth_ + ret
-                    start_pt = i
-                else:
-                    break
+            else:
+                for i in reversed(range(0, pt)):
+                    if doc[i].pos_ != 'ADP' and doc[i].pos_ != 'SCONJ' and doc[i].tag_ != '補助記号-読点' and doc[i].tag_ != '補助記号-句点':
+                        ret = doc[i].orth_ + ret
+                        start_pt = i
+                    elif (doc[i].orth_ == 'の' or (doc[i].orth_ == 'に' and doc[i + 1].lemma_ == 'する')):
+                        ret = doc[i].orth_ + ret
+                        start_pt = i
+                    elif doc[i].orth_ == 'て' and doc[i + 1].tag_ == '動詞-非自立可能':     # 〜していること
+                        ret = doc[i].orth_ + ret
+                        start_pt = i
+                    else:
+                        break
         # 動詞の名詞化
         elif (doc[pt].pos_ == 'VERB'):
             for token in doc[0:]:
@@ -149,14 +173,18 @@ class VerbExtractor:
         else:
             punc_o_f = False
             punc_c_f = False
+            punc_ct = 0
             # 後方のチャンク
             for token in doc[pt+1:]:
-                if (pt == token.head.i):
+#                if (pt == token.head.i):
+                if (self.head_connect_check(pt, token.head.i, *doc)):
                     if (token.pos_ == 'ADP' and (token.lemma_ == 'を' or token.lemma_ == 'は' or token.lemma_ == 'が' or token.lemma_ == 'で' or token.lemma_ == 'も')):  # 名詞の名詞　は接続させたい
                         break
                     if token.tag_ == '補助記号-括弧閉':
                         punc_c_f = True
+                        punc_ct = punc_ct + 1
                     if token.tag_ == '補助記号-括弧開':
+                        punc_ct = punc_ct - 1
                         punc_o_f = True
                     end_pt = end_pt + 1
                     ret = ret + token.orth_
@@ -166,10 +194,27 @@ class VerbExtractor:
                     if doc[i].tag_ != '補助記号-括弧開':
                         start_pt = i
                         ret = doc[i].orth_ + ret
+                        if doc[i].tag_ == '補助記号-括弧閉':
+                            punc_c_f = True
+                            punc_ct = punc_ct + 1
                         continue
+                    else:
+                        punc_ct = punc_ct - 1
+                        if(punc_ct != 0):
+                            start_pt = i
+                            ret = doc[i].orth_ + ret
+                            continue
                     punc_o_f = False
                     punc_c_f = False
+                elif not punc_c_f and not punc_o_f:
+                    if doc[i].tag_ == '補助記号-括弧開':
+                        break
                 if(doc[i].head.i == pt and doc[i].pos_ != 'VERB' and doc[i].pos_ != 'AUX' and doc[i].pos_ != 'DET'):
+                    if doc[i].tag_ == '補助記号-括弧開':
+                        punc_o_f = True
+                    if doc[i].tag_ == '補助記号-括弧閉':
+                        punc_ct = punc_ct + 1
+                        punc_c_f = True
                     start_pt = i
                     ret = doc[i].orth_ + ret
 #                elif (doc[i].pos_ == 'PUNCT' and doc[i].lemma_ == '「'):  # 「＋名詞
@@ -199,6 +244,7 @@ class VerbExtractor:
                     if doc[i].orth_ == 'の' and doc[i - 1].lemma_ == 'ため':
                         break
                     if doc[i].tag_ == '補助記号-括弧閉':
+                        punc_ct = punc_ct + 1
                         punc_c_f = True
                     start_pt = i
                     ret = doc[i].orth_ + ret
