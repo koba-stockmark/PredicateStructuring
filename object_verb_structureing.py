@@ -253,17 +253,29 @@ class VerbExtractor:
             #      return doc[pt].orth_
         return ret, start_pt, end_pt
 
+
+    """
+        並列句の取得
+    """
+    def para_get(self, start, end, *doc):
+        ret = ''
+        for token in doc:
+            if (token.pos_ == 'NOUN' or token.pos_ == 'PROPN') and (token.i > end or token.i < start):
+                if (token.head.i >= start and token.head.i <= end):
+                    return self.num_chunk(token.i, *doc)
+        return '', 0, 0
+
     """
         主語の取得
     """
     def subject_get(self, verb_point, *doc):
-        ret = ''
+        ret = ['', 0, 0]
         ng_pt = verb_point
         verb_pt = doc[verb_point].head.i
         # 直接接続をチェック
         for token in doc:
             if token.dep_ == "nsubj" and token.head.i == verb_pt and token.i != ng_pt:
-                ret = self.num_chunk(token.i, *doc)[0]
+                ret = self.num_chunk(token.i, *doc)
                 return ret
         # 間接接続をチェック
         for i in reversed(range(0, verb_pt)):
@@ -275,7 +287,7 @@ class VerbExtractor:
                     else:
                         chek = doc[chek].head.i
                 if doc[i].i != ng_pt and (chek == verb_pt or chek == doc[verb_pt].head.i):
-                    ret = self.num_chunk(doc[i].i, *doc)[0]
+                    ret = self.num_chunk(doc[i].i, *doc)
                     break
         return ret
 
@@ -297,8 +309,12 @@ class VerbExtractor:
             if (token.dep_ == "obj" and token.head.dep_ != "obj") or (doc_len > token.i + 1 and token.dep_ == "nsubj" and doc[token.i + 1].lemma_ == "も"):  # トークンが目的語なら
 #                if(doc_len > token.i + 1 and doc[token.i + 1].orth_ == 'に'):      #　〇〇には〇〇の などの文は「を」でなくてもobjで解析される場合がある
 #                    continue
-                obj_w = self.num_chunk(token.i, *doc)[0]
-                subject_w = self.subject_get(token.i, *doc)
+                ret_obj = self.num_chunk(token.i, *doc)
+                obj_w = ret_obj[0]
+#                para_obj = self.para_get(ret_obj[1], ret_obj[2], *doc)[0]
+                ret_subj =  self.subject_get(token.i, *doc)
+                subject_w =ret_subj[0]
+                para_subj = self.para_get(ret_subj[1], ret_subj[2], *doc)[0]
                 if(token.dep_ == "nsubj"):
                     if subject_w == obj_w:
                         subject_w = ''
@@ -597,7 +613,9 @@ class VerbExtractor:
                 #
 
 
-
+                #  並立句の追加
+                if para_subj:
+                    subject_w = para_subj + subject_w
                 #"""
                 # デバッグ用
                 if (obj_w and main_verb):
