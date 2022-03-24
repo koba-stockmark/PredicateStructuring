@@ -256,24 +256,27 @@ class VerbExtractor:
     """
         主語の取得
     """
-    def subject_get(self, verb_pt, *doc):
+    def subject_get(self, verb_point, *doc):
         ret = ''
+        ng_pt = verb_point
+        verb_pt = doc[verb_point].head.i
+        # 直接接続をチェック
         for token in doc:
-            if token.dep_ == "nsubj":
-                chek = token.head.i
+            if token.dep_ == "nsubj" and token.head.i == verb_pt and token.i != ng_pt:
+                ret = self.num_chunk(token.i, *doc)[0]
+                return ret
+        # 間接接続をチェック
+        for i in reversed(range(0, verb_pt)):
+            if doc[i].dep_ == "nsubj":
+                chek = doc[i].head.i
                 while chek != doc[chek].head.i:
                     if chek == verb_pt:
                         break
                     else:
                         chek = doc[chek].head.i
-                if chek == verb_pt:
-                    ret = self.num_chunk(token.i, *doc)[0]
-#            if token.dep_ == "nsubj" and token.head.i == verb_pt:  # トークンが主語で述部が同じ
-#                ret = self.num_chunk(token.i, *doc)[0]
-        if(ret == ''):
-            for token in doc:
-                if token.dep_ == "nsubj" and token.head.i == doc[verb_pt].head.i:  # トークンが主語で述部が同じ
-                    ret = self.num_chunk(token.i, *doc)[0]
+                if doc[i].i != ng_pt and (chek == verb_pt or chek == doc[verb_pt].head.i):
+                    ret = self.num_chunk(doc[i].i, *doc)[0]
+                    break
         return ret
 
     """
@@ -291,11 +294,14 @@ class VerbExtractor:
         for token in doc:
             obj_w = ''
             rule_id = 0
-            if (token.dep_ == "obj" and token.head.dep_ != "obj"):  # トークンが目的語なら
-                subject_w = self.subject_get(token.head.i, *doc)
-                if(doc[token.i + 1].orth_ == 'に'):      #　〇〇には〇〇の などの文は「を」でなくてもobjで解析される場合がある
-                    continue
+            if (token.dep_ == "obj" and token.head.dep_ != "obj") or (doc_len > token.i + 1 and token.dep_ == "nsubj" and doc[token.i + 1].lemma_ == "も"):  # トークンが目的語なら
+#                if(doc_len > token.i + 1 and doc[token.i + 1].orth_ == 'に'):      #　〇〇には〇〇の などの文は「を」でなくてもobjで解析される場合がある
+#                    continue
                 obj_w = self.num_chunk(token.i, *doc)[0]
+                subject_w = self.subject_get(token.i, *doc)
+                if(token.dep_ == "nsubj"):
+                    if subject_w == obj_w:
+                        subject_w = ''
                 if (token.head.lemma_ == "する"):
                     #
                     #             述部が  名詞＋（と、に）する（目標とする　など）
