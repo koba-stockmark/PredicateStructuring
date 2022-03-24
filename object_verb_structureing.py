@@ -177,7 +177,6 @@ class VerbExtractor:
             punc_ct = 0
             # 後方のチャンク
             for token in doc[pt+1:]:
-#                if (pt == token.head.i):
                 if (self.head_connect_check(pt, token.head.i, *doc)):
                     if (token.pos_ == 'ADP' and (token.lemma_ == 'を' or token.lemma_ == 'は' or token.lemma_ == 'が' or token.lemma_ == 'で' or token.lemma_ == 'も' or token.lemma_ == 'にて')):  # 名詞の名詞　は接続させたい
                         break
@@ -218,21 +217,6 @@ class VerbExtractor:
                         punc_c_f = True
                     start_pt = i
                     ret = doc[i].orth_ + ret
-#                elif (doc[i].pos_ == 'PUNCT' and doc[i].lemma_ == '「'):  # 「＋名詞
-#                    if "」" not in ret:
-#                        find_f = False
-#                        for token in doc[pt+1:]:
-#                            if(token.lemma_ == '」' and token.head.i == pt):
-#                                find_f = True
-#                                break
-#                        if(find_f):
-#                            start_pt = i
-#                            ret = doc[i].orth_ + ret
-#                        else:
-#                            break
-#                    else:
-#                        start_pt = i
-#                        ret = doc[i].orth_ + ret
                 elif (doc[i].pos_ != 'DET' and doc[i].pos_ != 'VERB'  and doc[i].pos_ != 'AUX' and doc[i].pos_ != 'SCONJ' and doc[i].pos_ != 'PART' and doc[i].pos_ != 'PRON' and doc[i].tag_ != '補助記号-読点' and doc[i].tag_ != '補助記号-句点' and
                         (doc[i].pos_ != 'ADP' or doc[i].orth_ == 'の' or doc[i].orth_ == 'や' or doc[i].orth_ == 'と' or                  # 名詞　＋　の[や]　＋　〇〇
                          (doc[i].pos_ == 'ADP' and doc[i + 1].orth_ == 'の'))):                                                           # 名詞 +  格助詞　＋　の　＋　〇〇
@@ -275,8 +259,21 @@ class VerbExtractor:
     def subject_get(self, verb_pt, *doc):
         ret = ''
         for token in doc:
-            if token.dep_ == "nsubj" and token.head.i == verb_pt:  # トークンが主語で述部が同じ
-                ret = self.num_chunk(token.i, *doc)[0]
+            if token.dep_ == "nsubj":
+                chek = token.head.i
+                while chek != doc[chek].head.i:
+                    if chek == verb_pt:
+                        break
+                    else:
+                        chek = doc[chek].head.i
+                if chek == verb_pt:
+                    ret = self.num_chunk(token.i, *doc)[0]
+#            if token.dep_ == "nsubj" and token.head.i == verb_pt:  # トークンが主語で述部が同じ
+#                ret = self.num_chunk(token.i, *doc)[0]
+        if(ret == ''):
+            for token in doc:
+                if token.dep_ == "nsubj" and token.head.i == doc[verb_pt].head.i:  # トークンが主語で述部が同じ
+                    ret = self.num_chunk(token.i, *doc)[0]
         return ret
 
     """
@@ -469,6 +466,7 @@ class VerbExtractor:
                 #           ○○する　以外の一般の動詞
                 #
                 else:
+#                    obj_w = self.num_chunk(token.i, *doc)[0]
                     ###############################
                     #    形式動詞
                     ###############################
@@ -483,7 +481,7 @@ class VerbExtractor:
                             verb_w = verb["lemma"]
                             modality_w = verb["modality"]
                             rule_id = 17
-                    elif  doc_len > token.head.i + 1 and (doc[token.head.i + 1].tag_ == '動詞-非自立可能'):          # 動詞　＋　補助動詞
+                    elif doc_len > token.head.i + 1 and (doc[token.head.i + 1].tag_ == '動詞-非自立可能'):          # 動詞　＋　補助動詞
                         verb = self.verb_chunk(doc[token.head.i].i, *doc)
                         verb_w = verb["lemma"] + doc[token.head.i + 1].lemma_
                         modality_w = verb["modality"]
@@ -502,13 +500,29 @@ class VerbExtractor:
                             verb_w = verb["lemma"]
                             modality_w = verb["modality"]
                             rule_id = 20
-                    else:                                                           # 単独の動詞
+                    ###############################
+                    #    普通名詞　〇〇　＋　を　＋　〇〇　に（で、と、から...） + する
+                    ###############################
+                    elif doc_len > token.head.i + 2 and token.head.tag_ == '名詞-普通名詞-一般' and doc[token.head.i + 1].pos_ == 'ADP' and doc[token.head.i + 2].lemma_ == 'する':
+                        verb = self.verb_chunk(doc[token.head.i].i, *doc)
+                        verb_w = verb["lemma"] + doc[token.head.i + 1].orth_ + doc[token.head.i + 2].lemma_
+                        modality_w = verb["modality"]
+                        rule_id = 25
+                    ###############################
+                    #    普通名詞　〇〇　＋　を　＋　〇〇　に（で、と、から...）
+                    ###############################
+                    elif doc_len > token.head.i + 1 and token.head.tag_ == '名詞-普通名詞-一般' and doc[token.head.i + 1].pos_ == 'ADP':
+                        obj_w = ''
+                        verb_w = ''
+                    ###############################
+                    #    単独の動詞
+                    ###############################
+                    else:
                         verb_w = token.head.lemma_
                         verb = self.verb_chunk(token.head.i, *doc)
                         verb_w = verb["lemma"]
                         modality_w = verb["modality"]
                         rule_id = 21
-                    obj_w = self.num_chunk(token.i, *doc)[0]
 #                    obj_w = ''  # デバッグ用
 
                 ###########################################################
