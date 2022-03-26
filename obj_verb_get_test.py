@@ -6,7 +6,7 @@ model = VerbExtractor() # KeywordExtractorのクラスのインスタンス化
 
 articles = json.load(open('nikkei.json'))
 solution = open('solution_sentence.txt')
-out_file = open('result.txt', 'w')
+out_file = open('result.tsv', 'w')
 #for doc in articles:
 for doc in solution:
 #  print('doc = ', doc)

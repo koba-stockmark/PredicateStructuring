@@ -35,7 +35,8 @@ class VerbExtractor:
             ret = ret + re.findall("<モダリティ.+?>", tag.fstring)
         return ret
     """
-    headでつながるかのチェック
+    headを辿ってc_ptがh_ptにたどり着くかのチェック
+    つながる場合はc_ptはh_ptの修飾部
     """
     def head_connect_check(self, h_pt, c_pt, *doc):
         if h_pt == c_pt:
@@ -178,8 +179,14 @@ class VerbExtractor:
             # 後方のチャンク
             for token in doc[pt+1:]:
                 if (self.head_connect_check(pt, token.head.i, *doc)):
-                    if (token.pos_ == 'ADP' and (token.lemma_ == 'を' or token.lemma_ == 'は' or token.lemma_ == 'が' or token.lemma_ == 'で' or token.lemma_ == 'も' or token.lemma_ == 'にて')):  # 名詞の名詞　は接続させたい
+                    if (token.pos_ == 'ADP' and (token.lemma_ == 'を' or token.lemma_ == 'は' or token.lemma_ == 'が' or token.lemma_ == 'で' or token.lemma_ == 'も' or token.lemma_ == 'にて')):  # 名詞の名詞　名詞と名詞　は接続させたい
                         break
+                    if(token.pos_ == 'ADP' and token.lemma_ == 'と' and doc[token.i + 1].tag_ == '補助記号-読点'):    # 名詞と、名愛　は切り離す　
+                        break
+#                    if(token.pos_ == 'ADP' and token.lemma_ == 'と'):    # 名詞と、名愛　は切り離す　
+#                        break
+#                    if token.tag_ == '補助記号-句点' or token.tag_ == '補助記号-読点':
+#                        break
                     if token.tag_ == '補助記号-括弧閉':
                         punc_c_f = True
                         punc_ct = punc_ct + 1
@@ -190,6 +197,8 @@ class VerbExtractor:
                     ret = ret + token.orth_
             # 前方のチャンク
             for i in reversed(range(0, pt)):
+                if pt < doc[i].head.i and doc[i].head.i != doc[pt].head.i:
+                    break
                 if punc_c_f and not punc_o_f:
                     if doc[i].tag_ != '補助記号-括弧開':
                         start_pt = i
@@ -209,7 +218,8 @@ class VerbExtractor:
                 elif not punc_c_f and not punc_o_f:
                     if doc[i].tag_ == '補助記号-括弧開':
                         break
-                if(doc[i].head.i == pt and doc[i].pos_ != 'VERB' and doc[i].pos_ != 'AUX' and doc[i].pos_ != 'DET'):
+                if(doc[i].head.i == pt and doc[i].pos_ != 'VERB' and doc[i].pos_ != 'AUX' and doc[i].pos_ != 'DET' and
+                        (doc[i].tag_ != '名詞-普通名詞-副詞可能' or doc[i].lemma_ != 'なか')):
                     if doc[i].tag_ == '補助記号-括弧開':
                         punc_o_f = True
                     if doc[i].tag_ == '補助記号-括弧閉':
@@ -222,12 +232,24 @@ class VerbExtractor:
                          (doc[i].pos_ == 'ADP' and doc[i + 1].orth_ == 'の'))):                                                           # 名詞 +  格助詞　＋　の　＋　〇〇
                     if (doc[i].orth_ == 'の' and (doc[i - 1].pos_ == 'ADP' or doc[i - 1].pos_ == 'SCONJ') and (doc[i - 2].pos_ == 'VERB' or doc[i - 2].pos_ == 'AUX')):  # 動詞 +  助詞　＋　の　/　〇〇     前が動詞の場合は「〜の」の連体修飾では繋げない
                         break
-                    if(doc[i].pos_ == 'SYM' and doc[i].lemma_ == '～'):
+                    if(doc[i].pos_ == 'SYM' and doc[i].lemma_ == '〜'):
+                        break
+                    if(doc[i].pos_ == 'SYM' and not self.head_connect_check(pt, doc[i].head.i, *doc)):
                         break
                     if(doc[i].tag_ == '接尾辞-名詞的-助数詞' and (doc[i].lemma_ == '日' or doc[i].lemma_ == '月' or doc[i].lemma_ == '年')):
                         break
                     if doc[i].orth_ == 'の' and doc[i - 1].lemma_ == 'ため':
                         break
+                    if doc[i].tag_ == '名詞-普通名詞-副詞可能' and (doc[i].lemma_ == 'なか' or  doc[i].lemma_ == 'ため' or doc[i].lemma_ == 'もと' ):
+                        break
+                    if(doc[i].pos_ == 'ADJ' and not self.head_connect_check(pt, i, *doc)):   # objを修飾しない形容詞
+                        break
+                    if(doc[i].pos_ == 'CCONJ' and doc[i].norm_ != '及び'):
+                        break
+                    if not self.head_connect_check(pt, i, *doc) and doc[pt].head.i != doc[i].head.i:
+                        break
+#                    if(doc[i].pos_ == 'ADP' and doc[i].lemma_ == 'と'):
+#                        break
                     if doc[i].tag_ == '補助記号-括弧閉':
                         punc_ct = punc_ct + 1
                         punc_c_f = True
@@ -241,6 +263,7 @@ class VerbExtractor:
                     start_pt = i
                     ret = doc[i].orth_ + ret
                 elif(doc[i].pos_ == 'PUNCT' and doc[i - 1].pos_ != 'VERB'  and doc[i - 1].pos_ != 'ADV'  and doc[i - 1].pos_ != 'ADP' and
+                     doc[i - 1].tag_ != '名詞-普通名詞-副詞可能' and doc[i - 1].tag_ != '接尾辞-名詞的-助数詞' and
                      (doc[i - 1].head.i == doc[i + 1].head.i or doc[i - 1].head.i == pt or doc[i - 1].head.i == i + 1)):     # 〇〇、〇〇　の場合はまとめる
                     start_pt = i
                     ret = doc[i].orth_ + ret
@@ -256,11 +279,16 @@ class VerbExtractor:
 
     """
         並列句の取得
+        objやsubjの格がついていないがかかり先が同じものは並立句とみなす
     """
     def para_get(self, start, end, *doc):
         ret = ''
         for token in doc:
-            if (token.pos_ == 'NOUN' or token.pos_ == 'PROPN') and (token.i > end or token.i < start):
+            if (token.pos_ == 'NOUN' or token.pos_ == 'PROPN') and token.tag_ != '名詞-普通名詞-副詞可能' and (token.i > end or token.i < start):
+                if doc[token.i + 1].lemma_ == 'の' and doc[token.i + 1].pos_ == 'ADP':  # 〇〇の〇〇　は並列扱いしない
+                    return '', 0, 0
+                if token.tag_ == '名詞-普通名詞-サ変可能' and (doc[token.i + 1].pos_ == 'PUNCT' or doc[token.i + 1].pos_ == 'SYM'):  # サ変名詞、〇〇　は並列扱いしない
+                    return '', 0, 0
                 if (token.head.i >= start and token.head.i <= end):
                     return self.num_chunk(token.i, *doc)
         return '', 0, 0
@@ -274,17 +302,21 @@ class VerbExtractor:
         verb_pt = doc[verb_point].head.i
         # 直接接続をチェック
         for token in doc:
-            if token.dep_ == "nsubj" and token.head.i == verb_pt and token.i != ng_pt:
+            if token.dep_ == "nsubj" and token.head.i == verb_pt and token.i != ng_pt and token.tag_ != '名詞-普通名詞-副詞可能':
                 ret = self.num_chunk(token.i, *doc)
                 return ret
         # 間接接続をチェック
         for i in reversed(range(0, verb_pt)):
-            if doc[i].dep_ == "nsubj":
+            if doc[i].dep_ == "nsubj" and doc[i].tag_ != '名詞-普通名詞-副詞可能':
                 chek = doc[i].head.i
                 while chek != doc[chek].head.i:
                     if chek == verb_pt:
                         break
                     else:
+                        if(doc[doc[chek].i + 1].tag_ == '形状詞-助動詞語幹' and doc[doc[chek].i + 1].head.i == doc[doc[chek].i].i):
+                            break
+                        if doc[chek].pos_ == 'ADJ':
+                            break
                         chek = doc[chek].head.i
                 if doc[i].i != ng_pt and (chek == verb_pt or chek == doc[verb_pt].head.i):
                     ret = self.num_chunk(doc[i].i, *doc)
@@ -299,22 +331,30 @@ class VerbExtractor:
 
         ret = ''
         modality_w = ''
+        dummy_subject = ''
         # 形態素解析を行い、各形態素に対して処理を行う。
         doc = self.nlp(text)  # 文章を解析
         doc_len = len(doc)
 
         for token in doc:
             obj_w = ''
+            subject_w = ''
             rule_id = 0
-            if (token.dep_ == "obj" and token.head.dep_ != "obj") or (doc_len > token.i + 1 and token.dep_ == "nsubj" and doc[token.i + 1].lemma_ == "も"):  # トークンが目的語なら
+            if (token.dep_ == "obj" and token.head.dep_ != "obj") or (doc_len > token.i + 1 and token.dep_ == "nsubj" and doc[token.i + 1].lemma_ == "も"):  # トークンが目的語なら　〇〇も　＋　できる　などは主語と目的語の可能性がある
 #                if(doc_len > token.i + 1 and doc[token.i + 1].orth_ == 'に'):      #　〇〇には〇〇の などの文は「を」でなくてもobjで解析される場合がある
 #                    continue
+
                 ret_obj = self.num_chunk(token.i, *doc)
                 obj_w = ret_obj[0]
-#                para_obj = self.para_get(ret_obj[1], ret_obj[2], *doc)[0]
-                ret_subj =  self.subject_get(token.i, *doc)
-                subject_w =ret_subj[0]
+                para_obj = self.para_get(ret_obj[1], ret_obj[2], *doc)[0]
+
+                ret_subj = self.subject_get(token.i, *doc)
+                if not token.dep_ == "nsubj":   # 〇〇も　の例外処理でsubjを目的語にしている場合は自分自身をsubjにしない（省略されていると考える）
+                    subject_w = ret_subj[0]
+                if subject_w:
+                    dummy_subject = subject_w
                 para_subj = self.para_get(ret_subj[1], ret_subj[2], *doc)[0]
+
                 if(token.dep_ == "nsubj"):
                     if subject_w == obj_w:
                         subject_w = ''
@@ -563,8 +603,25 @@ class VerbExtractor:
                 if (obj_w ):
                     print(text)
                     modal = ', '.join([str(x) for x in modality_w])
-                    print('all = 【%s - %s】 subj = 【%s】 modality = %s rule_id = %d' % (obj_w, verb_w, subject_w, modal, rule_id))
-                    ret = ret + text + '\n' + 'all = 【' + obj_w + ' - ' + verb_w + '】 modality = ' +  modal + ' rule_id = ' + str(rule_id) + '\n'
+                    if subject_w or not dummy_subject:
+                        if para_subj:
+                            print('all = 【%s - %s】 subj = 【%s】 modality = %s rule_id = %d' % (obj_w, verb_w, subject_w, modal, rule_id))
+                            ret = ret + text + '\t\t' + subject_w + '\t' + obj_w + '\t' + verb_w + '\t' + modal + ' \t' + str(rule_id) + '\n'
+                            print('all = 【%s - %s】 subj = 【%s】 modality = %s rule_id = %d' % (obj_w, verb_w, para_subj, modal, rule_id))
+                            ret = ret + text + '\t\t' + para_subj + '\t' + obj_w + '\t' + verb_w + '\t' + modal + ' \t' + str(rule_id) + '\n'
+                        else:
+                            print('all = 【%s - %s】 subj = 【%s】 modality = %s rule_id = %d' % (obj_w, verb_w, subject_w, modal, rule_id))
+                            ret = ret + text + '\t\t' + subject_w + '\t' + obj_w + '\t' + verb_w + '\t' + modal + ' \t' + str(rule_id) + '\n'
+                    else:
+                        if para_subj:
+                            print('all = 【%s - %s】 subj = 【%s (省略)】 modality = %s rule_id = %d' % (obj_w, verb_w, dummy_subject, modal, rule_id))
+                            ret = ret + text + '\t\t' + dummy_subject + '\t' + obj_w + '\t' + verb_w + '\t' + modal + ' \t' + str(rule_id) + '\n'
+                            print('all = 【%s - %s】 subj = 【%s (省略)】 modality = %s rule_id = %d' % (obj_w, verb_w, para_subj, modal, rule_id))
+                            ret = ret + text + '\t\t' + para_subj + '\t' + obj_w + '\t' + verb_w + '\t' + modal + ' \t' + str(rule_id) + '\n'
+                        else:
+                            print('all = 【%s - %s】 subj = 【%s (省略)】 modality = %s rule_id = %d' % (obj_w, verb_w, dummy_subject, modal, rule_id))
+                            ret = ret + text + '\t\t' + dummy_subject + '\t' + obj_w  + '\t' + verb_w + '\t' + modal + ' \t' + str(rule_id) + '\n'
+#                    ret = ret + text + '\n' + 'all = 【' + obj_w + ' - ' + verb_w + '】 modality = ' +  modal + ' rule_id = ' + str(rule_id) + '\n'
                 #"""
                 # デバッグ用
 
@@ -613,16 +670,30 @@ class VerbExtractor:
                 #
 
 
-                #  並立句の追加
-                if para_subj:
-                    subject_w = para_subj + subject_w
                 #"""
                 # デバッグ用
                 if (obj_w and main_verb):
                     print(text)
                     modal = ', '.join([str(x) for x in modality_w])
-                    print('【%s - %s】 subj = 【%s】 modality = %s rule_id = %d' % (obj_w, verb_w, subject_w, modal, rule_id))
-                    ret = ret + text + '\n' + '【' + obj_w + ' - ' + verb_w + '】 modality = ' +  modal + ' rule_id = ' + str(rule_id) + '\n'
+                    if subject_w or not dummy_subject:
+                        if para_subj:
+                            print('【%s - %s】 subj = 【%s】 modality = %s rule_id = %d' % (obj_w, verb_w, subject_w, modal, rule_id))
+                            ret = ret + text + '\tMain\t' + subject_w + '\t' + obj_w + '\t' + verb_w + '\t' + modal + ' \t' + str(rule_id) + '\n'
+                            print('【%s - %s】 subj = 【%s】 modality = %s rule_id = %d' % (obj_w, verb_w, para_subj, modal, rule_id))
+                            ret = ret + text + '\tMain\t' + para_subj + '\t' + obj_w + '\t' + verb_w + '\t' + modal + ' \t' + str(rule_id) + '\n'
+                        else:
+                            print('【%s - %s】 subj = 【%s】 modality = %s rule_id = %d' % (obj_w, verb_w, subject_w, modal, rule_id))
+                            ret = ret + text + '\tMain\t' + subject_w + '\t' + obj_w + '\t' + verb_w + '\t' + modal + ' \t' + str(rule_id) + '\n'
+                    else:
+                        if para_subj:
+                            print('【%s - %s】 subj = 【%s(省略)】 modality = %s rule_id = %d' % (obj_w, verb_w, dummy_subject, modal, rule_id))
+                            ret = ret + text + '\tMain\t' + dummy_subject + '\t' + obj_w + '\t' + verb_w + '\t' + modal + ' \t' + str(rule_id) + '\n'
+                            print('【%s - %s】 subj = 【%s(省略)】 modality = %s rule_id = %d' % (obj_w, verb_w, para_subj, modal, rule_id))
+                            ret = ret + text + '\tMain\t' + para_subj + '\t' + obj_w + '\t' + verb_w + '\t' + modal + ' \t' + str(rule_id) + '\n'
+                        else:
+                            print('【%s - %s】 subj = 【%s (省略)】 modality = %s rule_id = %d' % (obj_w, verb_w, dummy_subject, modal, rule_id))
+                            ret = ret + text + '\tMain\t' + dummy_subject + '\t' + obj_w + '\t' + verb_w + '\t' + modal + ' \t' + str(rule_id) + '\n'
+#                    ret = ret + text + '\n' + '【' + obj_w + ' - ' + verb_w + '】 modality = ' + modal + ' rule_id = ' + str(rule_id) + '\n'
                 # デバッグ用
                 #"""
         return ret
