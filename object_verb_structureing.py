@@ -75,11 +75,12 @@ class VerbExtractor:
         pre = ''
         for i in reversed(range(0, pt)):
             if (pt == doc[i].head.i or pt == doc[i].head.head.i) and doc[i].pos_ != 'PUNCT' and (doc[i].pos_ != 'AUX' or doc[i].orth_ == 'する') and\
-                    (doc[i].pos_ != 'ADP' or (doc[i].tag_ == '助詞-副助詞' and doc[i].lemma_ != 'まで')) and doc[i].pos_ != 'ADV' and doc[i].pos_ != 'SCONJ' and \
+                    (doc[i].pos_ != 'ADP' or (doc[i].tag_ == '助詞-副助詞' and doc[i].lemma_ != 'まで')) and doc[i].pos_ != 'ADV' and doc[i].pos_ != 'SCONJ' and\
+                    doc[i].norm_ != 'から' and\
                     doc[i].tag_ != '名詞-普通名詞-副詞可能' and doc[i].tag_ != '名詞-普通名詞-助数詞可能' and doc[i].tag_ != '接尾辞-名詞的-助数詞':
                 pre = doc[i].orth_ + pre
                 start_pt = i
-            elif(doc[i].tag_ == '補助記号-読点' and doc[i - 1].head.i == doc[i].i + 1):      # 〇〇、〇〇する　などの並列術部
+            elif(doc[i].tag_ == '補助記号-読点' and doc[i - 1].head.i == doc[i].i + 1 and doc[i - 1].tag_ != '名詞-普通名詞-助数詞可能'):      # 〇〇、〇〇する　などの並列術部
                 pre = doc[i].orth_ + pre
                 start_pt = i
             else:
@@ -322,6 +323,17 @@ class VerbExtractor:
                     ret = self.num_chunk(doc[i].i, *doc)
                     break
         return ret
+
+    """
+    補助用言のチェック
+    """
+    sub_verb_dic = ['開始', '発表', '始める', '実施', '行なう', 'スタート', '目指す', '進める', '推進', '強化', '実現', '追加', '拡大', '活用', '加速', '拡充', '掲げる', '達成']
+
+    def sub_verb_chek(self, check_w):
+        for sub_verb_w in self.sub_verb_dic:
+            if check_w.startswith(sub_verb_w):
+                return True
+        return False
 
     """
     O-Vの取得
@@ -592,12 +604,6 @@ class VerbExtractor:
                 ###########################################################
 
 
-                ##########################################################################################################################################
-                #    メイン述部の判断
-                #              目的語のかかる先が　メイン述部　か　メイン述部＋補助述部　かの判断
-                #              出力は　目的語　＋　メイン術部　にする
-                ##########################################################################################################################################
-
                 #"""
                 # デバッグ用
                 if (obj_w ):
@@ -606,25 +612,30 @@ class VerbExtractor:
                     if subject_w or not dummy_subject:
                         if para_subj:
                             print('all = 【%s - %s】 subj = 【%s】 modality = %s rule_id = %d' % (obj_w, verb_w, subject_w, modal, rule_id))
-                            ret = ret + text + '\t\t' + subject_w + '\t' + obj_w + '\t' + verb_w + '\t' + modal + ' \t' + str(rule_id) + '\n'
+                            ret = ret + text + '\t\t' + subject_w + '\t' + obj_w + '\t' + verb_w + '\t\t' + modal + '\t' + str(rule_id) + '\n'
                             print('all = 【%s - %s】 subj = 【%s】 modality = %s rule_id = %d' % (obj_w, verb_w, para_subj, modal, rule_id))
-                            ret = ret + text + '\t\t' + para_subj + '\t' + obj_w + '\t' + verb_w + '\t' + modal + ' \t' + str(rule_id) + '\n'
+                            ret = ret + text + '\t\t' + para_subj + '\t' + obj_w + '\t' + verb_w + '\t\t' + modal + '\t' + str(rule_id) + '\n'
                         else:
                             print('all = 【%s - %s】 subj = 【%s】 modality = %s rule_id = %d' % (obj_w, verb_w, subject_w, modal, rule_id))
-                            ret = ret + text + '\t\t' + subject_w + '\t' + obj_w + '\t' + verb_w + '\t' + modal + ' \t' + str(rule_id) + '\n'
+                            ret = ret + text + '\t\t' + subject_w + '\t' + obj_w + '\t' + verb_w + '\t\t' + modal + '\t' + str(rule_id) + '\n'
                     else:
                         if para_subj:
                             print('all = 【%s - %s】 subj = 【%s (省略)】 modality = %s rule_id = %d' % (obj_w, verb_w, dummy_subject, modal, rule_id))
-                            ret = ret + text + '\t\t' + dummy_subject + '\t' + obj_w + '\t' + verb_w + '\t' + modal + ' \t' + str(rule_id) + '\n'
+                            ret = ret + text + '\t\t' + dummy_subject + '\t' + obj_w + '\t' + verb_w + '\t\t' + modal + '\t' + str(rule_id) + '\n'
                             print('all = 【%s - %s】 subj = 【%s (省略)】 modality = %s rule_id = %d' % (obj_w, verb_w, para_subj, modal, rule_id))
-                            ret = ret + text + '\t\t' + para_subj + '\t' + obj_w + '\t' + verb_w + '\t' + modal + ' \t' + str(rule_id) + '\n'
+                            ret = ret + text + '\t\t' + para_subj + '\t' + obj_w + '\t' + verb_w + '\t\t' + modal + '\t' + str(rule_id) + '\n'
                         else:
                             print('all = 【%s - %s】 subj = 【%s (省略)】 modality = %s rule_id = %d' % (obj_w, verb_w, dummy_subject, modal, rule_id))
-                            ret = ret + text + '\t\t' + dummy_subject + '\t' + obj_w  + '\t' + verb_w + '\t' + modal + ' \t' + str(rule_id) + '\n'
+                            ret = ret + text + '\t\t' + dummy_subject + '\t' + obj_w  + '\t' + verb_w + '\t\t' + modal + '\t' + str(rule_id) + '\n'
 #                    ret = ret + text + '\n' + 'all = 【' + obj_w + ' - ' + verb_w + '】 modality = ' +  modal + ' rule_id = ' + str(rule_id) + '\n'
                 #"""
                 # デバッグ用
 
+                ##########################################################################################################################################
+                #    メイン述部の判断
+                #              目的語のかかる先が　メイン述部　か　メイン述部＋補助述部　かの判断
+                #              出力は　目的語　＋　メイン術部　にする
+                ##########################################################################################################################################
                 main_verb = False
                 if (token.head.i == token.head.head.i and
                         (token.head.pos_ == "VERB" or token.head.pos_ == "ADV") or              # 最後の動詞？　注)普通名詞のサ変名詞利用の場合はADVになっている
@@ -668,6 +679,10 @@ class VerbExtractor:
                 #   目的語がない場合は文脈（前の文）から目的語を持ってくる　　　TBD
                 #
                 #
+                sub_verb = ''
+                if self.sub_verb_chek(verb_w):
+                    sub_verb = verb_w
+                    verb_w = ''
 
 
                 #"""
@@ -677,22 +692,22 @@ class VerbExtractor:
                     modal = ', '.join([str(x) for x in modality_w])
                     if subject_w or not dummy_subject:
                         if para_subj:
-                            print('【%s - %s】 subj = 【%s】 modality = %s rule_id = %d' % (obj_w, verb_w, subject_w, modal, rule_id))
-                            ret = ret + text + '\tMain\t' + subject_w + '\t' + obj_w + '\t' + verb_w + '\t' + modal + ' \t' + str(rule_id) + '\n'
-                            print('【%s - %s】 subj = 【%s】 modality = %s rule_id = %d' % (obj_w, verb_w, para_subj, modal, rule_id))
-                            ret = ret + text + '\tMain\t' + para_subj + '\t' + obj_w + '\t' + verb_w + '\t' + modal + ' \t' + str(rule_id) + '\n'
+                            print('【%s - %s - (%s)】 subj = 【%s】 modality = %s rule_id = %d' % (obj_w, verb_w, sub_verb, subject_w, modal, rule_id))
+                            ret = ret + text + '\tMain\t' + subject_w + '\t' + obj_w + '\t' + verb_w + '\t' + sub_verb + '\t' + modal + '\t' + str(rule_id) + '\n'
+                            print('【%s - %s - (%s)】 subj = 【%s】 modality = %s rule_id = %d' % (obj_w, verb_w, sub_verb, para_subj, modal, rule_id))
+                            ret = ret + text + '\tMain\t' + para_subj + '\t' + obj_w + '\t' + verb_w + '\t' + sub_verb + '\t' + modal + '\t' + str(rule_id) + '\n'
                         else:
-                            print('【%s - %s】 subj = 【%s】 modality = %s rule_id = %d' % (obj_w, verb_w, subject_w, modal, rule_id))
-                            ret = ret + text + '\tMain\t' + subject_w + '\t' + obj_w + '\t' + verb_w + '\t' + modal + ' \t' + str(rule_id) + '\n'
+                            print('【%s - %s - (%s)】 subj = 【%s】 modality = %s rule_id = %d' % (obj_w, verb_w, sub_verb, subject_w, modal, rule_id))
+                            ret = ret + text + '\tMain\t' + subject_w + '\t' + obj_w + '\t' + verb_w + '\t' + sub_verb + '\t' + modal + '\t' + str(rule_id) + '\n'
                     else:
                         if para_subj:
-                            print('【%s - %s】 subj = 【%s(省略)】 modality = %s rule_id = %d' % (obj_w, verb_w, dummy_subject, modal, rule_id))
-                            ret = ret + text + '\tMain\t' + dummy_subject + '\t' + obj_w + '\t' + verb_w + '\t' + modal + ' \t' + str(rule_id) + '\n'
-                            print('【%s - %s】 subj = 【%s(省略)】 modality = %s rule_id = %d' % (obj_w, verb_w, para_subj, modal, rule_id))
-                            ret = ret + text + '\tMain\t' + para_subj + '\t' + obj_w + '\t' + verb_w + '\t' + modal + ' \t' + str(rule_id) + '\n'
+                            print('【%s - %s - (%s)】 subj = 【%s(省略)】 modality = %s rule_id = %d' % (obj_w, verb_w, sub_verb, dummy_subject, modal, rule_id))
+                            ret = ret + text + '\tMain\t' + dummy_subject + '\t' + obj_w + '\t' + verb_w + '\t' + sub_verb + '\t' + modal + '\t' + str(rule_id) + '\n'
+                            print('【%s - %s - (%s)】 subj = 【%s(省略)】 modality = %s rule_id = %d' % (obj_w, verb_w, sub_verb, para_subj, modal, rule_id))
+                            ret = ret + text + '\tMain\t' + para_subj + '\t' + obj_w + '\t' + verb_w + '\t' + sub_verb + '\t' + modal + '\t' + str(rule_id) + '\n'
                         else:
-                            print('【%s - %s】 subj = 【%s (省略)】 modality = %s rule_id = %d' % (obj_w, verb_w, dummy_subject, modal, rule_id))
-                            ret = ret + text + '\tMain\t' + dummy_subject + '\t' + obj_w + '\t' + verb_w + '\t' + modal + ' \t' + str(rule_id) + '\n'
+                            print('【%s - %s - (%s)】 subj = 【%s (省略)】 modality = %s rule_id = %d' % (obj_w, verb_w, sub_verb, dummy_subject, modal, rule_id))
+                            ret = ret + text + '\tMain\t' + dummy_subject + '\t' + obj_w + '\t' + verb_w + '\t' + sub_verb + '\t' + modal + '\t' + str(rule_id) + '\n'
 #                    ret = ret + text + '\n' + '【' + obj_w + ' - ' + verb_w + '】 modality = ' + modal + ' rule_id = ' + str(rule_id) + '\n'
                 # デバッグ用
                 #"""
