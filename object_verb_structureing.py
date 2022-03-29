@@ -77,7 +77,7 @@ class VerbExtractor:
             if (pt == doc[i].head.i or pt == doc[i].head.head.i) and doc[i].pos_ != 'PUNCT' and (doc[i].pos_ != 'AUX' or doc[i].orth_ == 'する') and\
                     (doc[i].pos_ != 'ADP' or (doc[i].tag_ == '助詞-副助詞' and doc[i].lemma_ != 'まで')) and doc[i].pos_ != 'ADV' and doc[i].pos_ != 'SCONJ' and\
                     doc[i].norm_ != 'から' and\
-                    doc[i].tag_ != '名詞-普通名詞-副詞可能' and doc[i].tag_ != '名詞-普通名詞-助数詞可能' and doc[i].tag_ != '接尾辞-名詞的-助数詞':
+                    doc[i].tag_ != '名詞-普通名詞-副詞可能' and doc[i].tag_ != '名詞-普通名詞-助数詞可能' and doc[i].tag_ != '接尾辞-名詞的-助数詞' and doc[i].tag_ != '名詞-普通名詞-助数詞可能':
                 pre = doc[i].orth_ + pre
                 start_pt = i
             elif(doc[i].tag_ == '補助記号-読点' and doc[i - 1].head.i == doc[i].i + 1 and doc[i - 1].tag_ != '名詞-普通名詞-助数詞可能'):      # 〇〇、〇〇する　などの並列術部
@@ -100,7 +100,7 @@ class VerbExtractor:
                 append_l = token.lemma_
                 end_pt = end_pt + 1
             # 動詞　＋　接尾辞
-            elif (tail_ct == 0 and token.head.i == token.head.head.i and (token.tag_  ==  '接尾辞-名詞的-サ変可能')):
+            elif (tail_ct == 0 and token.head.i == token.head.head.i and token.tag_ == '接尾辞-名詞的-サ変可能'):
                 if(find_f):
                     ret = ret + append_o
                 find_f = True
@@ -265,6 +265,7 @@ class VerbExtractor:
                     ret = doc[i].orth_ + ret
                 elif(doc[i].pos_ == 'PUNCT' and doc[i - 1].pos_ != 'VERB'  and doc[i - 1].pos_ != 'ADV'  and doc[i - 1].pos_ != 'ADP' and
                      doc[i - 1].tag_ != '名詞-普通名詞-副詞可能' and doc[i - 1].tag_ != '接尾辞-名詞的-助数詞' and
+                     doc[i - 1].tag_ != '名詞-普通名詞-助数詞可能' and doc[i - 1].tag_ != '名詞-数詞' and
                      (doc[i - 1].head.i == doc[i + 1].head.i or doc[i - 1].head.i == pt or doc[i - 1].head.i == i + 1)):     # 〇〇、〇〇　の場合はまとめる
                     start_pt = i
                     ret = doc[i].orth_ + ret
@@ -327,7 +328,9 @@ class VerbExtractor:
     """
     補助用言のチェック
     """
-    sub_verb_dic = ['開始', '発表', '始める', '実施', '行なう', 'スタート', '目指す', '進める', '推進', '強化', '実現', '追加', '拡大', '活用', '加速', '拡充', '掲げる', '達成']
+    # NG '発表', '実現', '追加'
+    sub_verb_dic = ['開始', 'お知らせ', '始める', '実施', '行なう', '行う', 'スタート', '目指す', '進める', '推進', '強化',
+                    '拡大', '活用', '加速', '拡充', '掲げる', '達成', '始動', '予定', '計画', '決定', '終る', '終わる']
 
     def sub_verb_chek(self, check_w):
         for sub_verb_w in self.sub_verb_dic:
@@ -352,6 +355,7 @@ class VerbExtractor:
             obj_w = ''
             subject_w = ''
             rule_id = 0
+            next_head_use = False
             if (token.dep_ == "obj" and token.head.dep_ != "obj") or (doc_len > token.i + 1 and token.dep_ == "nsubj" and doc[token.i + 1].lemma_ == "も"):  # トークンが目的語なら　〇〇も　＋　できる　などは主語と目的語の可能性がある
 #                if(doc_len > token.i + 1 and doc[token.i + 1].orth_ == 'に'):      #　〇〇には〇〇の などの文は「を」でなくてもobjで解析される場合がある
 #                    continue
@@ -436,7 +440,7 @@ class VerbExtractor:
                             # ○○を使いやすくする -> 使いやすくする
                             obj_w = self.num_chunk(token.i, *doc)[0]
                             verb = self.verb_chunk(token.head.i, *doc)
-                            verb_w = verb["lemma"]
+                            verb_w = doc[token.head.i - 2].orth_ + doc[token.head.i - 1].orth_ + verb["lemma"]
                             modality_w = verb["modality"]
                             rule_id = 8
                         else:
@@ -494,7 +498,7 @@ class VerbExtractor:
                 elif doc_len > token.head.i + 1 and (token.head.pos_ == 'NOUN' or token.head.pos_ == 'VERB') and token.head.dep_ == 'ROOT' and doc[token.head.i + 1].lemma_ == 'する':
                     obj_w = self.num_chunk(token.i, *doc)[0]
                     verb = self.verb_chunk(token.head.i, *doc)
-                    verb_w = verb["lemma"] + doc[token.head.i + 1].lemma_
+                    verb_w = verb["lemma"] + 'する'
                     modality_w = verb["modality"]
                     rule_id = 14
                 #
@@ -520,7 +524,7 @@ class VerbExtractor:
                 #
                 #   〇〇　＋　を　＋　〇〇(名詞) + 、+ ... 　
                 #
-                elif doc_len > token.head.i + 1 and token.head.pos_ == 'NOUN' and doc[token.head.i + 1].tag_ == '補助記号-読点':
+                elif doc_len > token.head.i + 1 and (token.head.pos_ == 'NOUN' and token.head.tag_ != '接尾辞-名詞的-助数詞' and token.head.tag_ != '名詞-普通名詞-助数詞可能') and doc[token.head.i + 1].tag_ == '補助記号-読点':
                     obj_w = self.num_chunk(token.i, *doc)[0]
                     verb = self.verb_chunk(token.head.i, *doc)
                     verb_w = verb["lemma"] + '(する)'
@@ -532,7 +536,10 @@ class VerbExtractor:
                 elif token.head.pos_ == 'NOUN' and token.head.dep_ == 'ROOT' and token.head.i == token.head.head.i:
                     obj_w = self.num_chunk(token.i, *doc)[0]
                     verb = self.verb_chunk(token.head.i, *doc)
-                    verb_w = verb["lemma"] + '(する)'
+                    if doc_len > token.head.i + 1 and doc[token.head.i + 1].lemma_ == 'です':
+                        verb_w = verb["lemma"] + doc[token.head.i + 1].lemma_
+                    else:
+                        verb_w = verb["lemma"] + '(する)'
                     modality_w = verb["modality"]
                     rule_id = 15
                 #                        obj_w = ''  # デバッグ用
@@ -557,7 +564,8 @@ class VerbExtractor:
                             rule_id = 17
                     elif doc_len > token.head.i + 1 and (doc[token.head.i + 1].tag_ == '動詞-非自立可能'):          # 動詞　＋　補助動詞
                         verb = self.verb_chunk(doc[token.head.i].i, *doc)
-                        verb_w = verb["lemma"] + doc[token.head.i + 1].lemma_
+#                        verb_w = verb["lemma"] + doc[token.head.i + 1].lemma_
+                        verb_w = verb["lemma"] + 'する'
                         modality_w = verb["modality"]
                         rule_id = 18
                     ###############################
@@ -583,9 +591,41 @@ class VerbExtractor:
                         modality_w = verb["modality"]
                         rule_id = 25
                     ###############################
+                    #    普通名詞　〇〇　＋　を　＋　〇〇 + 化　＋　する
+                    ###############################
+                    elif doc_len > token.head.i + 2 and token.head.tag_ == '名詞-普通名詞-一般' and doc[token.head.i + 1].head.i != doc[token.head.i + 1].i and doc[token.head.i + 1].tag_ == '接尾辞-名詞的-サ変可能' and doc[token.head.i + 2].lemma_ == 'する':
+                        verb = self.verb_chunk(doc[token.head.i].i, *doc)
+                        verb_w = verb["lemma"] + doc[token.head.i + 1].orth_ + doc[token.head.i + 2].lemma_
+                        modality_w = verb["modality"]
+                        rule_id = 26
+                    ###############################
+                    #    普通名詞　〇〇　＋　を　＋　〇〇日　＋　から
+                    ###############################
+                    elif doc_len > token.head.i + 1 and token.head.tag_ == '名詞-普通名詞-副詞可能' and doc[token.head.i + 1].pos_ == 'ADP' and doc[token.head.i + 1].lemma_ == 'から':
+                        next_head_use = True
+                        verb = self.verb_chunk(doc[token.head.head.i].i, *doc)
+                        verb_w = verb["lemma"] + doc[token.head.head.i + 1].orth_
+                        modality_w = verb["modality"]
+                        rule_id = 27
+                    ###############################
                     #    普通名詞　〇〇　＋　を　＋　〇〇　に（で、と、から...）
                     ###############################
                     elif doc_len > token.head.i + 1 and token.head.tag_ == '名詞-普通名詞-一般' and doc[token.head.i + 1].pos_ == 'ADP':
+                        obj_w = ''
+                        verb_w = ''
+                    elif doc_len > token.head.i + 2 and token.head.tag_ == '名詞-普通名詞-一般' and doc[token.head.i + 1].pos_ == 'PUNCT' and doc[token.head.i + 2].pos_ == 'ADP':
+                        obj_w = ''
+                        verb_w = ''
+                    ###############################
+                    #    普通名詞　〇〇　＋　を　＋　〇〇日
+                    ###############################
+                    elif token.head.tag_ == '接尾辞-名詞的-助数詞' or token.head.tag_ == '名詞-普通名詞-助数詞可能' or token.head.tag_ == '名詞-普通名詞-副詞可能':
+                        obj_w = ''
+                        verb_w = ''
+                    ###############################
+                    #    普通名詞　〇〇　＋　を　＋　〇〇日
+                    ###############################
+                    elif doc_len > token.head.i + 1 and token.head.tag_ == '名詞-数詞' and doc[token.head.i + 1].pos_ == 'PUNCT':
                         obj_w = ''
                         verb_w = ''
                     ###############################
@@ -595,6 +635,8 @@ class VerbExtractor:
                         verb_w = token.head.lemma_
                         verb = self.verb_chunk(token.head.i, *doc)
                         verb_w = verb["lemma"]
+                        if doc_len > token.head.i + 1 and doc[token.head.i + 1].tag_ == '接尾辞-名詞的-サ変可能': # 〇〇化する
+                            verb_w = verb_w + 'する'
                         modality_w = verb["modality"]
                         rule_id = 21
 #                    obj_w = ''  # デバッグ用
@@ -646,7 +688,7 @@ class VerbExtractor:
                     #           誤解析により補助術部に対して目的語がかかっている場合の処理
                     #
                     if doc_len > token.head.i + 3 and (doc[token.i + 2].head.i == token.head.i and doc[token.i + 2].pos_ == 'VERB' and doc[token.i + 3].lemma_ == "する"):
-                        verb_w = doc[token.i + 2].lemma_
+                        verb_w = doc[token.i + 2].lemma_ + doc[token.i + 3].lemma_
                         rule_id = 100
 #                        obj_w = ''  # デバッグ用
                 #
@@ -674,6 +716,9 @@ class VerbExtractor:
                     main_verb = True
                 elif token.head.pos_ == 'NOUN' and token.head.dep_ == 'ROOT' and token.head.i == token.head.head.i:        # 文末が　体言止
                     rule_id = 103
+                    main_verb = True
+                elif next_head_use and doc[token.head.head.i + 1].lemma_ == "する":
+                    rule_id = 104
                     main_verb = True
                 #
                 #   目的語がない場合は文脈（前の文）から目的語を持ってくる　　　TBD
