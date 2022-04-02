@@ -18,20 +18,43 @@ class VerbExtractor:
         objやsubjの格がついていないがかかり先が同じものは並立句とみなす
     """
     def para_get(self, start, end, *doc):
-        ret = ''
-        for token in doc:
-            if (token.pos_ == 'NOUN' or token.pos_ == 'PROPN') and token.tag_ != '名詞-普通名詞-副詞可能' and (token.i > end or token.i < start):
-                if len(doc) > token.i + 1 and doc[token.i + 1].lemma_ == 'の' and doc[token.i + 1].pos_ == 'ADP':  # 〇〇の〇〇　は並列扱いしない
-                    return '', 0, 0
-                if token.tag_ == '名詞-普通名詞-サ変可能' and (doc[token.i + 1].pos_ == 'PUNCT' or doc[token.i + 1].pos_ == 'SYM'):  # サ変名詞、〇〇　は並列扱いしない
-                    return '', 0, 0
-                if (token.head.i >= start and token.head.i <= end):
-                    return self.num_chunk(token.i, *doc)
-        return '', 0, 0
+        ret = []
+        sp = start
+        ep = end
+        find_ct = 0
+        for i in reversed(range(0, start)):
+            if sp < i:
+                continue
+            if (doc[i].pos_ == 'NOUN' or doc[i].pos_ == 'PROPN') and doc[i].tag_ != '名詞-普通名詞-副詞可能' and (i > ep or i < sp):
+                if len(doc) > i + 1 and doc[i + 1].lemma_ == 'の' and doc[i + 1].pos_ == 'ADP':  # 〇〇の〇〇　は並列扱いしない
+                    if (doc[i].head.i >= sp and doc[i].head.i <= ep):
+                        if not find_ct:
+                            ret.append(('', 0, 0))
+                        return ret
+                    else:
+                        continue
+#                if token.tag_ == '名詞-普通名詞-サ変可能' and (doc[token.i + 1].pos_ == 'PUNCT' or doc[token.i + 1].pos_ == 'SYM'):  # サ変名詞、〇〇　は並列扱いしない
+#                    return '', 0, 0
+                if (doc[i].head.i >= sp and doc[i].head.i <= ep) and (doc[i + 1].lemma_ == 'と' or doc[i + 1].lemma_ == 'や' or doc[i + 1].pos_ == 'PUNCT'):
+                    ret.append((self.num_chunk(i, *doc)))
+                    find_ct = find_ct + 1
+                    sp = ret[find_ct - 1][1]
+                    ep = ret[find_ct - 1][2]
+                    continue
+
+        if not find_ct:
+            for i in reversed(range(0, doc[end].head.i)):
+                if doc[i].head.i == doc[end].head.i and doc[i].lemma_ == '共同':
+                    ret = self.para_get(i, i, *doc)
+                    return ret
+            ret.append(('', 0, 0))
+        return ret
 
     """
         目的語に対する主語の取得
         目的語のかかり先の動詞にかかる主語を探す
+        〇〇と〇〇　のような並列は分割してひとつだけを返す。
+        見つからないときは　連体修飾　「△△△をする〇〇(主語)は、」　のような形式からも探す　
     """
     def subject_get(self, verb_point, *doc):
         ret = ['', 0, 0]
@@ -40,7 +63,13 @@ class VerbExtractor:
         # 直接接続をチェック
         for token in doc:
             if token.dep_ == "nsubj" and token.head.i == verb_pt and token.i != ng_pt and token.tag_ != '名詞-普通名詞-副詞可能':
-                ret = self.num_chunk(token.i, *doc)
+                ret_subj = self.num_chunk(token.i, *doc)
+                ret[2] = ret_subj[2]
+                for i in reversed(range(ret_subj[1], ret_subj[2] + 1)):     # 〇〇と〇〇　は切り離す
+                    if doc[i].pos_ == 'ADP' and doc[i].lemma_ == 'と':
+                        break
+                    ret[0] = doc[i].orth_ + ret[0]
+                    ret[1] = i
                 return ret
         # 間接接続をチェック
         for i in reversed(range(0, verb_pt)):
@@ -57,9 +86,23 @@ class VerbExtractor:
                             break
                         chek = doc[chek].head.i
                 if doc[i].i != ng_pt and (chek == verb_pt or chek == doc[verb_pt].head.i or chek == doc[verb_pt].head.head.i):
-                    ret = self.num_chunk(doc[i].i, *doc)
+                    ret_subj = self.num_chunk(doc[i].i, *doc)
+                    ret[2] = ret_subj[2]
+                    for i in reversed(range(ret_subj[1], ret_subj[2] + 1)):     # 〇〇と〇〇　は切り離す
+                        if doc[i].pos_ == 'ADP' and doc[i].lemma_ == 'と':
+                            break
+                        ret[0] = doc[i].orth_ + ret[0]
+                        ret[1] = i
+                    return ret
+        # 連体修飾をチェック
+        if doc[doc[verb_point].head.head.i].dep_ == 'nsubj':
+            ret_subj = self.num_chunk(doc[verb_point].head.head.i, *doc)
+            ret[2] = ret_subj[2]
+            for i in reversed(range(ret_subj[1], ret_subj[2] + 1)):  # 〇〇と〇〇　は切り離す
+                if doc[i].pos_ == 'ADP' and doc[i].lemma_ == 'と':
                     break
-
+                ret[0] = doc[i].orth_ + ret[0]
+                ret[1] = i
         return ret
 
     """
@@ -92,6 +135,7 @@ class VerbExtractor:
         ret = ''
         modality_w = ''
         dummy_subject = ''
+        para_subj = [['',0 ,0 ]]
         # 形態素解析を行い、各形態素に対して処理を行う。
         doc = self.nlp(text)  # 文章を解析
         doc_len = len(doc)
@@ -99,7 +143,6 @@ class VerbExtractor:
         for token in doc:
             obj_w = ''
             subject_w = ''
-            para_subj = ''
             rule_id = 0
             next_head_use = False
             if ((token.dep_ == "obj" and token.head.dep_ != "obj") or
@@ -119,7 +162,7 @@ class VerbExtractor:
                     subject_w = ret_subj[0]
                 if subject_w:
                     dummy_subject = subject_w
-                    para_subj = self.para_get(ret_subj[1], ret_subj[2], *doc)[0]
+                    para_subj = self.para_get(ret_subj[1], ret_subj[2], *doc)
 
                 if(token.dep_ == "nsubj"):
                     if subject_w == obj_w:
@@ -274,7 +317,8 @@ class VerbExtractor:
                 #
                 #   〇〇　＋　を　＋　〇〇(名詞) + 、+ ... 　
                 #
-                elif doc_len > token.head.i + 1 and (token.head.pos_ == 'NOUN' and token.head.tag_ != '接尾辞-名詞的-助数詞' and token.head.tag_ != '名詞-普通名詞-助数詞可能') and doc[token.head.i + 1].tag_ == '補助記号-読点':
+                elif (doc_len > token.head.i + 1 and (token.head.pos_ == 'NOUN' and token.head.tag_ != '接尾辞-名詞的-副詞可能' and token.head.tag_ != '接尾辞-名詞的-助数詞' and token.head.tag_ != '名詞-普通名詞-助数詞可能') and
+                      token.head.tag_ != '名詞-普通名詞-形状詞可能' and doc[token.head.i + 1].tag_ == '補助記号-読点'):
                     obj_w = self.num_chunk(token.i, *doc)[0]
                     verb = self.verb_chunk(token.head.i, *doc)
                     verb_w = verb["lemma"] + '(する)'
@@ -283,7 +327,7 @@ class VerbExtractor:
                 #
                 #   〇〇　＋　を　＋　普通名詞。　　　体言止
                 #
-                elif token.head.pos_ == 'NOUN' and token.head.dep_ == 'ROOT' and token.head.i == token.head.head.i:
+                elif (token.head.pos_ == 'NOUN' and ((token.head.dep_ == 'ROOT' and token.head.i == token.head.head.i) or (doc_len > token.head.i + 1 and doc[token.head.i + 1].pos_ == 'SYM'))):
                     obj_w = self.num_chunk(token.i, *doc)[0]
                     verb = self.verb_chunk(token.head.i, *doc)
                     if (doc_len > token.head.i + 1 and doc[token.head.i + 1].lemma_ == 'です'):
@@ -356,6 +400,14 @@ class VerbExtractor:
                         modality_w = verb["modality"]
                         rule_id = 27
                     ###############################
+                    #    単独の動詞　普通名詞　〇〇　＋　を　＋　形容動詞
+                    ###############################
+                    elif doc_len > token.head.i + 1 and token.head.tag_ == '形状詞-一般' and doc[token.head.i + 1].orth_ == 'に':
+                        verb = self.verb_chunk(doc[token.head.i].i, *doc)
+                        verb_w = verb["lemma"] + 'にする'
+                        modality_w = verb["modality"]
+                        rule_id = 30
+                    ###############################
                     #    普通名詞　〇〇　＋　を　＋　〇〇日　＋　から
                     ###############################
                     elif doc_len > token.head.i + 1 and token.head.tag_ == '名詞-普通名詞-副詞可能' and doc[token.head.i + 1].pos_ == 'ADP' and doc[token.head.i + 1].lemma_ == 'から':
@@ -367,10 +419,16 @@ class VerbExtractor:
                     ###############################
                     #    普通名詞　〇〇　＋　を　＋　〇〇　に（で、と、から...）
                     ###############################
-                    elif doc_len > token.head.i + 1 and token.head.tag_ == '名詞-普通名詞-一般' and doc[token.head.i + 1].pos_ == 'ADP':
+                    elif doc_len > token.head.i + 1 and token.head.tag_ == '名詞-普通名詞-一般' and (doc[token.head.i + 1].pos_ == 'ADP' or doc[token.head.i + 1].pos_ == 'SCONJ'):
                         obj_w = ''
                         verb_w = ''
                     elif doc_len > token.head.i + 2 and token.head.tag_ == '名詞-普通名詞-一般' and doc[token.head.i + 1].pos_ == 'PUNCT' and doc[token.head.i + 2].pos_ == 'ADP':
+                        obj_w = ''
+                        verb_w = ''
+                    ###############################
+                    #    普通名詞　〇〇　＋　を　＋　接尾
+                    ###############################
+                    elif token.head.tag_ == '接尾辞-名詞的-副詞可能' or token.head.tag_ == '名詞-普通名詞-形状詞可能':
                         obj_w = ''
                         verb_w = ''
                     ###############################
@@ -411,23 +469,19 @@ class VerbExtractor:
                     print(text)
                     modal = ', '.join([str(x) for x in modality_w])
                     if subject_w or not dummy_subject:
-                        if para_subj:
-                            print('all = 【%s - %s】 subj = 【%s】 modality = %s rule_id = %d' % (obj_w, verb_w, subject_w, modal, rule_id))
-                            ret = ret + text + '\t\t' + subject_w + '\t' + obj_w + '\t' + verb_w + '\t\t' + modal + '\t' + str(rule_id) + '\n'
-                            print('all = 【%s - %s】 subj = 【%s】 modality = %s rule_id = %d' % (obj_w, verb_w, para_subj, modal, rule_id))
-                            ret = ret + text + '\t\t' + para_subj + '\t' + obj_w + '\t' + verb_w + '\t\t' + modal + '\t' + str(rule_id) + '\n'
-                        else:
-                            print('all = 【%s - %s】 subj = 【%s】 modality = %s rule_id = %d' % (obj_w, verb_w, subject_w, modal, rule_id))
-                            ret = ret + text + '\t\t' + subject_w + '\t' + obj_w + '\t' + verb_w + '\t\t' + modal + '\t' + str(rule_id) + '\n'
+                        print('all = 【%s - %s】 subj = 【%s】 modality = %s rule_id = %d' % (obj_w, verb_w, subject_w, modal, rule_id))
+                        ret = ret + text + '\t\t' + subject_w + '\t' + obj_w + '\t' + verb_w + '\t\t' + modal + '\t' + str(rule_id) + '\n'
+                        if para_subj[0][0]:
+                            for para_s in para_subj:
+                                print('all = 【%s - %s】 subj = 【%s】 modality = %s rule_id = %d' % (obj_w, verb_w, para_s[0], modal, rule_id))
+                                ret = ret + text + '\t\t' + para_s[0] + '\t' + obj_w + '\t' + verb_w + '\t\t' + modal + '\t' + str(rule_id) + '\n'
                     else:
-                        if para_subj:
-                            print('all = 【%s - %s】 subj = 【%s (省略)】 modality = %s rule_id = %d' % (obj_w, verb_w, dummy_subject, modal, rule_id))
-                            ret = ret + text + '\t\t' + dummy_subject + '\t' + obj_w + '\t' + verb_w + '\t\t' + modal + '\t' + str(rule_id) + '\n'
-                            print('all = 【%s - %s】 subj = 【%s (省略)】 modality = %s rule_id = %d' % (obj_w, verb_w, para_subj, modal, rule_id))
-                            ret = ret + text + '\t\t' + para_subj + '\t' + obj_w + '\t' + verb_w + '\t\t' + modal + '\t' + str(rule_id) + '\n'
-                        else:
-                            print('all = 【%s - %s】 subj = 【%s (省略)】 modality = %s rule_id = %d' % (obj_w, verb_w, dummy_subject, modal, rule_id))
-                            ret = ret + text + '\t\t' + dummy_subject + '\t' + obj_w  + '\t' + verb_w + '\t\t' + modal + '\t' + str(rule_id) + '\n'
+                        print('all = 【%s - %s】 subj = 【%s (省略)】 modality = %s rule_id = %d' % (obj_w, verb_w, dummy_subject, modal, rule_id))
+                        ret = ret + text + '\t\t' + dummy_subject + '(省略)\t' + obj_w + '\t' + verb_w + '\t\t' + modal + '\t' + str(rule_id) + '\n'
+                        if para_subj[0][0]:
+                            for para_s in para_subj:
+                                print('all = 【%s - %s】 subj = 【%s (省略)】 modality = %s rule_id = %d' % (obj_w, verb_w, para_s[0], modal, rule_id))
+                                ret = ret + text + '\t\t' + para_s[0] + '(省略)\t' + obj_w + '\t' + verb_w + '\t\t' + modal + '\t' + str(rule_id) + '\n'
                 #"""
                 # デバッグ用
 
@@ -505,24 +559,19 @@ class VerbExtractor:
                     print(text)
                     modal = ', '.join([str(x) for x in modality_w])
                     if subject_w or not dummy_subject:
-                        if para_subj:
-                            print('【%s - %s - (%s)】 subj = 【%s】 modality = %s rule_id = %d' % (obj_w, verb_w, sub_verb, subject_w, modal, rule_id))
-                            ret = ret + text + '\tMain\t' + subject_w + '\t' + obj_w + '\t' + verb_w + '\t' + sub_verb + '\t' + modal + '\t' + str(rule_id) + '\n'
-                            print('【%s - %s - (%s)】 subj = 【%s】 modality = %s rule_id = %d' % (obj_w, verb_w, sub_verb, para_subj, modal, rule_id))
-                            ret = ret + text + '\tMain\t' + para_subj + '\t' + obj_w + '\t' + verb_w + '\t' + sub_verb + '\t' + modal + '\t' + str(rule_id) + '\n'
-                        else:
-                            print('【%s - %s - (%s)】 subj = 【%s】 modality = %s rule_id = %d' % (obj_w, verb_w, sub_verb, subject_w, modal, rule_id))
-                            ret = ret + text + '\tMain\t' + subject_w + '\t' + obj_w + '\t' + verb_w + '\t' + sub_verb + '\t' + modal + '\t' + str(rule_id) + '\n'
+                        print('【%s - %s - (%s)】 subj = 【%s】 modality = %s rule_id = %d' % (obj_w, verb_w, sub_verb, subject_w, modal, rule_id))
+                        ret = ret + text + '\tMain\t' + subject_w + '\t' + obj_w + '\t' + verb_w + '\t' + sub_verb + '\t' + modal + '\t' + str(rule_id) + '\n'
+                        if para_subj[0][0]:
+                            for para_s in para_subj:
+                                print('【%s - %s - (%s)】 subj = 【%s】 modality = %s rule_id = %d' % (obj_w, verb_w, sub_verb, para_s[0], modal, rule_id))
+                                ret = ret + text + '\tMain\t' + para_s[0] + '\t' + obj_w + '\t' + verb_w + '\t' + sub_verb + '\t' + modal + '\t' + str(rule_id) + '\n'
                     else:
-                        if para_subj:
-                            print('【%s - %s - (%s)】 subj = 【%s(省略)】 modality = %s rule_id = %d' % (obj_w, verb_w, sub_verb, dummy_subject, modal, rule_id))
-                            ret = ret + text + '\tMain\t' + dummy_subject + '\t' + obj_w + '\t' + verb_w + '\t' + sub_verb + '\t' + modal + '\t' + str(rule_id) + '\n'
-                            print('【%s - %s - (%s)】 subj = 【%s(省略)】 modality = %s rule_id = %d' % (obj_w, verb_w, sub_verb, para_subj, modal, rule_id))
-                            ret = ret + text + '\tMain\t' + para_subj + '\t' + obj_w + '\t' + verb_w + '\t' + sub_verb + '\t' + modal + '\t' + str(rule_id) + '\n'
-                        else:
-                            print('【%s - %s - (%s)】 subj = 【%s (省略)】 modality = %s rule_id = %d' % (obj_w, verb_w, sub_verb, dummy_subject, modal, rule_id))
-                            ret = ret + text + '\tMain\t' + dummy_subject + '\t' + obj_w + '\t' + verb_w + '\t' + sub_verb + '\t' + modal + '\t' + str(rule_id) + '\n'
-#                    ret = ret + text + '\n' + '【' + obj_w + ' - ' + verb_w + '】 modality = ' + modal + ' rule_id = ' + str(rule_id) + '\n'
+                        print('【%s - %s - (%s)】 subj = 【%s(省略)】 modality = %s rule_id = %d' % (obj_w, verb_w, sub_verb, dummy_subject, modal, rule_id))
+                        ret = ret + text + '\tMain\t' + dummy_subject + '(省略)\t' + obj_w + '\t' + verb_w + '\t' + sub_verb + '\t' + modal + '\t' + str(rule_id) + '\n'
+                        if para_subj[0][0]:
+                            for para_s in para_subj:
+                                print('【%s - %s - (%s)】 subj = 【%s(省略)】 modality = %s rule_id = %d' % (obj_w, verb_w, sub_verb, para_s[0], modal, rule_id))
+                                ret = ret + text + '\tMain\t' + para_s[0] + '(省略)\t' + obj_w + '\t' + verb_w + '\t' + sub_verb + '\t' + modal + '\t' + str(rule_id) + '\n'
                 # デバッグ用
                 #"""
         return ret

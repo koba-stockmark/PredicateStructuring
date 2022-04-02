@@ -136,7 +136,7 @@ class ChunkExtractor:
         end_pt = pt
         ret = doc[pt].orth_
         if doc[pt].lemma_ == 'こと' or doc[pt].lemma_ == '人' or doc[pt].lemma_ == 'もの' or doc[pt].lemma_ == 'とき' or doc[pt].lemma_ == 'ため' or doc[pt].lemma_ == '方':
-            if doc[pt + 1].tag_ == '補助記号-括弧閉' and doc[pt + 1].head.i == doc[pt].i:
+            if (doc[pt + 1].tag_ == '補助記号-括弧閉' or doc[pt + 1].lemma_ == '＂') and doc[pt + 1].head.i == doc[pt].i:
                 ret = ret + doc[pt + 1].orth_
                 for i in reversed(range(0, pt)):
                     if doc[i].tag_ == '補助記号-括弧開':
@@ -191,10 +191,10 @@ class ChunkExtractor:
                             break
                         if(token.pos_ == 'ADP' and token.lemma_ == 'と' and doc[token.i + 1].tag_ == '補助記号-読点'):    # 名詞と、名愛　は切り離す　
                             break
-#                    if(token.pos_ == 'ADP' and token.lemma_ == 'と'):    # 名詞と、名愛　は切り離す　
-#                        break
-#                    if token.tag_ == '補助記号-句点' or token.tag_ == '補助記号-読点':
-#                        break
+                        if(token.pos_ == 'ADP' and token.lemma_ == 'と'):    # 名詞と名詞　は切り離して並列処理にまかせる
+                            break
+                        if token.lemma_ == '。' or token.lemma_ == '、':
+                            break
                     if token.tag_ == '補助記号-括弧閉':
                         if punc_o_f:
                             punc_o_f = False
@@ -230,7 +230,7 @@ class ChunkExtractor:
                 elif not punc_c_f and not punc_o_f:
                     if doc[i].tag_ == '補助記号-括弧開':
                         break
-                if(doc[i].head.i == pt and doc[i].pos_ != 'VERB' and doc[i].pos_ != 'AUX' and doc[i].pos_ != 'DET' and
+                if(doc[i].head.i == pt and doc[i].pos_ != 'VERB' and doc[i].pos_ != 'AUX' and doc[i].pos_ != 'DET' and doc[i].tag_ != '補助記号-読点' and
                         (doc[i].tag_ != '名詞-普通名詞-副詞可能' or doc[i].lemma_ != 'なか')):
                     if doc[i].tag_ == '補助記号-括弧開':
                         punc_o_f = True
@@ -248,7 +248,7 @@ class ChunkExtractor:
                         break
                     if doc[i].pos_ == 'SYM' and doc[i].tag_ == '助詞-格助詞':      # 〜　が格助詞の朱鷺　
                         break
-                    if(doc[i].pos_ == 'SYM' and not self.head_connect_check(pt, doc[i].head.i, *doc)):
+                    if(doc[i].pos_ == 'SYM' and (not self.head_connect_check(pt, doc[i].head.i, *doc) and doc[pt].head.i !=  doc[i].head.i)):
                         break
                     if(doc[i].tag_ == '接尾辞-名詞的-助数詞' and (doc[i].lemma_ == '日' or doc[i].lemma_ == '月' or doc[i].lemma_ == '年')):
                         break
@@ -276,12 +276,17 @@ class ChunkExtractor:
                     ((doc[i].pos_ == 'AUX' or doc[i].pos_ == 'VERB') and doc[i + 1].orth_ == 'か')):  # 〇〇か〇〇
                     start_pt = i
                     ret = doc[i].orth_ + ret
-                elif(doc[i].pos_ == 'PUNCT' and doc[i - 1].pos_ != 'VERB'  and doc[i - 1].pos_ != 'ADV'  and doc[i - 1].pos_ != 'ADP' and
-                     doc[i - 1].tag_ != '名詞-普通名詞-副詞可能' and doc[i - 1].tag_ != '接尾辞-名詞的-助数詞' and
-                     doc[i - 1].tag_ != '名詞-普通名詞-助数詞可能' and doc[i - 1].tag_ != '名詞-数詞' and
-                     (doc[i - 1].head.i == doc[i + 1].head.i or doc[i - 1].head.i == pt or doc[i - 1].head.i == i + 1)):     # 〇〇、〇〇　の場合はまとめる
+                #elif(doc[i].tag_ == '補助記号-読点' and (doc[i + 1].tag_ == '補助記号-括弧開' or doc[i - 1].tag_ == '補助記号-括弧閉' or doc[i - 1].orth_ == '株式会社') and
+                elif (doc[i].tag_ == '補助記号-読点' and (doc[i + 1].tag_ == '補助記号-括弧開' or doc[i - 1].tag_ == '補助記号-括弧閉') and
+                        (doc[i - 1].head.i == doc[i + 1].head.i or doc[i - 1].head.i == pt or doc[i - 1].head.i == i + 1)):     # 〇〇、〇〇　の場合はまとめる
                     start_pt = i
                     ret = doc[i].orth_ + ret
+#                elif(doc[i].pos_ == 'PUNCT' and doc[i - 1].pos_ != 'VERB'  and doc[i - 1].pos_ != 'ADV'  and doc[i - 1].pos_ != 'ADP' and
+#                     doc[i - 1].tag_ != '名詞-普通名詞-副詞可能' and doc[i - 1].tag_ != '接尾辞-名詞的-助数詞' and
+#                     doc[i - 1].tag_ != '名詞-普通名詞-助数詞可能' and doc[i - 1].tag_ != '名詞-数詞' and
+#                     (doc[i - 1].head.i == doc[i + 1].head.i or doc[i - 1].head.i == pt or doc[i - 1].head.i == i + 1)):     # 〇〇、〇〇　の場合はまとめる
+#                    start_pt = i
+#                    ret = doc[i].orth_ + ret
                 elif(doc[i].pos_ == 'ADP' and doc[i].orth_ == 'に' and doc[i + 1].orth_ == 'なる'):
                     start_pt = i
                     ret = doc[i].orth_ + ret
