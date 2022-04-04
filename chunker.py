@@ -254,6 +254,8 @@ class ChunkExtractor:
                         break
                     if doc[i].orth_ == 'の' and doc[i - 1].lemma_ == 'ため':
                         break
+                    if doc[i].orth_ == 'の' and doc[i - 1].lemma_ == 'で':
+                        break
                     if doc[i].tag_ == '名詞-普通名詞-副詞可能' and (doc[i].lemma_ == 'なか' or  doc[i].lemma_ == 'ため' or doc[i].lemma_ == 'もと' ):
                         break
                     if(doc[i].pos_ == 'ADJ' and not self.head_connect_check(pt, i, *doc)):   # objを修飾しない形容詞
@@ -276,8 +278,11 @@ class ChunkExtractor:
                     ((doc[i].pos_ == 'AUX' or doc[i].pos_ == 'VERB') and doc[i + 1].orth_ == 'か')):  # 〇〇か〇〇
                     start_pt = i
                     ret = doc[i].orth_ + ret
-                #elif(doc[i].tag_ == '補助記号-読点' and (doc[i + 1].tag_ == '補助記号-括弧開' or doc[i - 1].tag_ == '補助記号-括弧閉' or doc[i - 1].orth_ == '株式会社') and
                 elif (doc[i].tag_ == '補助記号-読点' and (doc[i + 1].tag_ == '補助記号-括弧開' or doc[i - 1].tag_ == '補助記号-括弧閉') and
+                        (doc[i - 1].head.i == doc[i + 1].head.i or doc[i - 1].head.i == pt or doc[i - 1].head.i == i + 1)):     # 〇〇、〇〇　の場合はまとめる
+                    start_pt = i
+                    ret = doc[i].orth_ + ret
+                elif(doc[i].tag_ == '補助記号-読点' and  doc[i - 1].orth_ == '株式会社' and doc[i - 2].pos_ != 'NOUN' and doc[i - 2].pos_ != 'PROPN' and
                         (doc[i - 1].head.i == doc[i + 1].head.i or doc[i - 1].head.i == pt or doc[i - 1].head.i == i + 1)):     # 〇〇、〇〇　の場合はまとめる
                     start_pt = i
                     ret = doc[i].orth_ + ret

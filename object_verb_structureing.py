@@ -1,6 +1,7 @@
 import spacy
 from spacy.symbols import obj
 from chunker import ChunkExtractor
+from subject_get import SubjectExtractor
 
 class VerbExtractor:
 
@@ -12,6 +13,8 @@ class VerbExtractor:
         chunker = ChunkExtractor()
         self.num_chunk = chunker.num_chunk
         self.verb_chunk = chunker.verb_chunk
+        subj_get = SubjectExtractor()
+        self.subject_get = subj_get.subject_get_from_object
 
     """
         並列句の取得
@@ -25,7 +28,8 @@ class VerbExtractor:
         for i in reversed(range(0, start)):
             if sp < i:
                 continue
-            if (doc[i].pos_ == 'NOUN' or doc[i].pos_ == 'PROPN') and doc[i].tag_ != '名詞-普通名詞-副詞可能' and (i > ep or i < sp):
+            if ((doc[i].pos_ == 'NOUN' or doc[i].pos_ == 'PROPN') and doc[i].tag_ != '名詞-普通名詞-副詞可能' and (i >= ep or i < sp) or
+                ((doc[i].head.head.i >= ep or doc[i].head.head.i < sp) and doc[doc[i].head.i].norm_ == '他')):
                 if len(doc) > i + 1 and doc[i + 1].lemma_ == 'の' and doc[i + 1].pos_ == 'ADP':  # 〇〇の〇〇　は並列扱いしない
                     if (doc[i].head.i >= sp and doc[i].head.i <= ep):
                         if not find_ct:
@@ -41,69 +45,24 @@ class VerbExtractor:
                     sp = ret[find_ct - 1][1]
                     ep = ret[find_ct - 1][2]
                     continue
+                if (doc[i].head.head.i >= ep or doc[i].head.head.i < sp) and (doc[i].pos_ == 'NOUN' or doc[i].pos_ == 'PROPN') and\
+                        (doc[i + 1].lemma_ == '、' or doc[doc[i].head.i].i == i + 1) and doc[doc[i].head.i].norm_ == '他' and doc[doc[i].head.i + 1].pos_ != 'ADP':
+                    ret.append((self.num_chunk(i, *doc)))
+                    find_ct = find_ct + 1
+                    sp = ret[find_ct - 1][1]
+                    ep = ret[find_ct - 1][2]
+                    continue
+
 
         if not find_ct:
             for i in reversed(range(0, doc[end].head.i)):
-                if doc[i].head.i == doc[end].head.i and doc[i].lemma_ == '共同':
-                    ret = self.para_get(i, i, *doc)
-                    return ret
+                if i != end:
+                    if doc[i].head.i == doc[end].head.i and doc[i].lemma_ == '共同':
+                        ret = self.para_get(i, i, *doc)
+                        return ret
             ret.append(('', 0, 0))
         return ret
 
-    """
-        目的語に対する主語の取得
-        目的語のかかり先の動詞にかかる主語を探す
-        〇〇と〇〇　のような並列は分割してひとつだけを返す。
-        見つからないときは　連体修飾　「△△△をする〇〇(主語)は、」　のような形式からも探す　
-    """
-    def subject_get(self, verb_point, *doc):
-        ret = ['', 0, 0]
-        ng_pt = verb_point
-        verb_pt = doc[verb_point].head.i
-        # 直接接続をチェック
-        for token in doc:
-            if token.dep_ == "nsubj" and token.head.i == verb_pt and token.i != ng_pt and token.tag_ != '名詞-普通名詞-副詞可能':
-                ret_subj = self.num_chunk(token.i, *doc)
-                ret[2] = ret_subj[2]
-                for i in reversed(range(ret_subj[1], ret_subj[2] + 1)):     # 〇〇と〇〇　は切り離す
-                    if doc[i].pos_ == 'ADP' and doc[i].lemma_ == 'と':
-                        break
-                    ret[0] = doc[i].orth_ + ret[0]
-                    ret[1] = i
-                return ret
-        # 間接接続をチェック
-        for i in reversed(range(0, verb_pt)):
-            if ((doc[i].dep_ == "nsubj" and doc[i].tag_ != '名詞-普通名詞-副詞可能') or
-                (len(doc) > i + 2 and doc[i].dep_ == "obl" and doc[i].tag_ != '名詞-普通名詞-副詞可能' and doc[i + 1].lemma_ == 'など' and (doc[i + 2].lemma_ == 'は' or doc[i + 2].lemma_ == 'が'))):
-                chek = doc[i].head.i
-                while chek != doc[chek].head.i:
-                    if chek == verb_pt:
-                        break
-                    else:
-                        if(doc[doc[chek].i + 1].tag_ == '形状詞-助動詞語幹' and doc[doc[chek].i + 1].head.i == doc[doc[chek].i].i):
-                            break
-                        if doc[chek].pos_ == 'ADJ':
-                            break
-                        chek = doc[chek].head.i
-                if doc[i].i != ng_pt and (chek == verb_pt or chek == doc[verb_pt].head.i or chek == doc[verb_pt].head.head.i):
-                    ret_subj = self.num_chunk(doc[i].i, *doc)
-                    ret[2] = ret_subj[2]
-                    for i in reversed(range(ret_subj[1], ret_subj[2] + 1)):     # 〇〇と〇〇　は切り離す
-                        if doc[i].pos_ == 'ADP' and doc[i].lemma_ == 'と':
-                            break
-                        ret[0] = doc[i].orth_ + ret[0]
-                        ret[1] = i
-                    return ret
-        # 連体修飾をチェック
-        if doc[doc[verb_point].head.head.i].dep_ == 'nsubj':
-            ret_subj = self.num_chunk(doc[verb_point].head.head.i, *doc)
-            ret[2] = ret_subj[2]
-            for i in reversed(range(ret_subj[1], ret_subj[2] + 1)):  # 〇〇と〇〇　は切り離す
-                if doc[i].pos_ == 'ADP' and doc[i].lemma_ == 'と':
-                    break
-                ret[0] = doc[i].orth_ + ret[0]
-                ret[1] = i
-        return ret
 
     """
     述部のかかり先の取得
