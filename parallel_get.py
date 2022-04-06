@@ -1,4 +1,5 @@
 from chunker import ChunkExtractor
+from subject_get import SubjectExtractor
 
 class ParallelExtractor:
 
@@ -8,13 +9,16 @@ class ParallelExtractor:
         """
         chunker = ChunkExtractor()
         self.num_chunk = chunker.num_chunk
+        subj_get = SubjectExtractor()
+        self.rentai_check = subj_get.rentai_check
 
 
-    """
-        並列句の取得
-        objやsubjの格がついていないがかかり先が同じものは並立句とみなす
-    """
+
     def para_get(self, start, end, *doc):
+        """
+        並列句の取得
+        並立対象句（startからend）に係っている名詞句を並立句とする
+        """
         ret = []
         sp = start
         ep = end
@@ -22,7 +26,8 @@ class ParallelExtractor:
         for i in reversed(range(0, start)):
             if sp <= i:
                 continue
-            if ((doc[i].pos_ == 'NOUN' or doc[i].pos_ == 'PROPN') and doc[i].tag_ != '名詞-普通名詞-副詞可能' and (i >= ep or i < sp) or
+            if ((doc[i].pos_ == 'NOUN' or doc[i].pos_ == 'PROPN') and
+                doc[i].tag_ != '名詞-普通名詞-副詞可能' and doc[i].tag_ != '名詞-普通名詞-助数詞可能' and doc[i].tag_ != '接尾辞-名詞的-助数詞' and (i >= ep or i < sp) or
                 ((doc[i].head.head.i >= ep or doc[i].head.head.i < sp) and doc[doc[i].head.i].norm_ == '他')):
                 if len(doc) > i + 1 and doc[i + 1].lemma_ == 'の' and doc[i + 1].pos_ == 'ADP':  # 〇〇の〇〇　は並列扱いしない
                     if (doc[i].head.i >= sp and doc[i].head.i <= ep):
@@ -33,6 +38,8 @@ class ParallelExtractor:
                         continue
 #                if token.tag_ == '名詞-普通名詞-サ変可能' and (doc[token.i + 1].pos_ == 'PUNCT' or doc[token.i + 1].pos_ == 'SYM'):  # サ変名詞、〇〇　は並列扱いしない
 #                    return '', 0, 0
+                if self.rentai_check(i, *doc):
+                    break
                 if (doc[i].head.i >= sp and doc[i].head.i <= ep) and (doc[i + 1].lemma_ == 'と' or doc[i + 1].lemma_ == 'や' or doc[i + 1].lemma_ == 'など' or doc[i + 1].pos_ == 'PUNCT'):
                     ret.append((self.num_chunk(i, *doc)))
                     find_ct = find_ct + 1
