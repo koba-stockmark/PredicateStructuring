@@ -1,3 +1,4 @@
+import re
 from chunker import ChunkExtractor
 from subject_get import SubjectExtractor
 
@@ -27,8 +28,11 @@ class ParallelExtractor:
             if sp <= i:
                 continue
             if ((doc[i].pos_ == 'NOUN' or doc[i].pos_ == 'PROPN') and
-                doc[i].tag_ != '名詞-普通名詞-副詞可能' and doc[i].tag_ != '名詞-普通名詞-助数詞可能' and doc[i].tag_ != '接尾辞-名詞的-助数詞' and (i >= ep or i < sp) or
+                doc[i].tag_ != '名詞-普通名詞-副詞可能' and doc[i].tag_ != '接尾辞-名詞的-助数詞' and (doc[i].tag_ != '名詞-普通名詞-助数詞可能' or
+                doc[i].lemma_ == '社' or doc[i].lemma_ == '課' or doc[i].lemma_ == '部' or re.compile(r'^[a-zA-Z]+$').search(doc[i].lemma_)) and (i >= ep or i < sp) or
                 ((doc[i].head.head.i >= ep or doc[i].head.head.i < sp) and doc[doc[i].head.i].norm_ == '他')):
+                if self.rentai_check(i, *doc):      #   連体修飾は並列から外す
+                    continue
                 if len(doc) > i + 1 and doc[i + 1].lemma_ == 'の' and doc[i + 1].pos_ == 'ADP':  # 〇〇の〇〇　は並列扱いしない
                     if (doc[i].head.i >= sp and doc[i].head.i <= ep):
                         if not find_ct:
@@ -38,8 +42,6 @@ class ParallelExtractor:
                         continue
 #                if token.tag_ == '名詞-普通名詞-サ変可能' and (doc[token.i + 1].pos_ == 'PUNCT' or doc[token.i + 1].pos_ == 'SYM'):  # サ変名詞、〇〇　は並列扱いしない
 #                    return '', 0, 0
-                if self.rentai_check(i, *doc):
-                    break
                 if (doc[i].head.i >= sp and doc[i].head.i <= ep) and (doc[i + 1].lemma_ == 'と' or doc[i + 1].lemma_ == 'や' or doc[i + 1].lemma_ == 'など' or doc[i + 1].pos_ == 'PUNCT'):
                     ret.append((self.num_chunk(i, *doc)))
                     find_ct = find_ct + 1

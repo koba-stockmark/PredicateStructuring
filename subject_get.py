@@ -91,6 +91,8 @@ class SubjectExtractor:
 #                            break
                         if doc[chek].pos_ == 'ADJ':
                             break
+#                        if chek == obj_point:    # obj は主語にならない
+#                            break
                         chek = doc[chek].head.i
                 if doc[i].i != ng_pt and (chek == verb_pt or chek == doc[verb_pt].head.i or chek == doc[verb_pt].head.head.i):
 #                if doc[i].i != ng_pt and (chek == verb_pt):
@@ -126,33 +128,28 @@ class SubjectExtractor:
                         if (doc[doc[chek].i + 1].tag_ == '形状詞-助動詞語幹' and doc[doc[chek].i + 1].head.i == doc[
                             doc[chek].i].i):
                             break
-                        if ((doc[chek].morph.get("Inflection") and '連体形' in doc[chek].morph.get("Inflection")[
-                            0]) or
-                                (doc[chek + 1].pos_ == 'AUX' and doc[chek + 1].morph.get(
-                                    "Inflection") and '連体形' in doc[chek + 1].morph.get("Inflection")[0]) or
-                                (doc[chek + 1].pos_ == 'AUX' and doc[chek + 2].pos_ == 'AUX' and doc[
-                                    chek + 2].morph.get("Inflection") and '連体形' in
-                                 doc[chek + 2].morph.get("Inflection")[0])):
+                        if ((doc[chek].morph.get("Inflection") and '連体形' in doc[chek].morph.get("Inflection")[0]) or
+                                (doc[chek + 1].pos_ == 'AUX' and doc[chek + 1].morph.get("Inflection") and '連体形' in doc[chek + 1].morph.get("Inflection")[0]) or
+                                (doc[chek + 1].pos_ == 'AUX' and doc[chek + 2].pos_ == 'AUX' and doc[chek + 2].morph.get("Inflection") and '連体形' in doc[chek + 2].morph.get("Inflection")[0])):
                             break
                         if self.rentai_check(chek, *doc):
                             break
                         #                        if doc[doc[chek].i].tag_ == '名詞-普通名詞-助数詞可能':
                         #                            break
-                        if (doc[chek + 1].orth_ == 'さ' and doc[chek + 2].lemma_ == 'れる' and doc[
-                            chek + 3].lemma_ == 'た'):
+                        if (doc[chek + 1].orth_ == 'さ' and doc[chek + 2].lemma_ == 'れる' and doc[chek + 3].lemma_ == 'た'):
                             break
-                        if (doc[chek].pos_ == 'NOUN' and doc[chek - 1].orth_ == 'が' and doc[
-                            chek + 1].orth_ == 'で'):  # 〜が理由で…
+                        if (doc[chek].pos_ == 'NOUN' and doc[chek - 1].orth_ == 'が' and doc[chek + 1].orth_ == 'で'):  # 〜が理由で…
                             break
                         if (doc[chek].norm_ == '成る' and doc[chek - 1].orth_ == 'に'):  # 〜が〜になる〜する…
                             break
                         #                        if(doc[chek].pos_ == 'NOUN' and doc[chek + 1].orth_ == 'の' and doc[chek + 1].orth_ == 'の'):    # 主語が（名詞）の（名詞）は…
                         #                            break
+#                        if chek == obj_point:    # obj は主語にならない
+#                            break
                         if doc[chek].pos_ == 'ADJ':
                             break
                         chek = doc[chek].head.i
-                if doc[i].i != ng_pt and (
-                        chek == verb_pt or chek == doc[verb_pt].head.i or chek == doc[verb_pt].head.head.i):
+                if doc[i].i != ng_pt and (chek == verb_pt or chek == doc[verb_pt].head.i or chek == doc[verb_pt].head.head.i):
                     #                if doc[i].i != ng_pt and (chek == verb_pt):
                     ret_subj = self.num_chunk(doc[i].i, *doc)
                     ret[2] = ret_subj[2]
@@ -179,7 +176,7 @@ class SubjectExtractor:
                         ret[1] = i
                     return ret
         # 連体修飾をチェック
-        if doc[doc[obj_point].head.head.i].dep_ == 'nsubj':
+        if doc[doc[obj_point].head.head.i].dep_ == 'nsubj' and doc[doc[obj_point].head.head.i].lemma_ != 'こと':
             if doc[doc[obj_point].head.i + 1].lemma_ != 'できる':
                 if doc[verb_pt].lemma_ in self.campany_special_vaerb:
                     ret_subj = self.num_chunk(doc[obj_point].head.head.i, *doc)

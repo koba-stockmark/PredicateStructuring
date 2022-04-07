@@ -3,6 +3,7 @@ from spacy.symbols import obj
 from chunker import ChunkExtractor
 from subject_get import SubjectExtractor
 from parallel_get import ParallelExtractor
+from verb_split import VerbSpliter
 
 class VerbExtractor:
 
@@ -14,10 +15,12 @@ class VerbExtractor:
         chunker = ChunkExtractor()
         self.num_chunk = chunker.num_chunk
         self.verb_chunk = chunker.verb_chunk
-        subj_get = SubjectExtractor()
-        self.subject_get = subj_get.subject_get_from_object
-        parallel_get = ParallelExtractor()
-        self.para_get = parallel_get.para_get
+        s_g = SubjectExtractor()
+        self.subject_get = s_g.subject_get_from_object
+        p_g = ParallelExtractor()
+        self.para_get = p_g.para_get
+        v_s = VerbSpliter()
+        self.verb_devide = v_s.verb_devide
 
 
     """
@@ -59,6 +62,7 @@ class VerbExtractor:
             obj_w = ''
             subject_w = ''
             rule_id = 0
+            verb = {}
             next_head_use = False
             if ((token.dep_ == "obj" and token.head.dep_ != "obj") or
                     (doc_len > token.i + 1 and token.dep_ == "nsubj" and doc[token.i + 1].lemma_ == "も" and token.tag_ != '名詞-普通名詞-助数詞可能') or
@@ -376,7 +380,7 @@ class VerbExtractor:
                 ###########################################################
                 ##   TBD 慣用句処理  　（「日の目を見る」など）　#############
                 ###########################################################
-
+                dev_verb = self.verb_devide(verb["lemma_start"], verb["lemma_start"], *doc)
 
                 #"""
                 # デバッグ用
@@ -491,24 +495,6 @@ class VerbExtractor:
                 #"""
         return ret
 
-    def compaound(self,start, end, *doc):
-        ret = ''
-        for i in range(start, end):
-            ret = ret + doc[i].orth_
-        return ret
-
-    def objec_devide(self, start, end, *doc):
-        return
-
-    def verb_devide(self, start, end, *doc):
-        if start == end:
-            return self.compaound(start, end, *doc), ''
-        for i in reversed(range(start,end)):
-            if doc[i].norm_ in self.sub_verb_dic:
-                return self.compaound(start, i - 1, *doc), self.compaound(i, end, *doc)
-        return self.compaound(start, end, *doc), ''
-
-        return
 
     def verb_get(self, text):
         """

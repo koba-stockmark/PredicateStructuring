@@ -132,6 +132,10 @@ class ChunkExtractor:
         return {'lemma':ret_lemma, 'lemma_start':start_pt, 'lemma_end':end_pt, 'org_str':org_str, 'org_start':start_pt, 'org_end':end_pt + tail_ct, 'modality':[*self.modality_get(org_str)]}
 
 
+    """
+    英語スペースを考慮した単語結合
+    """
+
     def connect_word(self,str1, str2):
         if not str1 or not str2:
             return str1 + str2
@@ -275,8 +279,7 @@ class ChunkExtractor:
                         break
                     if doc[i].orth_ == 'の' and doc[i - 1].lemma_ == 'で':
                         break
-                    if doc[i].tag_ == '名詞-普通名詞-副詞可能' and (doc[i].lemma_ == 'なか' or  doc[i].lemma_ == 'ため' or doc[i].lemma_ == 'もと' ):
-#                    if doc[i].tag_ == '名詞-普通名詞-副詞可能':
+                    if doc[i].tag_ == '名詞-普通名詞-副詞可能' and (doc[i].lemma_ == 'なか' or  doc[i].lemma_ == 'ため' or doc[i].lemma_ == 'もと' or doc[i].lemma_ == '今後'):
                         break
                     if(doc[i].pos_ == 'ADJ' and not self.head_connect_check(pt, i, *doc)):   # objを修飾しない形容詞
                         break
