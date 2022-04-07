@@ -11,6 +11,8 @@ class VerbExtractor:
         """
         関数`__init__`はクラスをインスタンス化した時に実行されます。
         """
+
+
         self.nlp = spacy.load('ja_ginza_electra')  # Ginzaのロード　tranceferモデル
         chunker = ChunkExtractor()
         self.num_chunk = chunker.num_chunk

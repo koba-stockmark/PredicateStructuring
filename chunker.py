@@ -106,8 +106,9 @@ class ChunkExtractor:
                 append_l = token.lemma_
                 end_pt = end_pt + 1
             # 読点による述部の並列　「森の箱」を開発、受注販売を始めた。
-            elif tail_ct == 0 and ((token.tag_ == '補助記号-読点' and pt == token.head.i and doc[token.i - 1].tag_ == '名詞-普通名詞-サ変可能' and (self.case_get(doc[token.i + 1].i, *doc) == 'を' or self.case_get(doc[token.i + 1].i, *doc) == 'VERB')) or
-                                   ((self.case_get(doc[token.i].i, *doc) == 'を' or self.case_get(doc[token.i].i, *doc) == 'VERB') and find_f == True and doc[token.i].pos_ != 'AUX' and doc[token.i].pos_ != 'ADP')):
+            elif tail_ct == 0 and ((token.tag_ == '補助記号-読点' and pt == token.head.i and doc[token.i - 1].tag_ == '名詞-普通名詞-サ変可能' and doc[token.i + 1].tag_ == '名詞-普通名詞-サ変可能' and
+                    (self.case_get(doc[token.i + 1].i, *doc) == 'を' or self.case_get(doc[token.i + 1].i, *doc) == 'VERB')) or
+                    ((self.case_get(doc[token.i].i, *doc) == 'を' or self.case_get(doc[token.i].i, *doc) == 'VERB') and find_f == True and doc[token.i].pos_ != 'AUX' and doc[token.i].pos_ != 'ADP')):
                 if (find_f):
                     ret = ret + append_o
                 find_f = True

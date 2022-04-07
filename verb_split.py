@@ -7,8 +7,6 @@ class VerbSpliter:
         関数`__init__`はクラスをインスタンス化した時に実行されます。
         """
         chunker = ChunkExtractor()
-        self.num_chunk = chunker.num_chunk
-        self.head_connect_check = chunker.head_connect_check
         self.connect_word = chunker.connect_word
 
 
@@ -53,7 +51,7 @@ class VerbSpliter:
             return self.compaound(start, end, *doc), ''
         for i in reversed(range(start, end + 1)):
             if doc[i].norm_ in self.sub_verb_dic:
-                if doc[start].tag_ == '名詞-普通名詞-一般':  # 本格始動　など普通名詞との合成
+                if doc[i - 1].tag_ != '名詞-普通名詞-サ変可能':  # 本格始動　など普通名詞との合成
                     if doc[end].tag_ == '名詞-普通名詞-サ変可能':
                         return '', self.compaound(i, end, *doc) + 'する'
                     else:
