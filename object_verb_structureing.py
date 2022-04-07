@@ -21,6 +21,7 @@ class VerbExtractor:
         self.para_get = p_g.para_get
         v_s = VerbSpliter()
         self.verb_devide = v_s.verb_devide
+        self.sub_verb_chek = v_s.sub_verb_chek
 
 
     """
@@ -28,21 +29,6 @@ class VerbExtractor:
     """
     def predic_hea(self, s_pt, e_pt, *doc):
         return ret
-
-    """
-    補助用言のチェック
-    """
-    # NG '発表', '実現', '拡大', '追加'
-    sub_verb_dic = ['開始', 'スタート', '始める', '始まる', '始動', '本格始動', '続ける', '終わる', '終る',
-                    '掲げる', '目指す', '達成', '予定', '計画', '実施', '行なう', '行う', '進める', '推進', '加速',
-                    '強化', '拡充', '活用', 'お知らせ', '決定',
-                    '発表', '報ずる', '検討', '公開', '図る', 'いたす', 'いただく']
-
-    def sub_verb_chek(self, check_w):
-        for sub_verb_w in self.sub_verb_dic:
-            if check_w.startswith(sub_verb_w):
-                return True
-        return False
 
     """
     O-Vの取得
@@ -380,8 +366,6 @@ class VerbExtractor:
                 ###########################################################
                 ##   TBD 慣用句処理  　（「日の目を見る」など）　#############
                 ###########################################################
-                dev_verb = self.verb_devide(verb["lemma_start"], verb["lemma_start"], *doc)
-
                 #"""
                 # デバッグ用
                 if (obj_w ):
@@ -413,8 +397,8 @@ class VerbExtractor:
 #                """
                 # 複合動詞の場合、複合動詞間のかかり受けがあるのでそれを排除して最終かかり先を求める
                 predic_head = token.head.i
-                verb = self.verb_chunk(doc[token.head.i].i, *doc)
-                for i in range(verb['lemma_start'], verb['lemma_end']):
+                comp_verb = self.verb_chunk(doc[token.head.i].i, *doc)
+                for i in range(comp_verb['lemma_start'], comp_verb['lemma_end']):
                     if predic_head < doc[i].head.i:
                         predic_head = doc[i].head.i
                 #
@@ -472,7 +456,20 @@ class VerbExtractor:
                     verb_w = ''
 
 
-                #"""
+                ##########################################################################################################################################
+                #    複合術部のメインと補助への分割
+                ##########################################################################################################################################
+                if verb:
+                    dev_verb = self.verb_devide(verb["lemma_start"], verb["lemma_end"], *doc)
+                    if dev_verb[1]:
+                        verb_w = dev_verb[0]
+                        sub_verb = dev_verb[1]
+
+                ##########################################################################################################################################
+                #    目的語を述部と分割
+                ##########################################################################################################################################
+
+#"""
                 # デバッグ用
                 if (obj_w and main_verb):
                     print(text)
