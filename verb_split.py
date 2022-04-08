@@ -8,6 +8,9 @@ class VerbSpliter:
         """
         chunker = ChunkExtractor()
         self.connect_word = chunker.connect_word
+        self.num_chunk = chunker.num_chunk
+        self.compaound = chunker.compaound
+
 
 
 
@@ -32,32 +35,50 @@ class VerbSpliter:
 
 
     """
-    始点から終点までの単語の結合
+    述部に対するobjを探索
     """
-    def compaound(self, start, end, *doc):
-        ret = ''
-        for i in range(start, end ):
-            ret = ret + doc[i].orth_
-        ret = ret + doc[end].lemma_
-        return ret
+    def object_serch(self, start, *doc):
+        for token in doc:
+            if token.head.i == start and token.dep_ == 'obj':
+                return self.num_chunk(token.i, *doc)[0]
+        return ''
 
 
-    def objec_devide(self, start, end, *doc):
-        return
+    """
+    目的語の中の述部を分割
+
+    ret : 目的語　＋　主述部　＋　主述始点　＋　主述部終点
+    """
+    def object_devide(self, start, end, *doc):
+        if start == end:
+            return self.compaound(start, end, *doc), '', -1, -1
+        for i in reversed(range(start, end + 1)):
+            if doc[i].lemma_ == 'の' and doc[i].pos_ == 'ADP':
+                if doc[end].tag_ == '名詞-普通名詞-サ変可能' and i + 2 >= end:
+                    return self.compaound(start, i - 1, *doc), self.compaound(i + 1, end, *doc) + 'する', i + 1, end
+            elif doc[i].lemma_ == 'こと':
+                if doc[i - 1].lemma_ == 'する':
+                    return self.object_serch(start, * doc), self.compaound(start, i - 2, *doc) + 'する', start, i - 2, end
+        return self.compaound(start, end, *doc), '', -1, -1
 
 
+    """
+    複合術部を主述部と補助術部に分割
+    
+    ret : 主述部　＋　補助術部　＋　主述始点　＋　主述部終点　＋　補助述部始点　＋　補助述部終点
+    """
     def verb_devide(self, start, end, *doc):
         if start == end:
-            return self.compaound(start, end, *doc), ''
+            return self.compaound(start, end, *doc), '', start, end, -1, -1
         for i in reversed(range(start, end + 1)):
             if doc[i].norm_ in self.sub_verb_dic:
                 if doc[i - 1].tag_ != '名詞-普通名詞-サ変可能':  # 本格始動　など普通名詞との合成
                     if doc[end].tag_ == '名詞-普通名詞-サ変可能':
-                        return '', self.compaound(i, end, *doc) + 'する'
+                        return '', self.compaound(i, end, *doc) + 'する', -1, -1, i, end
                     else:
-                        return '', self.compaound(i, end, *doc)
+                        return '', self.compaound(i, end, *doc), -1, -1, i, end
                 if doc[end].tag_ == '名詞-普通名詞-サ変可能':
-                    return self.compaound(start, i - 1, *doc) + 'する', self.compaound(i, end, *doc) + 'する'
+                    return self.compaound(start, i - 1, *doc) + 'する', self.compaound(i, end, *doc) + 'する', start, i - 1, i, end
                 else:
-                    return self.compaound(start, i - 1, *doc) + 'する', self.compaound(i, end, *doc)
-        return self.compaound(start, end, *doc), ''
+                    return self.compaound(start, i - 1, *doc) + 'する', self.compaound(i, end, *doc), start, i - 1, i, end
+        return self.compaound(start, end, *doc), '', start, end, -1, -1

@@ -53,6 +53,27 @@ class ChunkExtractor:
             ret = ret + re.findall("<モダリティ.+?>", tag.fstring)
         return ret
 
+    """
+    英語スペースを考慮した単語結合
+    """
+
+    def connect_word(self, str1, str2):
+        if not str1 or not str2:
+            return str1 + str2
+        if re.compile(r'^[a-zA-Z]+$').search(str1[-1]) and re.compile(r'^[a-zA-Z]+$').search(str2[0]):
+            return str1 + ' ' + str2
+        else:
+            return str1 + str2
+
+    """
+    始点から終点までの単語の結合
+    """
+    def compaound(self, start, end, *doc):
+        ret = ''
+        for i in range(start, end):
+            ret = self.connect_word(ret, doc[i].orth_)
+        ret = ret + doc[end].lemma_
+        return ret
 
     """
     動詞のチャンキング
@@ -132,18 +153,6 @@ class ChunkExtractor:
 #        return ret_lemma, start_pt, end_pt, org_str, start_pt, end_pt + tail_ct, *self.modality_get(org_str)
         return {'lemma':ret_lemma, 'lemma_start':start_pt, 'lemma_end':end_pt, 'org_str':org_str, 'org_start':start_pt, 'org_end':end_pt + tail_ct, 'modality':[*self.modality_get(org_str)]}
 
-
-    """
-    英語スペースを考慮した単語結合
-    """
-
-    def connect_word(self,str1, str2):
-        if not str1 or not str2:
-            return str1 + str2
-        if re.compile(r'^[a-zA-Z]+$').search(str1[-1]) and re.compile(r'^[a-zA-Z]+$').search(str2[0]):
-            return str1 + ' ' + str2
-        else:
-            return str1 + str2
 
     """
     名詞のチャンキング
