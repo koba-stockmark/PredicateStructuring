@@ -55,7 +55,7 @@ koushin_dic = [
 ]
 
 tyuushi_dic =[
-"やめる","休止","切る","廃止"
+"やめる","休止","廃止"
 ]
 
 sankaku_dic = [
