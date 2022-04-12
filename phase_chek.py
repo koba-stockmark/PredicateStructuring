@@ -1,9 +1,10 @@
 from chunker import ChunkExtractor
+from verb_split import VerbSpliter
 
 kousou_dic = [
 "コンセプト","ミッション","めざし応援","めざす","レイアウト提案","開拓","開発計画","願う","企画、開発","企画、販売","企画",
     "企画及び開発","企業理念","掲げる","計画","構想","考える","考案","実現","着手","着目","調査","追求","分析","目指す",
-    "目的","予測","予定"
+    "目的","予測","予定","求める"
 ]
 
 kenkyuu_dic = [
@@ -42,7 +43,7 @@ seihin_dic = [
     "認証サービス","納入","配信","配信中","配達サービス","配布","買取りサービス","売り出す","売却","発刊","発行","発信",
     "発売","発売中","発表","発表、展示","販売","販売開始","販売中","披露","複数展開","放送","本格サービス","本格稼働",
     "本格提供","本格展開","本格導入","本格販売","無償提供","無償配布","無料オンライン開催","無料提供","無料配布",
-    "有料生配信","予約受付","予約販売","利用可能","一般販売","量産","扱う"
+    "有料生配信","予約受付","予約販売","利用可能","一般販売","量産","扱う","展開"
 ]
 
 koushin_dic = [
@@ -51,7 +52,7 @@ koushin_dic = [
     "改善","改良","拡充","拡大","拡張","急拡大","継続","減らす","効率化","向上","更改","更新","高める","再販売",
     "再編","削減","刷新","自動化","受け継ぐ","収益化","収益化支援","集約","充実","伸ばす","進める","推進","整える",
     "整備","整理","積極化","切り替える","全面リニューアル","増強","増設","促進","続ける","短縮","値上げ","注力","追加",
-    "追加リリース","追加納入","追加発売","徹底","転用","発展","普及","復活","変革","変更","本格化"
+    "追加リリース","追加納入","追加発売","徹底","転用","発展","普及","復活","変革","変更","本格化","強化"
 ]
 
 tyuushi_dic =[
@@ -126,40 +127,49 @@ class PhaseCheker:
         self.connect_word = chunker.connect_word
         self.num_chunk = chunker.num_chunk
         self.compaound = chunker.compaound
+        v_s = VerbSpliter()
+        self.sub_verb_dic = v_s.sub_verb_dic
 
 
-    def phase_chek(self, start, end, *doc):
+    def phase_chek(self, start, end, obj_tart, obj_end, *doc):
         ret = ''
         verv_word = self.compaound(start ,end, *doc)
         if(verv_word in kousou_dic):
-            ret = ret + '<構想>'
+            ret = ret + '<構想・目標>,'
         if(verv_word in kenkyuu_dic):
-            ret = ret + '<研究>'
+            ret = ret + '<研究>,'
         if(verv_word in kaihatsu_dic):
-            ret = ret + '<開発>'
+            ret = ret + '<開発>,'
         if(verv_word in jikken_dic):
-            ret = ret + '<実験>'
+            ret = ret + '<実験>,'
         if(verv_word in seihin_dic):
-            ret = ret + '<製品・サービス化>'
+            ret = ret + '<製品・サービス化>,'
         if(verv_word in koushin_dic):
-            ret = ret + '<更新>'
+            ret = ret + '<更新>,'
         if(verv_word in tyuushi_dic):
-            ret = ret + '<中止>'
+            ret = ret + '<中止>,'
         if(verv_word in sankaku_dic):
-            ret = ret + '<参画>'
+            ret = ret + '<参画>,'
         if(verv_word in riyou_dic):
-            ret = ret + '<利用>'
+            ret = ret + '<利用>,'
         if(verv_word in soshiki_dic):
-            ret = ret + '<組織変更>'
+            ret = ret + '<組織変更>,'
         if(verv_word in renkei_dic):
-            ret = ret + '<連携>'
+            ret = ret + '<連携>,'
         if(verv_word in tsuuchi_dic):
-            ret = ret + '<告知>'
+            ret = ret + '<告知>,'
         if(verv_word in tetsuzuki_dic):
-            ret = ret + '<手続き>'
+            ret = ret + '<手続き>,'
         if(verv_word in sonota_dic):
-            ret = ret + '<その他>'
-        return ret
+            ret = ret + '<その他>,'
+        if(verv_word in self.sub_verb_dic and obj_tart):
+            ret2 = self.phase_chek(obj_tart, obj_end, '', '', *doc)
+            if ret2:
+                if '更新' in ret and '更新'not in ret2:
+                    ret = ret2 + ',<更新>'
+                else:
+                    ret = ret2
+        return ret.rstrip(',')
 
 
 

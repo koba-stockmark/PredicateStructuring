@@ -224,6 +224,8 @@ class ChunkExtractor:
                             break
                         if(token.pos_ == 'ADP' and token.lemma_ == 'や'):    # 名詞など名詞　は切り離して並列処理にまかせる
                             break
+                        if(token.pos_ == 'ADP' and token.lemma_ == 'の' and token.head.i != doc[token.i + 1].head.i):    # 後方は　の　で切る　ただし、その先の語が　の　の前にかかるときはつなげる
+                            break
                         if token.lemma_ == '。' or token.lemma_ == '、':
                             break
                     if token.tag_ == '補助記号-括弧閉':
@@ -270,9 +272,10 @@ class ChunkExtractor:
                         punc_c_f = True
                     start_pt = i
                     ret = self.connect_word(doc[i].orth_, ret)
-                elif (doc[i].pos_ != 'DET' and doc[i].pos_ != 'VERB'  and doc[i].pos_ != 'AUX' and doc[i].pos_ != 'SCONJ' and doc[i].pos_ != 'PART' and doc[i].pos_ != 'PRON' and doc[i].tag_ != '補助記号-読点' and doc[i].tag_ != '補助記号-句点' and
-                        (doc[i].pos_ != 'ADP' or doc[i].orth_ == 'の' or doc[i].orth_ == 'や' or doc[i].orth_ == 'と' or                  # 名詞　＋　の[や]　＋　〇〇
-                         (doc[i].pos_ == 'ADP' and doc[i + 1].orth_ == 'の'))):                                                           # 名詞 +  格助詞　＋　の　＋　〇〇
+                elif (doc[i].pos_ != 'DET' and doc[i].pos_ != 'VERB'  and doc[i].pos_ != 'AUX' and doc[i].pos_ != 'SCONJ' and
+                      doc[i].pos_ != 'PART' and doc[i].pos_ != 'PRON' and doc[i].tag_ != '補助記号-読点' and doc[i].tag_ != '補助記号-句点' and
+                        (doc[i].pos_ != 'ADP' or doc[i].orth_ == 'の' or doc[i].orth_ == 'や' or doc[i].orth_ == 'と' or
+                         (doc[i].pos_ == 'ADP' and doc[i + 1].orth_ == 'の'))):                                                           #  名詞　＋　の[や]　＋　〇〇 名詞 +  格助詞　＋　の　＋　〇〇
                     if (doc[i].orth_ == 'の' and (doc[i - 1].pos_ == 'ADP' or doc[i - 1].pos_ == 'SCONJ') and (doc[i - 2].pos_ == 'VERB' or doc[i - 2].pos_ == 'AUX')):  # 動詞 +  助詞　＋　の　/　〇〇     前が動詞の場合は「〜の」の連体修飾では繋げない
                         break
                     if(doc[i].pos_ == 'SYM' and doc[i].lemma_ == '〜'):
@@ -332,4 +335,4 @@ class ChunkExtractor:
                      break
             #      print(doc[pt].orth_)
             #      return doc[pt].orth_
-        return ret, start_pt, end_pt
+        return [ret, start_pt, end_pt]
