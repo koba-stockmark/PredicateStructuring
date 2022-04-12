@@ -148,9 +148,6 @@ class ChunkExtractor:
         else:
             ret_lemma = pre + doc[pt].lemma_
             org_str = pre + doc[pt].orth_ + append_o + tail_o
-#        return ret_lemma, start_pt, end_pt, org_str, start_pt, end_pt + tail_ct
-#        print('◎',org_str, *self.modality_get(org_str))
-#        return ret_lemma, start_pt, end_pt, org_str, start_pt, end_pt + tail_ct, *self.modality_get(org_str)
         return {'lemma':ret_lemma, 'lemma_start':start_pt, 'lemma_end':end_pt, 'org_str':org_str, 'org_start':start_pt, 'org_end':end_pt + tail_ct, 'modality':[*self.modality_get(org_str)]}
 
 
@@ -264,7 +261,7 @@ class ChunkExtractor:
                     if doc[i].tag_ == '補助記号-括弧開':
                         break
                 if(doc[i].head.i == pt and doc[i].pos_ != 'VERB' and doc[i].pos_ != 'AUX' and doc[i].pos_ != 'DET' and doc[i].pos_ != 'CCONJ' and doc[i].tag_ != '補助記号-読点' and
-                        (doc[i].tag_ != '名詞-普通名詞-副詞可能' or doc[i].lemma_ != 'なか')):
+                        (doc[i].tag_ != '名詞-普通名詞-副詞可能' or doc[i].lemma_ != 'なか') and doc[i].norm_ != '～'):
                     if doc[i].tag_ == '補助記号-括弧開':
                         punc_o_f = True
                     if doc[i].tag_ == '補助記号-括弧閉':
@@ -278,7 +275,7 @@ class ChunkExtractor:
                          (doc[i].pos_ == 'ADP' and doc[i + 1].orth_ == 'の'))):                                                           #  名詞　＋　の[や]　＋　〇〇 名詞 +  格助詞　＋　の　＋　〇〇
                     if (doc[i].orth_ == 'の' and (doc[i - 1].pos_ == 'ADP' or doc[i - 1].pos_ == 'SCONJ') and (doc[i - 2].pos_ == 'VERB' or doc[i - 2].pos_ == 'AUX')):  # 動詞 +  助詞　＋　の　/　〇〇     前が動詞の場合は「〜の」の連体修飾では繋げない
                         break
-                    if(doc[i].pos_ == 'SYM' and doc[i].lemma_ == '〜'):
+                    if(doc[i].pos_ == 'SYM' and (doc[i].lemma_ == '〜' or doc[i].lemma_ == '～' or doc[i].lemma_ == '＊')):
                         break
                     if doc[i].pos_ == 'SYM' and doc[i].tag_ == '助詞-格助詞':      # 〜　が格助詞の朱鷺　
                         break
@@ -314,7 +311,7 @@ class ChunkExtractor:
                     ((doc[i].pos_ == 'AUX' or doc[i].pos_ == 'VERB') and doc[i + 1].orth_ == 'か')):  # 〇〇か〇〇
                     start_pt = i
                     ret = self.connect_word(doc[i].orth_, ret)
-                elif (doc[i].tag_ == '補助記号-読点' and (doc[i + 1].tag_ == '補助記号-括弧開' or doc[i - 1].tag_ == '補助記号-括弧閉') and
+                elif (doc[i].tag_ == '補助記号-読点' and doc[i - 1].tag_ == '補助記号-括弧閉' and
                         (doc[i - 1].head.i == doc[i + 1].head.i or doc[i - 1].head.i == pt or doc[i - 1].head.i == i + 1)):     # 〇〇、〇〇　の場合はまとめる
                     start_pt = i
                     ret = self.connect_word(doc[i].orth_, ret)
@@ -333,6 +330,4 @@ class ChunkExtractor:
                     ret = self.connect_word(doc[i].orth_, ret)
                 else:
                      break
-            #      print(doc[pt].orth_)
-            #      return doc[pt].orth_
-        return [ret, start_pt, end_pt]
+        return {'lemma': ret, 'lemma_start': start_pt, 'lemma_end': end_pt}

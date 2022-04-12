@@ -40,7 +40,7 @@ class VerbSpliter:
     def object_serch(self, start, *doc):
         for token in doc:
             if token.head.i == start and token.dep_ == 'obj':
-                return self.num_chunk(token.i, *doc)[0]
+                return self.num_chunk(token.i, *doc)['lemma']
         return ''
 
 
@@ -53,8 +53,11 @@ class VerbSpliter:
         if start == end:
             return self.compaound(start, end, *doc), '', -1, -1
         for i in reversed(range(start, end + 1)):
-            if doc[i].lemma_ == 'の' and doc[i].pos_ == 'ADP':
-                if doc[end].tag_ == '名詞-普通名詞-サ変可能' and i + 2 >= end:
+            if doc[i].pos_ == 'PUNCT':
+                break
+            if doc[i].lemma_ == 'の' and doc[i - 1].lemma_ != 'へ' and doc[i].pos_ == 'ADP':      # の　で分割。　への　は例外
+                if doc[end].tag_ == '名詞-普通名詞-サ変可能' and i + 4 >= end:    # 述部の複合語を4語まで許す
+#                if doc[end].tag_ == '名詞-普通名詞-サ変可能':
                     return self.compaound(start, i - 1, *doc), self.compaound(i + 1, end, *doc) + 'する', i + 1, end
             elif doc[i].lemma_ == 'こと':
                 if doc[i - 1].lemma_ == 'する':

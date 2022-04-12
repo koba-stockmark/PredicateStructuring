@@ -36,7 +36,7 @@ class ParallelExtractor:
                 if len(doc) > i + 1 and doc[i + 1].lemma_ == 'の' and doc[i + 1].pos_ == 'ADP':  # 〇〇の〇〇　は並列扱いしない
                     if (doc[i].head.i >= sp and doc[i].head.i <= ep):
                         if not find_ct:
-                            ret.append(('', 0, 0))
+                            ret.append({'lemma': '', 'lemma_start': -1, 'lemma_end': -1})
                         return ret
                     else:
                         continue
@@ -45,8 +45,8 @@ class ParallelExtractor:
                 if (doc[i].head.i >= sp and doc[i].head.i <= ep) and (doc[i + 1].lemma_ == 'と' or doc[i + 1].lemma_ == 'や' or doc[i + 1].lemma_ == 'など' or doc[i + 1].pos_ == 'PUNCT'):
                     ret.append((self.num_chunk(i, *doc)))
                     find_ct = find_ct + 1
-                    sp = ret[find_ct - 1][1]
-                    ep = ret[find_ct - 1][2]
+                    sp = ret[find_ct - 1]['lemma_start']
+                    ep = ret[find_ct - 1]['lemma_end']
                     continue
                 if (doc[i + 1].pos_ == 'ADP' and doc[i + 1].lemma_ != 'など'):
                     break
@@ -54,14 +54,14 @@ class ParallelExtractor:
                         (doc[i + 1].lemma_ == '、' or doc[doc[i].head.i].i == i + 1) and doc[doc[i].head.i].norm_ == '他' and doc[doc[i].head.i + 1].pos_ != 'ADP':
                     ret.append((self.num_chunk(i, *doc)))
                     find_ct = find_ct + 1
-                    sp = ret[find_ct - 1][1]
-                    ep = ret[find_ct - 1][2]
+                    sp = ret[find_ct - 1]['lemma_start']
+                    ep = ret[find_ct - 1]['lemma_end']
                     continue
                 if(doc[i].head.i == doc[ep].head.i and (doc[i].tag_ != '名詞-普通名詞-サ変可能' or doc[i + 1].tag_ != '補助記号-読点')):
                     ret.append((self.num_chunk(i, *doc)))
                     find_ct = find_ct + 1
-                    sp = ret[find_ct - 1][1]
-                    ep = ret[find_ct - 1][2]
+                    sp = ret[find_ct - 1]['lemma_start']
+                    ep = ret[find_ct - 1]['lemma_end']
                     continue
 
         if not find_ct:
@@ -70,7 +70,7 @@ class ParallelExtractor:
                     if doc[i].head.i == doc[end].head.i and doc[i].lemma_ == '共同':
                         ret = self.para_get(i, i, *doc)
                         return ret
-            ret.append(('', 0, 0))
+            ret.append({'lemma': '', 'lemma_start': -1, 'lemma_end': -1})
         return ret
 
 
