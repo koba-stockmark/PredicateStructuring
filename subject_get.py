@@ -42,7 +42,7 @@ class SubjectExtractor:
         ret = {'lemma': '', 'lemma_start': -1, 'lemma_end': -1}
         ret_subj = self.num_chunk(doc[pt].i, *doc)
         if doc[pt].i > 0 and '名詞-固有名詞-地名' in doc[pt].tag_ and doc[doc[pt].i - 1].pos_ == 'NOUN':  # NPO法人ラ・レーチェ・リーグ日本は　など地名がわかれる場合の処理
-            append_subj = self.num_chunk(doc[pt].i, *doc)
+            append_subj = self.num_chunk(doc[pt].i - 1, *doc)
             ret_subj['lemma'] = append_subj['lemma'] + ret_subj['lemma']
             ret_subj['lemma_start'] = append_subj['lemma_start']
         ret['lemma_end'] = ret_subj['lemma_end']
@@ -67,7 +67,7 @@ class SubjectExtractor:
                     break
                 if (doc[doc[chek].i + 1].tag_ == '形状詞-助動詞語幹' and doc[doc[chek].i + 1].head.i == doc[doc[chek].i].i):
                     break
-                if doc[chek].lemma_ != '運営' and doc[chek].lemma_ != '提携':
+                if doc[chek].lemma_ != '運営' and doc[chek].lemma_ != '提携' and doc[chek].head.lemma_ != 'ほか':
                     if ((doc[chek].morph.get("Inflection") and '連体形' in doc[chek].morph.get("Inflection")[0]) or
                             (doc[chek + 1].pos_ == 'AUX' and doc[chek + 1].morph.get("Inflection") and '連体形' in doc[chek + 1].morph.get("Inflection")[0]) or
                             (doc[chek + 1].pos_ == 'AUX' and doc[chek + 2].pos_ == 'AUX' and doc[chek + 2].morph.get("Inflection") and '連体形' in doc[chek + 2].morph.get("Inflection")[0])):

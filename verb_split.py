@@ -29,7 +29,8 @@ class VerbSpliter:
     """
     def sub_verb_chek(self, check_w):
         for sub_verb_w in self.sub_verb_dic:
-            if check_w.startswith(sub_verb_w):
+            if sub_verb_w in check_w:
+#            if check_w.startswith(sub_verb_w):
                 return True
         return False
 
@@ -50,12 +51,13 @@ class VerbSpliter:
     ret : 目的語　＋　主述部　＋　主述始点　＋　主述部終点
     """
     def object_devide(self, start, end, *doc):
-        if start == end:
+        if start == end or doc[end].lemma_ == 'サービス':
             return self.compaound(start, end, *doc), '', -1, -1
         for i in reversed(range(start, end + 1)):
             if doc[i].pos_ == 'PUNCT':
                 break
-            if doc[i].lemma_ == 'の' and doc[i - 1].lemma_ != 'へ' and doc[i].pos_ == 'ADP':      # の　で分割。　への　は例外
+#            if doc[i].lemma_ == 'の' and doc[i - 1].lemma_ != 'へ' and doc[i].pos_ == 'ADP':      # の　で分割。　への　は例外
+            if doc[i].lemma_ == 'の' and doc[i].pos_ == 'ADP':      # の　で分割。　への　は例外
                 if doc[end].tag_ == '名詞-普通名詞-サ変可能' and i + 4 >= end:    # 述部の複合語を4語まで許す
 #                if doc[end].tag_ == '名詞-普通名詞-サ変可能':
                     return self.compaound(start, i - 1, *doc), self.compaound(i + 1, end, *doc) + 'する', i + 1, end
