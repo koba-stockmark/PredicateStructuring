@@ -61,11 +61,12 @@ class VerbExtractor:
             phase = ''
             """
             if (token.dep_ == "obl" and token.head.dep_ != "obl") and token.tag_ != '名詞-普通名詞-副詞可能':
-            """
+                """
             if ((token.dep_ == "obj" and token.head.dep_ != "obj") or
-                    (doc_len > token.i + 1 and token.dep_ == "nsubj" and doc[token.i + 1].lemma_ == "も" and token.tag_ != '名詞-普通名詞-助数詞可能') or
+                    (doc_len > token.i + 1 and token.dep_ == "nsubj" and doc[token.i + 1].lemma_ == "も" and
+                     (token.tag_ != '名詞-普通名詞-助数詞可能' or (token.lemma_ != '年' and token.lemma_ != '月' and token.lemma_ != '日' and token.lemma_ != '間'))) or
                     (doc_len > token.i + 2 and  doc[token.i + 1].lemma_ == "に" and doc[token.i + 2].lemma_ == "も")):  # トークンが目的語なら　〇〇も　＋　できる　などは主語と目的語の可能性がある
-#            """
+#                """
 ##                if(doc_len > token.i + 1 and doc[token.i + 1].orth_ == 'に'):      #　〇〇には〇〇の などの文は「を」でなくてもobjで解析される場合がある
 ##                    continue
 
@@ -514,37 +515,37 @@ class VerbExtractor:
 
                 if ret_obj and not verb_w:
                     dev_obj = self.object_devide(ret_obj['lemma_start'], ret_obj['lemma_end'], *doc)
-                    if dev_obj[1]:
-                        obj_w = dev_obj[0]
-                        verb_w = dev_obj[1]
+                    if dev_obj["verb"]:
+                        obj_w = dev_obj["object"]
+                        verb_w = dev_obj["verb"]
                         verb["lemma"] = verb_w
-                        verb["lemma_start"] = dev_obj[2]
-                        verb["lemma_end"] = dev_obj[3]
-                    if not dev_obj[0]:
+                        verb["lemma_start"] = dev_obj["verb_start"]
+                        verb["lemma_end"] = dev_obj["verb_end"]
+                    if not dev_obj["object"]:
                         obj_w = ''
 
                 ##########################################################################################################################################
                 #    複合術部のメインと補助への分割
                 ##########################################################################################################################################
-                dev_verb = []
+                dev_verb = {}
                 if verb and verb['lemma']:
                     dev_verb = self.verb_devide(verb["lemma_start"], verb["lemma_end"], *doc)
                 elif sub_verb and sub_verb['lemma']:
                     dev_verb = self.verb_devide(sub_verb["lemma_start"], sub_verb["lemma_end"], *doc)
-                if dev_verb and dev_verb[1]:    # 補助述部がある
-                    verb_w = dev_verb[0]
+                if dev_verb and dev_verb["sub_verb"]:    # 補助述部がある
+                    verb_w = dev_verb["verb"]
                     verb["lemma"] = verb_w
-                    verb["lemma_start"] = dev_verb[2]
-                    verb["lemma_end"] = dev_verb[3]
+                    verb["lemma_start"] = dev_verb["verb_start"]
+                    verb["lemma_end"] = dev_verb["verb_end"]
                     if verb_w and sub_verb_w:   # 主述部と補助術部の療法がる場合は取得した補助術部はもとの補助術部に追加する
-                        sub_verb_w = dev_verb[1] + sub_verb_w
+                        sub_verb_w = dev_verb["sub_verb"] + sub_verb_w
                         sub_verb["lemma"] = sub_verb_w
-                        sub_verb["lemma_start"] = dev_verb[4]
+                        sub_verb["lemma_start"] = dev_verb["sub_verb_start"]
                     else:
-                        sub_verb_w = dev_verb[1]
+                        sub_verb_w = dev_verb["sub_verb"]
                         sub_verb["lemma"] = sub_verb_w
-                        sub_verb["lemma_start"] = dev_verb[4]
-                        sub_verb["lemma_end"] = dev_verb[5]
+                        sub_verb["lemma_start"] = dev_verb["sub_verb_start"]
+                        sub_verb["lemma_end"] = dev_verb["sub_verb_end"]
 
                 ##########################################################################################################################################
                 #    目的語からの主述部がない場合は補助術部を主述部へもどす
