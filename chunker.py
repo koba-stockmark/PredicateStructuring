@@ -99,7 +99,7 @@ class ChunkExtractor:
                     (len(doc) > i + 2 and doc[i].pos_ == 'ADJ' and doc[i + 1].orth_ == 'に' and doc[i + 2].lemma_ == 'する'):  # 形容動詞　＋　に　＋　する
                 pre = doc[i].orth_ + pre
                 start_pt = i
-            elif i != 0 and (doc[i].tag_ == '補助記号-読点' and doc[i - 1].head.i == doc[i].i + 1 and doc[i - 1].tag_ != '名詞-普通名詞-助数詞可能'):      # 〇〇、〇〇する　などの並列術部
+            elif i != 0 and (doc[i].tag_ == '補助記号-読点' and doc[i - 1].head.i == doc[i].i + 1 and doc[i - 1].tag_ != '名詞-普通名詞-助数詞可能' and doc[i - 1].tag_ != '接尾辞-名詞的-助数詞'):      # 〇〇、〇〇する　などの並列術部
                 pre = doc[i].orth_ + pre
                 start_pt = i
             else:
@@ -211,7 +211,7 @@ class ChunkExtractor:
             for token in doc[pt+1:]:
                 if (self.head_connect_check(pt, token.head.i, *doc)):
                     if not punc_o_f:
-                        if (token.pos_ == 'ADP' and (token.lemma_ == 'を' or token.lemma_ == 'は' or token.lemma_ == 'が' or token.lemma_ == 'で' or token.lemma_ == 'も' or token.lemma_ == 'に' or token.lemma_ == 'にて')):  # 名詞の名詞　名詞と名詞　は接続させたい
+                        if (token.pos_ == 'ADP' and (token.lemma_ == 'を' or token.lemma_ == 'は' or token.lemma_ == 'が' or token.lemma_ == 'で' or token.lemma_ == 'も' or token.lemma_ == 'に' or token.lemma_ == 'にて' or token.orth_ == 'で')):  # 名詞の名詞　名詞と名詞　は接続させたい
                             break
                         if(token.pos_ == 'ADP' and token.lemma_ == 'と' and doc[token.i + 1].tag_ == '補助記号-読点'):    # 名詞と、名愛　は切り離す　
                             break
@@ -261,7 +261,7 @@ class ChunkExtractor:
                     if doc[i].tag_ == '補助記号-括弧開':
                         break
                 if(doc[i].head.i == pt and doc[i].pos_ != 'VERB' and doc[i].pos_ != 'AUX' and doc[i].pos_ != 'DET' and doc[i].pos_ != 'CCONJ' and doc[i].tag_ != '補助記号-読点' and
-                        (doc[i].tag_ != '名詞-普通名詞-副詞可能' or doc[i].lemma_ != 'なか') and doc[i].norm_ != '～'):
+                        (doc[i].tag_ != '名詞-普通名詞-副詞可能' or doc[i].lemma_ != 'なか') and doc[i].norm_ != '～' and doc[i].norm_ != '・'):
                     if doc[i].tag_ == '補助記号-括弧開':
                         punc_o_f = True
                     if doc[i].tag_ == '補助記号-括弧閉':
@@ -278,6 +278,8 @@ class ChunkExtractor:
                     if(doc[i].pos_ == 'SYM' and (doc[i].lemma_ == '〜' or doc[i].lemma_ == '～' or doc[i].lemma_ == '＊')):
                         break
                     if doc[i].pos_ == 'SYM' and doc[i].tag_ == '助詞-格助詞':      # 〜　が格助詞の朱鷺　
+                        break
+                    if doc[i].pos_ == 'SYM' and doc[i -1].pos_ == 'ADP':      # いつでも・どこでも　
                         break
                     if(doc[i].pos_ == 'SYM' and (not self.head_connect_check(pt, doc[i].head.i, *doc) and doc[pt].head.i !=  doc[i].head.i)):
                         break

@@ -5,6 +5,7 @@ from subject_get import SubjectExtractor
 from parallel_get import ParallelExtractor
 from verb_split import VerbSpliter
 from phase_chek import PhaseCheker
+from kanyouku_check import KanyoukuExtractor
 
 class VerbExtractor:
 
@@ -29,6 +30,9 @@ class VerbExtractor:
         self.object_devide = v_s.object_devide
         p_c = PhaseCheker()
         self.phase_chek = p_c.phase_chek
+        k = KanyoukuExtractor()
+        self.kanyouku_chek = k.kanyouku_chek
+        self.kanyouku_get = k.kanyouku_get
 
 
     """
@@ -60,7 +64,8 @@ class VerbExtractor:
             next_head_use = False
             phase = ''
             """
-            if (token.dep_ == "obl" and token.head.dep_ != "obl") and token.tag_ != '名詞-普通名詞-副詞可能':
+            if (token.dep_ == "obl" or token.dep_ == "obj" or token.dep_ == "nsubj"):
+#            if (token.dep_ == "obl" and token.head.dep_ != "obl") and token.tag_ != '名詞-普通名詞-副詞可能':
                 """
             if ((token.dep_ == "obj" and token.head.dep_ != "obj") or
                     (doc_len > token.i + 1 and token.dep_ == "nsubj" and doc[token.i + 1].lemma_ == "も" and
@@ -392,22 +397,32 @@ class VerbExtractor:
                     elif doc_len > token.head.i + 1 and token.head.tag_ == '名詞-数詞' and doc[token.head.i + 1].pos_ == 'PUNCT':
                         obj_w = ''
                         verb_w = ''
+                    ###########################################################
+                    ##   慣用句処理  　（「日の目を見る」など）
+                    ###########################################################
                     ###############################
                     #    単独の動詞
                     ###############################
                     else:
                         verb = self.verb_chunk(token.head.i, *doc)
                         verb_w = verb["lemma"]
-                        if doc_len > token.head.i + 1 and (doc[token.head.i + 1].tag_ == '接尾辞-名詞的-サ変可能' or
-                            (doc[token.head.i + 1].pos_ == 'VERB' and doc[token.head.i + 2].lemma_ == 'する') or
-                            (doc[token.head.i + 1].pos_ == 'VERB' and doc[token.head.i + 1].tag_ == '名詞-普通名詞-サ変可能' and doc[token.head.i + 1].head.i == doc[token.head.i].head.i)): # 〇〇化する   〇〇いたす
-                            verb_w = verb_w + 'する'
                         modality_w = verb["modality"]
-                        rule_id = 29
+                        #
+                        #  慣用句と普通動詞の処理の分離
+                        #
+                        kanyouku = self.kanyouku_chek(token.head.i, *doc)
+                        if len(kanyouku) > 0 and token.i < kanyouku[0]:
+                            verb_w = self.kanyouku_get(kanyouku, *doc)
+                            verb["lemma_start"] = kanyouku[0]
+                            verb["lemma_end"] = kanyouku[-1]
+                            rule_id = 50
+                        else:
+                            if doc_len > token.head.i + 1 and (doc[token.head.i + 1].tag_ == '接尾辞-名詞的-サ変可能' or
+                                (doc[token.head.i + 1].pos_ == 'VERB' and doc[token.head.i + 2].lemma_ == 'する') or
+                                (doc[token.head.i + 1].pos_ == 'VERB' and doc[token.head.i + 1].tag_ == '名詞-普通名詞-サ変可能' and doc[token.head.i + 1].head.i == doc[token.head.i].head.i)): # 〇〇化する   〇〇いたす
+                                verb_w = verb_w + 'する'
+                            rule_id = 29
 
-                ###########################################################
-                ##   TBD 慣用句処理  　（「日の目を見る」など）　#############
-                ###########################################################
                 #"""
                 # デバッグ用
                 if (obj_w ):
