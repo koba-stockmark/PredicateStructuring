@@ -31,15 +31,15 @@ class ChunkExtractor:
     表層格の獲得
     """
     def case_get(self, pt, *doc):
+        ret = ''
         for token in doc[pt:]:
-            if token.dep_ == "case":
-                if(doc[token.i + 1].dep_ == "case"):
-                    return token.lemma_ + token.head.lemma_
-                else:
-                    return token.lemma_
-            if token.pos_ == "AUX" or token.pos_ == "VERB" or token.pos_ == "ADV" or token.pos_ == "ADJ" or token.pos_ == "DET" or token.pos_ == "PUNCT":
-                return token.pos_
-        return ''
+            if token.head.i == pt and token.dep_ == "case":
+                for i in range(token.i, len(doc)):
+                    if doc[i].dep_ == "case":
+                        ret = ret + doc[i].lemma_
+                    else:
+                        return ret
+        return ret
 
     """
     KNPによるモダリティー処理
@@ -82,9 +82,10 @@ class ChunkExtractor:
     """
 
     def verb_chunk(self, pt, *doc):
-        start_pt = pt
-        end_pt = pt
-        pre = ''
+        start_pt = pt   # 始点
+        end_pt = pt     # 終点
+        pre = ''        # 前方文字
+        # 前方を結合
         for i in reversed(range(0, pt)):
             if (pt == doc[i].head.i or pt == doc[i].head.head.i) and doc[i].pos_ != 'PUNCT' and doc[i].tag_ != '接頭辞' and (doc[i].pos_ != 'AUX' or doc[i].orth_ == 'する') and\
                     (doc[i].pos_ != 'ADP' or (doc[i].tag_ == '助詞-副助詞' and doc[i].lemma_ != 'まで')) and doc[i].pos_ != 'ADV' and doc[i].pos_ != 'ADJ' and doc[i].pos_ != 'SCONJ' and\
@@ -104,12 +105,13 @@ class ChunkExtractor:
                 start_pt = i
             else:
                 break
-        find_f = False
-        append_o = ''
-        append_l = ''
-        tail_o = ''
-        tail_ct = 0
-        ret = ''
+        # 後方を結合
+        find_f = False  # すでに結合する対象が見つかっているか否か。見つかっている場合は残りの付属語を収集
+        append_o = ''   # 追加表記
+        append_l = ''   # 追加原型
+        tail_o = ''     # モダリティ解析用の付属語
+        tail_ct = 0     # 末尾単語数
+        ret = ''        # チャンク結果
         for token in doc[pt + 1:]:
             if (tail_ct == 0 and pt == token.head.i and token.pos_ != 'ADP'  and token.pos_ != 'SCONJ'  and token.pos_ != 'PART'  and token.pos_ != 'AUX' and token.pos_ != 'VERB' and token.pos_ != 'PUNCT' and token.pos_ != 'SYM'):
                 if(find_f):
@@ -121,16 +123,6 @@ class ChunkExtractor:
             # 動詞　＋　接尾辞
             elif (tail_ct == 0 and token.head.i == token.head.head.i and (token.tag_ == '接尾辞-名詞的-サ変可能' or (token.pos_ == 'VERB' and token.tag_ == '名詞-普通名詞-サ変可能'))):
                 if(find_f):
-                    ret = ret + append_o
-                find_f = True
-                append_o = token.orth_
-                append_l = token.lemma_
-                end_pt = end_pt + 1
-            # 読点による述部の並列　「森の箱」を開発、受注販売を始めた。
-            elif tail_ct == 0 and ((token.tag_ == '補助記号-読点' and pt == token.head.i and doc[token.i - 1].tag_ == '名詞-普通名詞-サ変可能' and doc[token.i + 1].tag_ == '名詞-普通名詞-サ変可能' and
-                    (self.case_get(doc[token.i + 1].i, *doc) == 'を' or self.case_get(doc[token.i + 1].i, *doc) == 'VERB')) or
-                    ((self.case_get(doc[token.i].i, *doc) == 'を' or self.case_get(doc[token.i].i, *doc) == 'VERB') and find_f == True and doc[token.i].pos_ != 'AUX' and doc[token.i].pos_ != 'ADP')):
-                if (find_f):
                     ret = ret + append_o
                 find_f = True
                 append_o = token.orth_
@@ -219,7 +211,9 @@ class ChunkExtractor:
                             break
                         if(token.pos_ == 'ADP' and token.lemma_ == 'など'):    # 名詞など名詞　は切り離して並列処理にまかせる
                             break
-                        if(token.pos_ == 'ADP' and token.lemma_ == 'や'):    # 名詞など名詞　は切り離して並列処理にまかせる
+                        if(token.pos_ == 'ADP' and token.lemma_ == 'や'):    # 名詞や名詞　は切り離して並列処理にまかせる
+                            break
+                        if(token.pos_ == 'ADP' and token.lemma_ == 'から'):    # 名詞から名詞　は切り離す
                             break
                         if(token.pos_ == 'ADP' and token.lemma_ == 'の' and token.head.i != doc[token.i + 1].head.i):    # 後方は　の　で切る　ただし、その先の語が　の　の前にかかるときはつなげる
                             break

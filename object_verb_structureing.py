@@ -19,6 +19,7 @@ class VerbExtractor:
         chunker = ChunkExtractor()
         self.num_chunk = chunker.num_chunk
         self.verb_chunk = chunker.verb_chunk
+        self.case_get = chunker.case_get
         s_g = SubjectExtractor()
         self.subject_get = s_g.subject_get_from_object
         self.rentai_check = s_g.rentai_check
@@ -64,7 +65,8 @@ class VerbExtractor:
             next_head_use = False
             phase = ''
             """
-            if (token.dep_ == "obl" or token.dep_ == "obj" or token.dep_ == "nsubj"):
+            if (token.dep_ == "obl"):
+#            if (token.dep_ == "obl" or token.dep_ == "obj" or token.dep_ == "nsubj"):
 #            if (token.dep_ == "obl" and token.head.dep_ != "obl") and token.tag_ != '名詞-普通名詞-副詞可能':
                 """
             if ((token.dep_ == "obj" and token.head.dep_ != "obj") or
@@ -75,6 +77,7 @@ class VerbExtractor:
 ##                if(doc_len > token.i + 1 and doc[token.i + 1].orth_ == 'に'):      #　〇〇には〇〇の などの文は「を」でなくてもobjで解析される場合がある
 ##                    continue
 
+                case = self.case_get(token.i, *doc)
                 if token.lemma_ == ' ':
                     continue
                 ret_obj = self.num_chunk(token.i, *doc)
@@ -106,7 +109,7 @@ class VerbExtractor:
                     #
                     #             述部が  名詞＋（と、に）する（目標とする　など）
                     #
-                    if (doc[token.head.i - 1].orth_ == 'に' or doc[token.head.i - 1].orth_ == 'と'):  # 【名詞】に(と)する
+                    if (doc[token.head.i - 1].orth_ == 'に' or doc[token.head.i - 1].orth_ == 'と') and token.i != token.head.i - 2:  # 【名詞】に(と)する
                         verb = self.verb_chunk(token.head.i - 2, *doc)
                         verb_w = verb["lemma"] + doc[token.head.i - 1].orth_ + token.head.lemma_
                         modality_w = verb["modality"]
@@ -272,7 +275,7 @@ class VerbExtractor:
                     modality_w = verb["modality"]
                     rule_id = 19
                 #
-                #   〇〇　＋　を　＋　普通名詞。　　　体言止
+                #   〇〇　＋　を　＋　普通名詞。　　　体言止 連用中止
                 #
                 elif (token.head.pos_ == 'NOUN' and ((token.head.dep_ == 'ROOT' and token.head.i == token.head.head.i) or (doc_len > token.head.i + 1 and doc[token.head.i + 1].pos_ == 'SYM'))):
                     verb = self.verb_chunk(token.head.i, *doc)
@@ -280,6 +283,8 @@ class VerbExtractor:
                         verb_w = verb["lemma"] + doc[token.head.i + 1].lemma_
                     elif verb["lemma"].endswith('中'):
                         verb_w = verb["lemma"] + '(です)'
+                    elif doc[token.head.i].morph.get("Inflection") and '連用形' in doc[token.head.i].morph.get("Inflection")[0]:
+                        verb_w = verb["lemma"]
                     else:
                         verb_w = verb["lemma"] + '(する)'
                     modality_w = verb["modality"]
@@ -401,6 +406,28 @@ class VerbExtractor:
                     ##   慣用句処理  　（「日の目を見る」など）
                     ###########################################################
                     ###############################
+                    #    〜にある
+                    ###############################
+                    elif token.head.lemma_ == 'ある' and (((doc[token.head.i - 1].lemma_ == 'に' or doc[token.head.i - 1].lemma_ == 'が')and doc[token.head.i - 1].tag_ == '助詞-格助詞') or (doc[token.head.i - 2].lemma_ == 'に' and doc[token.head.i - 1].lemma_ == 'は') or
+                                                        (doc[token.head.i - 1].lemma_ == 'で' and doc[token.head.i - 1].tag_ == '助動詞') or (doc[token.head.i - 2].lemma_ == 'で' and doc[token.head.i - 1].lemma_ == 'は')):
+                        if token.i != token.head.i - 2 and token.i != token.head.i - 3:
+                            if doc[token.head.i - 2].lemma_ == 'に' or doc[token.head.i - 2].lemma_ == 'で':
+                                pre_verb = self.num_chunk(token.head.i - 3, *doc)
+                            else:
+                                pre_verb = self.num_chunk(token.head.i - 2, *doc)
+                            verb = self.verb_chunk(token.head.i, *doc)
+                            modality_w = verb["modality"]
+                            if doc[token.head.i - 1].lemma_ == 'が':
+                                verb_w = pre_verb["lemma"] + 'が' + verb["lemma"]
+                            else:
+                                verb_w = pre_verb["lemma"] + 'に' + verb["lemma"]
+                            verb["lemma"] = verb_w
+                            verb["lemma_start"] = pre_verb["lemma_start"]
+                            rule_id = 41
+                        else:
+                            obj_w = ''
+                            verb_w = ''
+                    ###############################
                     #    単独の動詞
                     ###############################
                     else:
@@ -429,19 +456,19 @@ class VerbExtractor:
                     print(text)
                     modal = ', '.join([str(x) for x in modality_w])
                     if subject_w or not dummy_subject:
-                        print('all = 【%s - %s】 subj = 【%s】 modality = %s rule_id = %d' % (obj_w, verb_w, subject_w, modal, rule_id))
-                        ret = ret + text + '\t\t' + subject_w + '\t' + obj_w + '\t' + verb_w + '\t\t' + phase + '\t' + modal + '\t' + str(rule_id) + '\n'
+                        print('all = 【%s(%s) - %s】 subj = 【%s】 modality = %s rule_id = %d' % (obj_w, case, verb_w, subject_w, modal, rule_id))
+                        ret = ret + text + '\t\t' + subject_w + '\t' + obj_w + '\t' + case + '\t' + verb_w + '\t\t' + phase + '\t' + modal + '\t' + str(rule_id) + '\n'
                         if para_subj[0]['lemma']:
                             for para_s in para_subj:
-                                print('all = 【%s - %s】 subj = 【%s】 modality = %s rule_id = %d' % (obj_w, verb_w, para_s['lemma'], modal, rule_id))
-                                ret = ret + text + '\t\t' + para_s['lemma'] + '\t' + obj_w + '\t' + verb_w + '\t\t' + phase + '\t' + modal + '\t' + str(rule_id) + '\n'
+                                print('all = 【%s(%s) - %s】 subj = 【%s】 modality = %s rule_id = %d' % (obj_w, case, verb_w, para_s['lemma'], modal, rule_id))
+                                ret = ret + text + '\t\t' + para_s['lemma'] + '\t' + obj_w + '\t' + case + '\t' + verb_w + '\t\t' + phase + '\t' + modal + '\t' + str(rule_id) + '\n'
                     else:
-                        print('all = 【%s - %s】 subj = 【%s (省略)】 modality = %s rule_id = %d' % (obj_w, verb_w, dummy_subject, modal, rule_id))
-                        ret = ret + text + '\t\t' + dummy_subject + '(省略)\t' + obj_w + '\t' + verb_w + '\t\t' + phase + '\t' + modal + '\t' + str(rule_id) + '\n'
+                        print('all = 【%s(%s) - %s】 subj = 【%s (省略)】 modality = %s rule_id = %d' % (obj_w, case, verb_w, dummy_subject, modal, rule_id))
+                        ret = ret + text + '\t\t' + dummy_subject + '(省略)\t' + obj_w + '\t' + case + '\t' + verb_w + '\t\t' + phase + '\t' + modal + '\t' + str(rule_id) + '\n'
                         if para_subj[0]['lemma']:
                             for para_s in para_subj:
-                                print('all = 【%s - %s】 subj = 【%s (省略)】 modality = %s rule_id = %d' % (obj_w, verb_w, para_s['lemma'], modal, rule_id))
-                                ret = ret + text + '\t\t' + para_s['lemma'] + '(省略)\t' + obj_w + '\t' + verb_w + '\t\t' + phase + '\t' + modal + '\t' + str(rule_id) + '\n'
+                                print('all = 【%s(%s) - %s】 subj = 【%s (省略)】 modality = %s rule_id = %d' % (obj_w, case, verb_w, para_s['lemma'], modal, rule_id))
+                                ret = ret + text + '\t\t' + para_s['lemma'] + '(省略)\t' + obj_w + '\t' + case + '\t' + verb_w + '\t\t' + phase + '\t' + modal + '\t' + str(rule_id) + '\n'
                 #"""
                 # デバッグ用
 
@@ -514,7 +541,9 @@ class VerbExtractor:
                 ##########################################################################################################################################
                 sub_verb_w = ''
                 sub_verb = {}
+                sub_verb_is_original = True
                 if self.sub_verb_chek(verb_w):
+                    sub_verb_is_original = False
                     sub_verb_w = verb_w
                     sub_verb["lemma"] = verb["lemma"]
                     sub_verb["lemma_start"] = verb["lemma_start"]
@@ -552,7 +581,7 @@ class VerbExtractor:
                     verb["lemma"] = verb_w
                     verb["lemma_start"] = dev_verb["verb_start"]
                     verb["lemma_end"] = dev_verb["verb_end"]
-                    if verb_w and sub_verb_w:   # 主述部と補助術部の療法がる場合は取得した補助術部はもとの補助術部に追加する
+                    if verb_w and sub_verb_w and sub_verb_is_original:   # 主述部と補助術部の療法がる場合は取得した補助術部はもとの補助術部に追加する
                         sub_verb_w = dev_verb["sub_verb"] + sub_verb_w
                         sub_verb["lemma"] = sub_verb_w
                         sub_verb["lemma_start"] = dev_verb["sub_verb_start"]
@@ -588,19 +617,19 @@ class VerbExtractor:
                     print(text)
                     modal = ', '.join([str(x) for x in modality_w])
                     if subject_w or not dummy_subject:
-                        print('【%s - %s - (%s)】 subj = 【%s】 フェーズ = 【%s】modality = %s rule_id = %d' % (obj_w, verb_w, sub_verb_w, subject_w, phase, modal, rule_id))
-                        ret = ret + text + '\tMain\t' + subject_w + '\t' + obj_w + '\t' + verb_w + '\t' + sub_verb_w + '\t' + phase + '\t' + modal + '\t' + str(rule_id) + '\n'
+                        print('【%s(%s) - %s - (%s)】 subj = 【%s】 フェーズ = 【%s】modality = %s rule_id = %d' % (obj_w, case, verb_w, sub_verb_w, subject_w, phase, modal, rule_id))
+                        ret = ret + text + '\tMain\t' + subject_w + '\t' + obj_w + '\t' + case + '\t' + verb_w + '\t' + sub_verb_w + '\t' + phase + '\t' + modal + '\t' + str(rule_id) + '\n'
                         if para_subj[0]['lemma']:
                             for para_s in para_subj:
-                                print('【%s - %s - (%s)】 subj = 【%s】 フェーズ = 【%s】modality = %s rule_id = %d' % (obj_w, verb_w, sub_verb_w, para_s['lemma'], phase, modal, rule_id))
-                                ret = ret + text + '\tMain\t' + para_s['lemma'] + '\t' + obj_w + '\t' + verb_w + '\t' + sub_verb_w + '\t' + phase + '\t' + modal + '\t' + str(rule_id) + '\n'
+                                print('【%s(%s) - %s - (%s)】 subj = 【%s】 フェーズ = 【%s】modality = %s rule_id = %d' % (obj_w, case, verb_w, sub_verb_w, para_s['lemma'], phase, modal, rule_id))
+                                ret = ret + text + '\tMain\t' + para_s['lemma'] + '\t' + obj_w + '\t' + case + '\t' + verb_w + '\t' + sub_verb_w + '\t' + phase + '\t' + modal + '\t' + str(rule_id) + '\n'
                     else:
-                        print('【%s - %s - (%s)】 subj = 【%s(省略)】 フェーズ = 【%s】modality = %s rule_id = %d' % (obj_w, verb_w, sub_verb_w, dummy_subject, phase, modal, rule_id))
-                        ret = ret + text + '\tMain\t' + dummy_subject + '(省略)\t' + obj_w + '\t' + verb_w + '\t' + sub_verb_w + '\t' + phase + '\t' + modal + '\t' + str(rule_id) + '\n'
+                        print('【%s(%s) - %s - (%s)】 subj = 【%s(省略)】 フェーズ = 【%s】modality = %s rule_id = %d' % (obj_w, case, verb_w, sub_verb_w, dummy_subject, phase, modal, rule_id))
+                        ret = ret + text + '\tMain\t' + dummy_subject + '(省略)\t' + obj_w + '\t' + case + '\t' + verb_w + '\t' + sub_verb_w + '\t' + phase + '\t' + modal + '\t' + str(rule_id) + '\n'
                         if para_subj[0]['lemma']:
                             for para_s in para_subj:
-                                print('【%s - %s - (%s)】 subj = 【%s(省略)】 フェーズ = 【%s】modality = %s rule_id = %d' % (obj_w, verb_w, sub_verb_w, para_s['lemma'], phase, modal, rule_id))
-                                ret = ret + text + '\tMain\t' + para_s['lemma'] + '(省略)\t' + obj_w + '\t' + verb_w + '\t' + sub_verb_w + '\t' + phase + '\t' + modal + '\t' + str(rule_id) + '\n'
+                                print('【%s(%s) - %s - (%s)】 subj = 【%s(省略)】 フェーズ = 【%s】modality = %s rule_id = %d' % (obj_w, case, verb_w, sub_verb_w, para_s['lemma'], phase, modal, rule_id))
+                                ret = ret + text + '\tMain\t' + para_s['lemma'] + '(省略)\t' + obj_w + '\t' + case + '\t' + verb_w + '\t' + sub_verb_w + '\t' + phase + '\t' + modal + '\t' + str(rule_id) + '\n'
                 # デバッグ用
                 #"""
         return ret
