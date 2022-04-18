@@ -28,12 +28,27 @@ class ChunkExtractor:
         return False
 
     """
-    表層格の獲得
+    表層格の獲得    
     """
     def case_get(self, pt, *doc):
         ret = ''
+        open_f = False
         for token in doc[pt:]:
-            if token.head.i == pt and token.dep_ == "case":
+            if token.tag_ == '補助記号-括弧開' or open_f:
+                if token.tag_ == '補助記号-括弧閉':
+                    open_f = False
+                else:
+                    open_f = True
+                continue
+            if len(doc) > token.i + 2 and doc[token.i + 1].tag_ == '補助記号-句点' and doc[token.i + 2].tag_ == '補助記号-括弧閉':
+                continue
+            if token.dep_ == "case" and token.head.i == pt and len(doc) > token.i + 1 and doc[token.i + 1].tag_ != '補助記号-括弧閉':
+                for i in range(token.i, len(doc)):
+                    if doc[i].dep_ == "case":
+                        ret = ret + doc[i].lemma_
+                    else:
+                        return ret
+            elif token.dep_ == "case" and token.head.head.i == pt and token.head.pos_ == 'NOUN':    # 括弧書きを挟んだ係り受けの場合　ex.SaaSソリューション「Ecomedia」を開発する
                 for i in range(token.i, len(doc)):
                     if doc[i].dep_ == "case":
                         ret = ret + doc[i].lemma_
@@ -203,8 +218,9 @@ class ChunkExtractor:
             for token in doc[pt+1:]:
                 if (self.head_connect_check(pt, token.head.i, *doc)):
                     if not punc_o_f:
-                        if (token.pos_ == 'ADP' and (token.lemma_ == 'を' or token.lemma_ == 'は' or token.lemma_ == 'が' or token.lemma_ == 'で' or token.lemma_ == 'も' or token.lemma_ == 'に' or token.lemma_ == 'にて' or token.orth_ == 'で')):  # 名詞の名詞　名詞と名詞　は接続させたい
-                            break
+                        if (token.pos_ == 'ADP' and (token.lemma_ == 'を' or token.lemma_ == 'は' or token.lemma_ == 'が' or token.lemma_ == 'で' or token.lemma_ == 'も' or token.lemma_ == 'に' or token.lemma_ == 'にて' or token.orth_ == 'で' or token.orth_ == 'より')):  # 名詞の名詞　名詞と名詞　は接続させたい
+                            if len(doc) > token.i + 1 and doc[token.i + 1].tag_ != '補助記号-括弧閉':
+                                break
                         if(token.pos_ == 'ADP' and token.lemma_ == 'と' and doc[token.i + 1].tag_ == '補助記号-読点'):    # 名詞と、名愛　は切り離す　
                             break
                         if(token.pos_ == 'ADP' and token.lemma_ == 'と'):    # 名詞と名詞　は切り離して並列処理にまかせる
@@ -217,7 +233,7 @@ class ChunkExtractor:
                             break
                         if(token.pos_ == 'ADP' and token.lemma_ == 'の' and token.head.i != doc[token.i + 1].head.i):    # 後方は　の　で切る　ただし、その先の語が　の　の前にかかるときはつなげる
                             break
-                        if token.lemma_ == '。' or token.lemma_ == '、':
+                        if (token.lemma_ == '。' or token.lemma_ == '、') and doc[token.i + 1].tag_ != '補助記号-括弧閉':
                             break
                     if token.tag_ == '補助記号-括弧閉':
                         if punc_o_f:

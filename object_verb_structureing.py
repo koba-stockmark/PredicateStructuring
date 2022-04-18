@@ -72,7 +72,7 @@ class VerbExtractor:
             if ((token.dep_ == "obj" and token.head.dep_ != "obj") or
                     (doc_len > token.i + 1 and token.dep_ == "nsubj" and doc[token.i + 1].lemma_ == "も" and
                      (token.tag_ != '名詞-普通名詞-助数詞可能' or (token.lemma_ != '年' and token.lemma_ != '月' and token.lemma_ != '日' and token.lemma_ != '間'))) or
-                    (doc_len > token.i + 2 and  doc[token.i + 1].lemma_ == "に" and doc[token.i + 2].lemma_ == "も")):  # トークンが目的語なら　〇〇も　＋　できる　などは主語と目的語の可能性がある
+                    (doc_len > token.i + 2 and token.pos_ == 'NOUN' and doc[token.i + 1].lemma_ == "に" and doc[token.i + 2].lemma_ == "も")):  # トークンが目的語なら　〇〇も　＋　できる　などは主語と目的語の可能性がある
 #                """
 ##                if(doc_len > token.i + 1 and doc[token.i + 1].orth_ == 'に'):      #　〇〇には〇〇の などの文は「を」でなくてもobjで解析される場合がある
 ##                    continue
