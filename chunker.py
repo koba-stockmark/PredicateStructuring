@@ -280,7 +280,6 @@ class ChunkExtractor:
                         break
                     end_pt = end_pt + 1
                     ret = self.connect_word(ret, token.orth_)
-                punc_o_f = False
                 punc_c_f = False
                 punc_ct = 0
 
@@ -288,13 +287,11 @@ class ChunkExtractor:
             for i in reversed(range(0, pt)):
                 if pt < doc[i].head.i and doc[i].head.i != doc[pt].head.i:
                     break
-#                if punc_c_f and not punc_o_f:
                 if punc_ct != 0:
                     if doc[i].tag_ != '補助記号-括弧開':
                         start_pt = i
                         ret = self.connect_word(doc[i].orth_, ret)
                         if doc[i].tag_ == '補助記号-括弧閉':
-                            punc_c_f = True
                             punc_ct = punc_ct + 1
                         continue
                     else:
@@ -303,13 +300,9 @@ class ChunkExtractor:
                             start_pt = i
                             ret = self.connect_word(doc[i].orth_, ret)
                             continue
-                    punc_o_f = False
-                    punc_c_f = False
-                elif not punc_c_f and not punc_o_f:
-#                elif punc_c_f == 0:
+                elif punc_c_f == 0:
                     if doc[i].tag_ == '補助記号-括弧開':
                         break
-#                if(doc[i].head.i == pt and
                 #
                 #  自立後の連続
                 #
@@ -319,11 +312,8 @@ class ChunkExtractor:
 #                        doc[i].tag_ != '名詞-普通名詞-助数詞可能' and
                         (not doc[i].morph.get("Inflection") or (doc[i].morph.get("Inflection")  and '連体形' not in doc[i].morph.get("Inflection")[0])) and
                         (doc[i].tag_ != '名詞-普通名詞-副詞可能' or (doc[i].lemma_ != 'なか' and doc[i].lemma_ != 'ため' and doc[i].lemma_ != 'もと')) and doc[i].norm_ != '～' and doc[i].norm_ != '・' and doc[i].norm_ != '＊'):
-                    if doc[i].tag_ == '補助記号-括弧開':
-                        punc_o_f = True
                     if doc[i].tag_ == '補助記号-括弧閉':
                         punc_ct = punc_ct + 1
-                        punc_c_f = True
                     start_pt = i
                     ret = self.connect_word(doc[i].orth_, ret)
                 #
@@ -359,15 +349,14 @@ class ChunkExtractor:
                         break
                     if(doc[i].pos_ == 'ADJ' and not self.head_connect_check(pt, i, *doc)):   # objを修飾しない形容詞
                         break
-                    if(doc[i].pos_ == 'CCONJ' and doc[i].norm_ != '及び'):
+#                    if(doc[i].pos_ == 'CCONJ' and doc[i].norm_ != '及び'):
+                    if(doc[i].pos_ == 'CCONJ'):
                         break
                     if(doc[i].pos_ == 'ADP' and ((doc[i].lemma_ == 'と' and doc[i + 1].lemma_ != 'の') or doc[i].lemma_ == 'や')):
                         break
                     if doc[i].tag_ == '補助記号-括弧閉':
                         punc_ct = punc_ct + 1
-                        punc_c_f = True
                     elif doc[i].tag_ == '補助記号-括弧開':
-                        punc_o_f = True
                         start_pt = i
                         ret = self.connect_word(doc[i].orth_, ret)
                         continue
