@@ -38,7 +38,10 @@ class ChunkExtractor:
                 if token.tag_ == '補助記号-括弧閉':
                     open_f = False
                 else:
-                    open_f = True
+                    if token.tag_ == '補助記号-括弧開' and open_f:  # ２個めの左カッコが来たらエラー
+                        break
+                    else:
+                        open_f = True
                 continue
             if len(doc) > token.i + 2 and doc[token.i + 1].tag_ == '補助記号-句点' and doc[token.i + 2].tag_ == '補助記号-括弧閉':
                 continue
@@ -48,12 +51,34 @@ class ChunkExtractor:
                         ret = ret + doc[i].lemma_
                     else:
                         return ret
-            elif token.dep_ == "case" and token.head.head.i == pt and token.head.pos_ == 'NOUN':    # 括弧書きを挟んだ係り受けの場合　ex.SaaSソリューション「Ecomedia」を開発する
+            elif token.dep_ == "case" and token.head.head.i == pt and token.head.pos_ == 'NOUN':  # 括弧書きを挟んだ係り受けの場合　ex.SaaSソリューション「Ecomedia」を開発する
                 for i in range(token.i, len(doc)):
                     if doc[i].dep_ == "case":
                         ret = ret + doc[i].lemma_
                     else:
                         return ret
+#            elif token.dep_ == "case" and token.head.head.i == doc[pt].head.i:    # 括弧書きを挟んだ係り受けの場合　ex.新事業としてフローズンミール定期配送サービス「nonpi A.R.U.」を開始すると発表した。
+#               for i in range(token.i, len(doc)):
+#                    if doc[i].dep_ == "case":
+#                        ret = ret + doc[i].lemma_
+#                    else:
+#                        return ret
+        if open_f and not ret:  # カッコのバランスが悪い場合は、カッコ内も対象にする
+            for token in doc[pt:]:
+                if len(doc) > token.i + 2 and doc[token.i + 1].tag_ == '補助記号-句点' and doc[token.i + 2].tag_ == '補助記号-括弧閉':
+                    continue
+                if token.dep_ == "case" and token.head.i == pt and len(doc) > token.i + 1 and doc[token.i + 1].tag_ != '補助記号-括弧閉':
+                    for i in range(token.i, len(doc)):
+                        if doc[i].dep_ == "case":
+                            ret = ret + doc[i].lemma_
+                        else:
+                            return ret
+                elif token.dep_ == "case" and token.head.head.i == pt and token.head.pos_ == 'NOUN':    # 括弧書きを挟んだ係り受けの場合　ex.SaaSソリューション「Ecomedia」を開発する
+                    for i in range(token.i, len(doc)):
+                        if doc[i].dep_ == "case":
+                            ret = ret + doc[i].lemma_
+                        else:
+                            return ret
         return ret
 
     """
@@ -216,7 +241,7 @@ class ChunkExtractor:
             punc_ct = 0
             # 後方のチャンク
             for token in doc[pt+1:]:
-                if (self.head_connect_check(pt, token.head.i, *doc)):
+                if (self.head_connect_check(pt, token.head.i, *doc)) or punc_ct < 0:
                     if not punc_o_f:
                         if (token.pos_ == 'ADP' and (token.lemma_ == 'を' or token.lemma_ == 'は' or token.lemma_ == 'が' or token.lemma_ == 'で' or token.lemma_ == 'も' or token.lemma_ == 'に' or token.lemma_ == 'にて' or token.orth_ == 'で' or token.orth_ == 'より')):  # 名詞の名詞　名詞と名詞　は接続させたい
                             if len(doc) > token.i + 1 and doc[token.i + 1].tag_ != '補助記号-括弧閉':
@@ -247,11 +272,24 @@ class ChunkExtractor:
                         punc_o_f = True
                     end_pt = end_pt + 1
                     ret = self.connect_word(ret, token.orth_)
+            # 後方が開カッコのほうが多い場合
+            if punc_ct < 0:
+                ret = ''
+                for token in doc[pt + 1:]:
+                    if token.tag_ == '補助記号-括弧開':
+                        break
+                    end_pt = end_pt + 1
+                    ret = self.connect_word(ret, token.orth_)
+                punc_o_f = False
+                punc_c_f = False
+                punc_ct = 0
+
             # 前方のチャンク
             for i in reversed(range(0, pt)):
                 if pt < doc[i].head.i and doc[i].head.i != doc[pt].head.i:
                     break
-                if punc_c_f and not punc_o_f:
+#                if punc_c_f and not punc_o_f:
+                if punc_ct != 0:
                     if doc[i].tag_ != '補助記号-括弧開':
                         start_pt = i
                         ret = self.connect_word(doc[i].orth_, ret)
@@ -261,17 +299,26 @@ class ChunkExtractor:
                         continue
                     else:
                         punc_ct = punc_ct - 1
-                        if(punc_ct != 0):
+                        if(punc_ct != 0):       # カッコのバランスが悪い？
                             start_pt = i
                             ret = self.connect_word(doc[i].orth_, ret)
                             continue
                     punc_o_f = False
                     punc_c_f = False
                 elif not punc_c_f and not punc_o_f:
+#                elif punc_c_f == 0:
                     if doc[i].tag_ == '補助記号-括弧開':
                         break
-                if(doc[i].head.i == pt and doc[i].pos_ != 'VERB' and doc[i].pos_ != 'AUX' and doc[i].pos_ != 'DET' and doc[i].pos_ != 'CCONJ' and doc[i].tag_ != '補助記号-読点' and
-                        (doc[i].tag_ != '名詞-普通名詞-副詞可能' or doc[i].lemma_ != 'なか') and doc[i].norm_ != '～' and doc[i].norm_ != '・'):
+#                if(doc[i].head.i == pt and
+                #
+                #  自立後の連続
+                #
+                if((doc[i].head.i == pt or doc[i].head.head.i == doc[pt].head.i) and
+                        doc[i].pos_ != 'VERB' and doc[i].pos_ != 'AUX' and doc[i].pos_ != 'DET' and doc[i].pos_ != 'CCONJ' and doc[i].tag_ != '補助記号-読点' and
+                        doc[i].pos_ != 'ADP' and doc[i].pos_ != 'SCONJ' and doc[i].tag_ != '助詞-副助詞' and
+#                        doc[i].tag_ != '名詞-普通名詞-助数詞可能' and
+                        (not doc[i].morph.get("Inflection") or (doc[i].morph.get("Inflection")  and '連体形' not in doc[i].morph.get("Inflection")[0])) and
+                        (doc[i].tag_ != '名詞-普通名詞-副詞可能' or (doc[i].lemma_ != 'なか' and doc[i].lemma_ != 'ため' and doc[i].lemma_ != 'もと')) and doc[i].norm_ != '～' and doc[i].norm_ != '・' and doc[i].norm_ != '＊'):
                     if doc[i].tag_ == '補助記号-括弧開':
                         punc_o_f = True
                     if doc[i].tag_ == '補助記号-括弧閉':
@@ -279,11 +326,17 @@ class ChunkExtractor:
                         punc_c_f = True
                     start_pt = i
                     ret = self.connect_word(doc[i].orth_, ret)
+                #
+                #  付属語を含むチャンク
+                #
+                #  名詞　＋　の[や]　＋　〇〇 名詞 +  格助詞　＋　の　＋　〇〇
+                #  動詞 +  助詞　＋　の　/　〇〇  前が動詞の場合は「〜の」の連体修飾では繋げない
+                #
                 elif (doc[i].pos_ != 'DET' and doc[i].pos_ != 'VERB'  and doc[i].pos_ != 'AUX' and doc[i].pos_ != 'SCONJ' and
                       doc[i].pos_ != 'PART' and doc[i].pos_ != 'PRON' and doc[i].tag_ != '補助記号-読点' and doc[i].tag_ != '補助記号-句点' and
-                        (doc[i].pos_ != 'ADP' or doc[i].orth_ == 'の' or doc[i].orth_ == 'や' or doc[i].orth_ == 'と' or
-                         (doc[i].pos_ == 'ADP' and doc[i + 1].orth_ == 'の'))):                                                           #  名詞　＋　の[や]　＋　〇〇 名詞 +  格助詞　＋　の　＋　〇〇
-                    if (doc[i].orth_ == 'の' and (doc[i - 1].pos_ == 'ADP' or doc[i - 1].pos_ == 'SCONJ') and (doc[i - 2].pos_ == 'VERB' or doc[i - 2].pos_ == 'AUX')):  # 動詞 +  助詞　＋　の　/　〇〇     前が動詞の場合は「〜の」の連体修飾では繋げない
+                      (doc[i].pos_ != 'ADP' or doc[i].orth_ == 'の' or doc[i].orth_ == 'や' or doc[i].orth_ == 'と' or
+                       (doc[i].pos_ == 'ADP' and doc[i + 1].orth_ == 'の'))):
+                    if (doc[i].orth_ == 'の' and (doc[i - 1].pos_ == 'ADP' or doc[i - 1].pos_ == 'SCONJ') and (doc[i - 2].pos_ == 'VERB' or doc[i - 2].pos_ == 'AUX')):
                         break
                     if(doc[i].pos_ == 'SYM' and (doc[i].lemma_ == '〜' or doc[i].lemma_ == '～' or doc[i].lemma_ == '＊')):
                         break
@@ -294,6 +347,7 @@ class ChunkExtractor:
                     if(doc[i].pos_ == 'SYM' and (not self.head_connect_check(pt, doc[i].head.i, *doc) and doc[pt].head.i !=  doc[i].head.i)):
                         break
                     if(doc[i].tag_ == '接尾辞-名詞的-助数詞' and (doc[i].lemma_ == '日' or doc[i].lemma_ == '月' or doc[i].lemma_ == '年')):
+#                    if((doc[i].tag_ == '接尾辞-名詞的-助数詞' or doc[i].tag_ == '名詞-普通名詞-助数詞可能') and (doc[i].lemma_ == '日' or doc[i].lemma_ == '月' or doc[i].lemma_ == '年')):
                         break
 #                    if doc[i].orth_ == 'の' and doc[i - 1].pos_ == 'ADV':
 #                        break
@@ -301,19 +355,24 @@ class ChunkExtractor:
                         break
                     if doc[i].orth_ == 'の' and doc[i - 1].lemma_ == 'で':
                         break
-                    if doc[i].tag_ == '名詞-普通名詞-副詞可能' and (doc[i].lemma_ == 'なか' or  doc[i].lemma_ == 'ため' or doc[i].lemma_ == 'もと' or doc[i].lemma_ == '今後'):
+                    if (doc[i].pos_ == 'NOUN' or doc[i].pos_ == 'ADV') and (doc[i].lemma_ == 'なか' or  doc[i].lemma_ == 'ため' or doc[i].lemma_ == 'もと' or doc[i].lemma_ == '今後'):
                         break
                     if(doc[i].pos_ == 'ADJ' and not self.head_connect_check(pt, i, *doc)):   # objを修飾しない形容詞
                         break
                     if(doc[i].pos_ == 'CCONJ' and doc[i].norm_ != '及び'):
-                        break
-                    if not self.head_connect_check(pt, i, *doc) and doc[pt].head.i != doc[i].head.i:
                         break
                     if(doc[i].pos_ == 'ADP' and ((doc[i].lemma_ == 'と' and doc[i + 1].lemma_ != 'の') or doc[i].lemma_ == 'や')):
                         break
                     if doc[i].tag_ == '補助記号-括弧閉':
                         punc_ct = punc_ct + 1
                         punc_c_f = True
+                    elif doc[i].tag_ == '補助記号-括弧開':
+                        punc_o_f = True
+                        start_pt = i
+                        ret = self.connect_word(doc[i].orth_, ret)
+                        continue
+                    if not self.head_connect_check(pt, i, *doc) and doc[pt].head.i != doc[i].head.i:
+                        break
                     start_pt = i
                     ret = self.connect_word(doc[i].orth_, ret)
 #                elif (doc[i].pos_ == 'VERB' or doc[i].pos_ == 'AUX' and (doc[i + 1].orth_ == 'ため' or doc[i + 1].orth_ == 'もの' or doc[i + 1].orth_ == 'とき' or doc[i + 1].orth_ == '人')):
