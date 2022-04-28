@@ -24,6 +24,7 @@ class ParallelExtractor:
         sp = start
         ep = end
         find_ct = 0
+        # 〇〇と（主語）が…　のパターン
         for i in reversed(range(0, start)):
             if sp <= i:
                 continue
@@ -63,6 +64,33 @@ class ParallelExtractor:
                     sp = ret[find_ct - 1]['lemma_start']
                     ep = ret[find_ct - 1]['lemma_end']
                     continue
+        # （主語1）が（主語2）と…　のパターン
+        """
+        for i in range(end + 1, doc[end].head.i):
+            if doc[i].tag_ == '名詞-数詞' or doc[i].tag_ == '名詞-普通名詞-助数詞可能' or doc[i].tag_ == '名詞-普通名詞-副詞可能':
+                break
+            if (doc[i + 1].pos_ == 'ADV'):
+                break
+            if len(doc) > i + 1 and doc[i + 1].lemma_ == 'の' and doc[i + 1].pos_ == 'ADP':  # 〇〇の〇〇　は並列扱いしない
+                if (doc[i].head.i >= sp and doc[i].head.i <= ep):
+                    if not find_ct:
+                        ret.append({'lemma': '', 'lemma_start': -1, 'lemma_end': -1})
+                    return ret
+                else:
+                    continue
+#            if self.rentai_check(i, *doc):  # 連体修飾は並列から外す
+#                continue
+            if (doc[i].head.i == doc[end].head.i and (doc[i + 1].lemma_ == 'と' or doc[i + 1].lemma_ == 'や' or doc[i + 1].lemma_ == 'など' or doc[i + 1].lemma_ == '、') and doc[i + 2].lemma_ != 'する' and doc[i + 2].lemma_ != 'なる'):
+                if doc[i].head.i != doc[end].head.i:
+                  continue
+                ret.append((self.num_chunk(i, *doc)))
+                find_ct = find_ct + 1
+                sp = ret[find_ct - 1]['lemma_start']
+                ep = ret[find_ct - 1]['lemma_end']
+                continue
+            if (doc[i + 1].pos_ == 'ADP' and doc[i + 1].lemma_ != 'など'):
+                break
+        """
 
         if not find_ct:
             for i in reversed(range(0, doc[end].head.i)):

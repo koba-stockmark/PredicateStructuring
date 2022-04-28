@@ -27,7 +27,7 @@ class SubjectExtractor:
     campany_special_vaerb = [
         'おこなう', 'かかげる', 'かまえる', 'けん引', 'コンセプトと', 'コンセプトに', 'コントローラーに','コントロール',
         'サポート', 'する', 'セットに', 'テーマに', 'ミッションと', 'ライトアップ','リード',
-        '運営', '営む', '遠隔管理', '応援', '解決', '開業', '開催', '開始','開発・運営', '開発・提供', '開発・販売',
+        '運営', '営む', '遠隔管理', '応援', '解決', '開業', '開催', '開始','開発・運営', '開発・提供', '開発・販売', '成長',
         '開発', '活用', '管理', '企画・開発','企画販売', '協賛', '強みと', '強化', '掲げる', '掲載', '経営', '公開',
         '構える','構築', '行う', '行なう', '採用', '支援', '実現', '実行', '主力と', '取り扱う', '手がける','手掛ける',
         '手伝い', '集める', '承る', '称', '進める', '図る', '推進', '生産', '製造・販売','製造', '製造販売', '説明',
@@ -115,6 +115,10 @@ class SubjectExtractor:
         ret = {'lemma': '', 'lemma_start': -1, 'lemma_end': -1}
         ng_pt = obj_point
         verb_pt = doc[obj_point].head.i
+        return self.subject_get_from_object2(verb_pt, ng_pt, *doc)
+
+    def subject_get_from_object2(self, verb_pt, ng_pt, *doc):
+        ret = {'lemma': '', 'lemma_start': -1, 'lemma_end': -1}
         # subjで直接接続をチェック
         for token in doc:
             if (token.dep_ == "nsubj" and (token.head.i == verb_pt and token.i != ng_pt and token.tag_ != '名詞-普通名詞-副詞可能')):
@@ -148,8 +152,8 @@ class SubjectExtractor:
                     return ret
         # 〇〇は.....〇〇を△△すると〇〇した　本来なら主語も目的語も△△にかかってほしいものが主語が〇〇にかかってしまって関係が取れない場合の処理
         if doc[verb_pt].dep_ != 'ROOT' and doc[doc[verb_pt].head.i].dep_ == 'ROOT' and (doc[doc[verb_pt].head.head.i - 2].lemma_ == 'た' or doc[doc[verb_pt].head.head.i - 2].lemma_ == 'する') and doc[doc[verb_pt].head.head.i -1].lemma_ == 'と':
-            ng_pt = doc[obj_point].head.i
-            verb_pt = doc[doc[obj_point].head.i].head.i
+            ng_pt = doc[verb_pt].i
+            verb_pt = doc[doc[verb_pt].i].head.i
             # 直接接続をチェック
             for token in doc:
                 if (token.dep_ == "nsubj" and (token.head.i == verb_pt and token.i != ng_pt and token.tag_ != '名詞-普通名詞-副詞可能') or
@@ -163,14 +167,28 @@ class SubjectExtractor:
                         ret['lemma_start'] = i
                     return ret
         # 連体修飾をチェック
-        if doc[doc[obj_point].head.head.i].dep_ == 'nsubj' and doc[doc[obj_point].head.head.i].lemma_ != 'こと':
-            if doc[doc[obj_point].head.i + 1].lemma_ != 'できる':
+        if (doc[verb_pt].head.i != verb_pt) and ((doc[doc[verb_pt].head.i].dep_ == 'nsubj' or doc[doc[verb_pt].head.i].dep_ == 'obl' or (doc[doc[verb_pt].head.i].dep_ == 'ROOT' and doc[doc[verb_pt].head.i].i != doc[len(doc) - 1].head.i)) and doc[doc[verb_pt].head.i].lemma_ != 'こと'):
+            if len(doc) > doc[verb_pt].i + 1 and doc[doc[verb_pt].i + 1].lemma_ != 'できる':
                 if doc[verb_pt].lemma_ in self.campany_special_vaerb:
-                    ret_subj = self.num_chunk(doc[obj_point].head.head.i, *doc)
+                    ret_subj = self.num_chunk(doc[verb_pt].head.i, *doc)
                     ret['lemma_end'] = ret_subj['lemma_end']
                     for i in reversed(range(ret_subj['lemma_start'], ret_subj['lemma_end'] + 1)):  # 〇〇と〇〇　は切り離す
                         if doc[i].pos_ == 'ADP' and doc[i].lemma_ == 'と':
                             break
                         ret['lemma'] = self.connect_word(doc[i].orth_, ret['lemma'])
                         ret['lemma_start'] = i
+                        if len(doc) > i + 1 and doc[i + 1].pos_ == 'ADP' and doc[i + 1].lemma_ == 'を':
+                            return {'lemma': '', 'lemma_start': -1, 'lemma_end': -1}
+                    return ret
+        # 〜をしている〇〇
+        if(doc[verb_pt].lemma_ == 'する' and doc[verb_pt - 1].lemma_ == 'を' and self.rentai_check(doc[verb_pt].i, *doc)):
+            ret_subj = self.num_chunk(doc[verb_pt].head.i, * doc)
+            ret['lemma_end'] = ret_subj['lemma_end']
+            for i in reversed(range(ret_subj['lemma_start'], ret_subj['lemma_end'] + 1)):  # 〇〇と〇〇　は切り離す
+                if doc[i].pos_ == 'ADP' and doc[i].lemma_ == 'と':
+                    break
+                ret['lemma'] = self.connect_word(doc[i].orth_, ret['lemma'])
+                ret['lemma_start'] = i
+                if len(doc) > i + 1 and doc[i + 1].pos_ == 'ADP' and doc[i + 1].lemma_ == 'を':
+                    return {'lemma': '', 'lemma_start': -1, 'lemma_end': -1}
         return ret
