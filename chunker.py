@@ -45,24 +45,34 @@ class ChunkExtractor:
                 continue
             if len(doc) > token.i + 2 and doc[token.i + 1].tag_ == '補助記号-句点' and doc[token.i + 2].tag_ == '補助記号-括弧閉':
                 continue
-            if token.dep_ == "case" and token.tag_ != '名詞-普通名詞-一般' and token.head.i == pt and len(doc) > token.i + 1 and doc[token.i + 1].tag_ != '補助記号-括弧閉':
+            if (token.dep_ == "case" or token.tag_ == '助詞-格助詞') and token.tag_ != '名詞-普通名詞-一般' and token.head.i == pt and len(doc) > token.i + 1 and doc[token.i + 1].tag_ != '補助記号-括弧閉':
                 for i in range(token.i, len(doc)):
-                    if doc[i].dep_ == "case":
+                    if doc[i].dep_ == "case" or doc[i].tag_ == '助詞-格助詞':
                         if(doc[i].lemma_ == 'と' and doc[i + 1].lemma_ == 'する' and doc[i + 2].lemma_ == 'て'):
                             ret = ret + doc[i].lemma_ + 'して'
                             return ret
                         elif doc[i].lemma_ == 'や':
 #                            ret = doc[doc[i].head.head.i - 1].lemma_
                             ret = self.case_get(doc[i].head.head.i, *doc)
+                        elif len(doc) > i + 2 and doc[i].lemma_ == 'に' and doc[i + 1].orth_ == 'おい' and doc[i + 2].orth_ == 'て':
+                            ret = 'において'
+                        elif len(doc) > i + 2 and doc[i].lemma_ == 'に' and doc[i + 1].orth_ == 'つい' and doc[i + 2].orth_ == 'て':
+                            ret = 'について'
+                        elif len(doc) > i + 2 and doc[i].lemma_ == 'に' and doc[i + 1].orth_ == '関し' and doc[i + 2].orth_ == 'て':
+                            ret = 'に関して'
+                        elif len(doc) > i + 2 and doc[i].lemma_ == 'に' and doc[i + 1].orth_ == '対し' and doc[i + 2].orth_ == 'て':
+                            ret = 'に対して'
+                        elif len(doc) > i + 2 and doc[i].lemma_ == 'に' and doc[i + 1].orth_ == 'よっ' and doc[i + 2].orth_ == 'て':
+                            ret = 'によって'
                         elif doc[i].lemma_ == 'に' and doc[i + 1].orth_ == 'より':
                             ret = 'により'
                         else:
                             ret = ret + doc[i].lemma_
                     else:
                         return ret
-            elif token.dep_ == "case" and token.tag_ != '名詞-普通名詞-一般' and token.head.head.i == pt and token.head.pos_ == 'NOUN' and token.lemma_ != 'の':  # 括弧書きを挟んだ係り受けの場合　ex.SaaSソリューション「Ecomedia」を開発する
+            elif (token.dep_ == "case" or token.tag_ == '助詞-格助詞') and token.tag_ != '名詞-普通名詞-一般' and token.head.head.i == pt and token.head.pos_ == 'NOUN' and token.lemma_ != 'の':  # 括弧書きを挟んだ係り受けの場合　ex.SaaSソリューション「Ecomedia」を開発する
                 for i in range(token.i, len(doc)):
-                    if doc[i].dep_ == "case":
+                    if doc[i].dep_ == "case" or doc[i].tag_ == '助詞-格助詞':
                         if(doc[i].lemma_ == 'と' and doc[i + 1].lemma_ == 'する' and doc[i + 2].lemma_ == 'て'):
                             ret = ret + doc[i].lemma_ + 'して'
                             return ret
@@ -84,9 +94,9 @@ class ChunkExtractor:
             for token in doc[pt:]:
                 if len(doc) > token.i + 2 and doc[token.i + 1].tag_ == '補助記号-句点' and doc[token.i + 2].tag_ == '補助記号-括弧閉':
                     continue
-                if token.dep_ == "case" and token.tag_ != '名詞-普通名詞-一般' and token.head.i == pt and len(doc) > token.i + 1 and doc[token.i + 1].tag_ != '補助記号-括弧閉':
+                if (token.dep_ == "case" or token.tag_ == '助詞-格助詞') and token.tag_ != '名詞-普通名詞-一般' and token.head.i == pt and len(doc) > token.i + 1 and doc[token.i + 1].tag_ != '補助記号-括弧閉':
                     for i in range(token.i, len(doc)):
-                        if doc[i].dep_ == "case":
+                        if doc[i].dep_ == "case" or doc[i].tag_ == '助詞-格助詞':
                             if (doc[i].lemma_ == 'と' and doc[i + 1].lemma_ == 'する' and doc[i + 2].lemma_ == 'て'):
                                 ret = ret + doc[i].lemma_ + 'して'
                                 return ret
@@ -98,9 +108,9 @@ class ChunkExtractor:
                                 ret = ret + doc[i].lemma_
                         else:
                             return ret
-                elif token.dep_ == "case" and token.tag_ != '名詞-普通名詞-一般' and token.head.head.i == pt and token.head.pos_ == 'NOUN':    # 括弧書きを挟んだ係り受けの場合　ex.SaaSソリューション「Ecomedia」を開発する
+                elif (token.dep_ == "case" or token.tag_ == '助詞-格助詞') and token.tag_ != '名詞-普通名詞-一般' and token.head.head.i == pt and token.head.pos_ == 'NOUN':    # 括弧書きを挟んだ係り受けの場合　ex.SaaSソリューション「Ecomedia」を開発する
                     for i in range(token.i, len(doc)):
-                        if doc[i].dep_ == "case":
+                        if doc[i].dep_ == "case" or doc[i].tag_ == '助詞-格助詞':
                             if (doc[i].lemma_ == 'と' and doc[i + 1].lemma_ == 'する' and doc[i + 2].lemma_ == 'て'):
                                 ret = ret + doc[i].lemma_ + 'して'
                                 return ret
@@ -120,6 +130,7 @@ class ChunkExtractor:
     def modality_get(self, text):
 
         ret = []
+        return ret
         if len(text) > 1:
             result = self.knp.parse(text)
             for tag in result.tag_list():  # 各基本句へのアクセス
@@ -162,10 +173,10 @@ class ChunkExtractor:
         # 前方を結合
         for i in reversed(range(0, pt)):
             if ((pt == doc[i].head.i or pt == doc[i].head.head.i) and doc[i].pos_ != 'PUNCT' and doc[i].tag_ != '接頭辞' and (doc[i].pos_ != 'AUX' or doc[i].orth_ == 'する') and
-                    (doc[i].lemma_ == 'する' or (not doc[i].morph.get("Inflection") or '連体形' not in doc[i].morph.get("Inflection")[0])) and
+                    ((not doc[i].morph.get("Inflection") or '連体形' not in doc[i].morph.get("Inflection")[0])) and
                   (doc[i].pos_ != 'ADP' or (doc[i].tag_ == '助詞-副助詞' and doc[i].lemma_ != 'まで')) and doc[i].pos_ != 'ADV' and doc[i].pos_ != 'ADJ' and doc[i].pos_ != 'SCONJ' and
                     doc[i].norm_ != 'から' and
-                    doc[i].tag_ != '名詞-普通名詞-副詞可能' and doc[i].tag_ != '名詞-普通名詞-助数詞可能' and doc[i].tag_ != '接尾辞-名詞的-助数詞' and doc[i].tag_ != '名詞-普通名詞-助数詞可能'):
+                    doc[i].tag_ != '補助記号-一般' and doc[i].tag_ != '名詞-普通名詞-副詞可能' and doc[i].tag_ != '名詞-普通名詞-助数詞可能' and doc[i].tag_ != '接尾辞-名詞的-助数詞' and doc[i].tag_ != '名詞-普通名詞-助数詞可能'):
                 pre = doc[i].orth_ + pre
                 start_pt = i
             elif len(doc) > i + 1 and doc[i].pos_ == 'ADJ' and doc[i + 1].lemma_ == 'する':    # 形容詞　＋　する
@@ -175,7 +186,23 @@ class ChunkExtractor:
                     (len(doc) > i + 2 and doc[i].pos_ == 'ADJ' and doc[i + 1].orth_ == 'に' and doc[i + 2].lemma_ == 'する'):  # 形容動詞　＋　に　＋　する
                 pre = doc[i].orth_ + pre
                 start_pt = i
-            elif i != 0 and (doc[i].tag_ == '補助記号-読点' and doc[i - 1].head.i == doc[i].i + 1 and doc[i - 1].tag_ != '名詞-普通名詞-助数詞可能' and doc[i - 1].tag_ != '接尾辞-名詞的-助数詞'):      # 〇〇、〇〇する　などの並列術部
+            elif i != 0 and (doc[i].tag_ == '補助記号-読点' and doc[i - 1].head.i == doc[i].i + 1 and doc[i - 1].pos_ != 'VERB' and
+                             doc[i - 1].tag_ != '名詞-普通名詞-助数詞可能' and doc[i - 1].tag_ != '接尾辞-名詞的-助数詞' and doc[i - 1].tag_ != '名詞-普通名詞-形状詞可能'):      # 〇〇、〇〇する　などの並列術部
+                pre = doc[i].orth_ + pre
+                start_pt = i
+            elif len(doc) > i + 1 and doc[i + 1].lemma_ == 'ため' and (doc[i].tag_ == '動詞-非自立可能' or doc[i].pos_ == 'VERB'):  # 応用するための
+                pre = doc[i].orth_ + pre
+                start_pt = i
+            elif len(doc) > i + 1 and doc[i + 1].lemma_ == 'ため' and doc[i].tag_ == '動詞-非自立可能':  # 応用するための
+                pre = doc[i].orth_ + pre
+                start_pt = i
+            elif len(doc) > i + 1 and doc[i + 1].lemma_ == 'よう' and doc[i].tag_ == '動詞-非自立可能':  # できるようになる
+                pre = doc[i].orth_ + pre
+                start_pt = i
+            elif (len(doc) > i + 1 and doc[i + 1].lemma_ == 'なる' and doc[i].lemma_ == 'ない') or (len(doc) > i + 1 and doc[i + 1].lemma_ == 'ない' and doc[i].tag_ == '動詞-非自立可能'):  # できなくなる
+                pre = doc[i].orth_ + pre
+                start_pt = i
+            elif (len(doc) > i + 1 and doc[i + 1].lemma_ == 'なる' and doc[i].lemma_ == 'やすい') or (len(doc) > i + 1 and doc[i + 1].lemma_ == 'やすい' and doc[i].tag_ == '動詞-非自立可能'):  # 載せやすくなる
                 pre = doc[i].orth_ + pre
                 start_pt = i
             else:
@@ -188,6 +215,8 @@ class ChunkExtractor:
         tail_ct = 0     # 末尾単語数
         ret = ''        # チャンク結果
         for token in doc[pt + 1:]:
+            if token.head.i != pt and doc[pt].head.i != token.i and doc[pt].head.i != token.head.i:
+                break
             if (tail_ct == 0 and pt == token.head.i and token.pos_ != 'ADP'  and token.pos_ != 'SCONJ'  and token.pos_ != 'PART'  and token.pos_ != 'AUX' and token.pos_ != 'VERB' and token.pos_ != 'PUNCT' and token.pos_ != 'SYM'):
                 if(find_f):
                     ret = ret + append_o
@@ -196,7 +225,8 @@ class ChunkExtractor:
                 append_l = token.lemma_
                 end_pt = end_pt + 1
             # 動詞　＋　接尾辞
-            elif (tail_ct == 0 and token.head.i == token.head.head.i and (token.tag_ == '接尾辞-名詞的-サ変可能' or (token.pos_ == 'VERB' and token.tag_ == '名詞-普通名詞-サ変可能'))):
+#            elif (tail_ct == 0 and token.head.i == token.head.head.i and (token.tag_ == '接尾辞-名詞的-サ変可能' or (token.pos_ == 'VERB' and token.tag_ == '名詞-普通名詞-サ変可能'))):
+            elif (tail_ct == 0 and doc[token.i - 1].pos_ != 'ADV' and doc[token.i - 1].pos_ != 'ADJ' and doc[token.i - 1].tag_ != '助動詞' and (token.tag_ == '接尾辞-名詞的-サ変可能' or (token.pos_ == 'VERB' and token.tag_ == '名詞-普通名詞-サ変可能'))):
                 if(find_f):
                     ret = ret + append_o
                 find_f = True
@@ -314,6 +344,8 @@ class ChunkExtractor:
                             break
                         if(token.pos_ == 'ADP' and token.lemma_ == 'と'):    # 名詞と名詞　は切り離して並列処理にまかせる
                             break
+                        if(token.pos_ == 'ADP' and token.lemma_ == 'へ' and doc[token.i + 1].lemma_ != '」' ):    # 名詞へ　は切り離して並列処理にまかせる
+                            break
                         if(token.pos_ == 'ADP' and token.lemma_ == 'など'):    # 名詞など名詞　は切り離して並列処理にまかせる
                             break
                         if(token.pos_ == 'ADP' and token.lemma_ == 'や'):    # 名詞や名詞　は切り離して並列処理にまかせる
@@ -327,6 +359,15 @@ class ChunkExtractor:
                         if len(doc) > token.i + 1 and (token.lemma_ == '。' or token.lemma_ == '、') and doc[token.i + 1].tag_ != '補助記号-括弧閉':
                             break
                         if len(doc) == token.i + 1 and (token.lemma_ == '。' or token.lemma_ == '、'):
+                            break
+                        #### 名詞から生成される動詞用
+                        if token.tag_ == '補助記号-句点' and token.pos_ == 'SYM':
+                            break
+                        if token.lemma_ == '：' or token.lemma_ == '～':
+                            break
+                        if token.tag_ == '助動詞':
+                            break
+                        if token.pos_ == 'AUX':
                             break
                     if token.tag_ == '補助記号-括弧閉':
                         punc_ct = punc_ct + 1
@@ -387,7 +428,7 @@ class ChunkExtractor:
                       doc[i].pos_ != 'PART' and doc[i].pos_ != 'PRON' and doc[i].tag_ != '補助記号-読点' and doc[i].tag_ != '補助記号-句点' and
                       (doc[i].pos_ != 'ADP' or doc[i].orth_ == 'の' or doc[i].orth_ == 'や' or doc[i].orth_ == 'と' or
                        (doc[i].pos_ == 'ADP' and doc[i + 1].orth_ == 'の'))):
-                    if (doc[i].orth_ == 'の' and (doc[i - 1].pos_ == 'ADP' or doc[i - 1].pos_ == 'SCONJ') and (doc[i - 2].pos_ == 'VERB' or doc[i - 2].pos_ == 'AUX')):
+                    if (doc[i].orth_ == 'の' and (doc[i - 1].pos_ == 'ADP' or doc[i - 1].pos_ == 'SCONJ') and (doc[i - 2].pos_ == 'VERB' or doc[i - 2].pos_ == 'AUX' or doc[i - 2].pos_ == 'SCONJ')):
                         break
                     if(doc[i].pos_ == 'SYM' and (doc[i].lemma_ == '〜' or doc[i].lemma_ == '～' or doc[i].lemma_ == '＊')):
                         break
