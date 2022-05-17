@@ -47,7 +47,7 @@ class ChunkExtractor:
                 continue
             if (token.dep_ == "case" or token.tag_ == '助詞-格助詞') and token.tag_ != '名詞-普通名詞-一般' and token.head.i == pt and len(doc) > token.i + 1 and doc[token.i + 1].tag_ != '補助記号-括弧閉':
                 for i in range(token.i, len(doc)):
-                    if doc[i].dep_ == "case" or doc[i].tag_ == '助詞-格助詞':
+                    if doc[i].dep_ == "case" or doc[i].tag_ == '助詞-格助詞' and doc[i].lemma_ != '～':
                         if(doc[i].lemma_ == 'と' and doc[i + 1].lemma_ == 'する' and doc[i + 2].lemma_ == 'て'):
                             ret = ret + doc[i].lemma_ + 'して'
                             return ret
@@ -122,6 +122,13 @@ class ChunkExtractor:
                                 ret = ret + doc[i].lemma_
                         else:
                             return ret
+        if not ret: # 直後に格助詞がない場合
+            if len(doc) > doc[pt].i + 1 and doc[doc[pt].i + 1].lemma_ == '・' and doc[doc[pt].head.i].pos_ == 'VERB':
+                for i in reversed(range(0, doc[doc[pt].head.i].i)):
+                    if doc[i].pos_ == 'ADP':
+                        ret = doc[i].lemma_ + ret
+                    else:
+                        break
         return ret
 
     """
@@ -217,7 +224,8 @@ class ChunkExtractor:
         for token in doc[pt + 1:]:
             if token.head.i != pt and doc[pt].head.i != token.i and doc[pt].head.i != token.head.i:
                 break
-            if (tail_ct == 0 and pt == token.head.i and token.pos_ != 'ADP'  and token.pos_ != 'SCONJ'  and token.pos_ != 'PART'  and token.pos_ != 'AUX' and token.pos_ != 'VERB' and token.pos_ != 'PUNCT' and token.pos_ != 'SYM'):
+            if ((tail_ct == 0 and pt == token.head.i and token.pos_ != 'ADP'  and token.pos_ != 'SCONJ'  and token.pos_ != 'PART'  and token.pos_ != 'AUX' and token.pos_ != 'VERB' and token.pos_ != 'PUNCT' and token.pos_ != 'SYM') and
+                (not doc[token.i - 1].morph.get("Inflection") or (not doc[token.i - 1].morph.get("Inflection") or '連体形' not in doc[token.i - 1].morph.get("Inflection")[0]))):
                 if(find_f):
                     ret = ret + append_o
                 find_f = True
@@ -360,6 +368,8 @@ class ChunkExtractor:
                             break
                         if len(doc) == token.i + 1 and (token.lemma_ == '。' or token.lemma_ == '、'):
                             break
+                        if token.head.head.i != token.i + 1 and token.lemma_ == '・':    # 〇〇・△△　で〇〇が△△にかからない場合は　・　を分離
+                            break
                         #### 名詞から生成される動詞用
                         if token.tag_ == '補助記号-句点' and token.pos_ == 'SYM':
                             break
@@ -489,6 +499,9 @@ class ChunkExtractor:
 #                    start_pt = i
 #                    ret = self.connect_word(doc[i].orth_, ret)
                 elif(doc[i].pos_ == 'ADP' and doc[i].orth_ == 'に' and doc[i + 1].orth_ == 'なる'):
+                    start_pt = i
+                    ret = self.connect_word(doc[i].orth_, ret)
+                elif len(doc) > i + 1 and doc[i + 1].tag_ == '接尾辞-名詞的-サ変可能':
                     start_pt = i
                     ret = self.connect_word(doc[i].orth_, ret)
                 else:

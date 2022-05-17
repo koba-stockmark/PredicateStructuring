@@ -45,7 +45,15 @@ class VerbPhraseExtractor:
         rule_id = 0
         verb = {}
         modality_w = ''
-        if (doc[pt].lemma_ == "する"):
+        #
+        #    形容詞
+        #
+        if doc[pt].tag_ == '形容詞-一般':
+            verb = self.verb_chunk(doc[doc[pt].i].i, *doc)
+            verb_w = verb["lemma"]
+            modality_w = verb["modality"]
+            rule_id = 80
+        elif (doc[pt].lemma_ == "する"):
             if doc[pt - 1].lemma_ == 'たり':
                 return {'lemma': '', 'lemma_start': -1, 'lemma_end': -1, 'modality': '', 'rule_id': -1}
             #
@@ -273,7 +281,7 @@ class VerbPhraseExtractor:
                     rule_id = 22
             elif len(doc) > doc[pt].i + 1 and (doc[doc[pt].i + 1].tag_ == '動詞-非自立可能'):  # 動詞　＋　補助動詞
                 verb = self.verb_chunk(doc[doc[pt].i].i, *doc)
-                if (doc[doc[pt].i].tag_ != '動詞-一般' and
+                if (doc[doc[pt].i].tag_ != '動詞-一般' and doc[doc[pt].i].tag_ != '形容詞-一般' and
                         (doc[doc[pt].i + 1].lemma_ == 'する' or doc[doc[pt].i + 1].lemma_ == 'できる' or doc[doc[pt].i].tag_ == '名詞-普通名詞-サ変可能' or
                          doc[doc[pt].i].tag_ == '名詞-普通名詞-サ変形状詞可能' or doc[doc[pt].i].tag_ == '名詞-普通名詞-一般')):
                     verb_w = verb["lemma"] + 'する'
@@ -365,9 +373,16 @@ class VerbPhraseExtractor:
             ###############################
             elif len(doc) > doc[pt].i + 1 and doc[pt].tag_ == '名詞-数詞' and doc[doc[pt].i + 1].pos_ == 'PUNCT':
                 verb_w = ''
-            ###########################################################
-            ##   慣用句処理  　（「日の目を見る」など）
-            ###########################################################
+            ###############################
+            #    〜を　形容詞　＋　できる
+            ###############################
+            elif doc[doc[pt].i - 1].tag_ == '形容詞-一般' and doc[pt].lemma_ == 'できる':
+                verb = self.verb_chunk(doc[pt].i, *doc)
+                modality_w = verb["modality"]
+                verb_w = doc[doc[pt].i - 1].orth_ + verb["lemma"]
+                verb["lemma"] = verb_w
+                verb["lemma_start"] = verb["lemma_start"] - 1
+                rule_id = 45
             ###############################
             #    〜にある
             ###############################

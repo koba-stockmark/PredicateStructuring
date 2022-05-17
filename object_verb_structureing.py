@@ -199,7 +199,9 @@ class VerbExtractor:
                 if (doc[i].head.i == token.i or renyou_f) and doc[i].pos_ != 'CCONJ':
                     continue
                 """
-                if (doc[i].dep_ == "obj" and doc[i].head.dep_ != "obj") or ((doc[i].dep_ == "obl" and doc[i].head.dep_ != "obl") and doc[i].tag_ != '名詞-普通名詞-副詞可能'):
+                if ((doc[i].dep_ == "obj" and doc[i].head.dep_ != "obj") or
+                        ((doc[i].dep_ == "obl" and doc[i].head.dep_ != "obl") and
+                         doc[i].tag_ != '名詞-普通名詞-副詞可能' and (doc[i].norm_ != '度' or doc[i - 1].pos_ == 'NUM'))):     # この度　はNG
                     if doc[i].head.i < verb["lemma_start"] or doc[i].head.i > verb["lemma_end"]:    # 述部に直接かからない
 #                        continue
                         #####  要検討　条件をもっと追加しないと余計なものができる
