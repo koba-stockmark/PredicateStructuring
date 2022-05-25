@@ -13,7 +13,7 @@ class SubjectExtractor:
 
 
     """
-    連体形の判別
+    名詞＋動詞　の連体形の判別
     """
     def rentai_check(self, pt , *doc):
         find = False
@@ -24,9 +24,21 @@ class SubjectExtractor:
                 find = True
         return find
 
+    """
+    名詞＋動詞　の終止形の判別
+    """
+    def shuusi_check(self, pt , *doc):
+        find = False
+        for cpt in range(pt + 1, doc[pt].head.i):
+            if(doc[cpt].pos_ != 'AUX' and doc[cpt].pos_ != 'VERB' and doc[cpt].pos_ != 'SCONJ'):
+                break
+            if doc[cpt].morph.get("Inflection") and '終止形' in doc[cpt].morph.get("Inflection")[0]:
+                find = True
+        return find
+
     campany_special_vaerb = [
-        'おこなう', 'かかげる', 'かまえる', 'けん引', 'コンセプトと', 'コンセプトに', 'コントローラーに','コントロール',
-        'サポート', 'する', 'セットに', 'テーマに', 'ミッションと', 'ライトアップ','リード',
+        'ある', 'おこなう', 'かかげる', 'かまえる', 'けん引', 'コンセプトと', 'コンセプトに', 'コントローラーに','コントロール',
+        'サポート', 'する', 'する', 'セットに', 'テーマに', 'ミッションと', 'ライトアップ','リード',
         '運営', '営む', '遠隔管理', '応援', '解決', '開業', '開催', '開始','開発・運営', '開発・提供', '開発・販売', '成長',
         '開発', '活用', '管理', '企画・開発','企画販売', '協賛', '強みと', '強化', '掲げる', '掲載', '経営', '公開',
         '構える','構築', '行う', '行なう', '採用', '支援', '実現', '実行', '主力と', '取り扱う', '手がける','手掛ける',
@@ -117,7 +129,8 @@ class SubjectExtractor:
         verb_pt = doc[obj_point].head.i
         return self.subject_get_from_object2(verb_pt, ng_pt, *doc)
 
-    def subject_get_from_object2(self, verb_pt, ng_pt, *doc):
+    def subject_get_from_object2(self, verb_pt, verb_end_pt, *doc):
+        ng_pt = verb_pt
         ret = {'lemma': '', 'lemma_start': -1, 'lemma_end': -1}
         # subjで直接接続をチェック
         for token in doc:
@@ -167,22 +180,85 @@ class SubjectExtractor:
                         ret['lemma_start'] = i
                     return ret
         # 連体修飾をチェック
-        if (doc[verb_pt].head.i != verb_pt) and ((doc[doc[verb_pt].head.i].dep_ == 'nsubj' or doc[doc[verb_pt].head.i].dep_ == 'obl' or (doc[doc[verb_pt].head.i].dep_ == 'ROOT' and doc[doc[verb_pt].head.i].i != doc[len(doc) - 1].head.i)) and doc[doc[verb_pt].head.i].lemma_ != 'こと'):
-            if len(doc) > doc[verb_pt].i + 1 and doc[doc[verb_pt].i + 1].lemma_ != 'できる':
-                if doc[verb_pt].lemma_ in self.campany_special_vaerb:
-                    ret_subj = self.num_chunk(doc[verb_pt].head.i, *doc)
+#        if (doc[verb_end_pt].head.i != verb_end_pt) and ((doc[doc[verb_end_pt].head.i].dep_ == 'nsubj' or doc[doc[verb_end_pt].head.i].dep_ == 'obl' or doc[doc[verb_end_pt].head.i].dep_ == 'obj' or doc[doc[verb_end_pt].head.i].dep_ == 'nmod' or (doc[doc[verb_end_pt].head.i].dep_ == 'ROOT' and doc[doc[verb_end_pt].head.i].i != doc[len(doc) - 1].head.i)) and doc[doc[verb_end_pt].head.i].lemma_ != 'こと'):
+        if (doc[verb_end_pt].head.i != verb_end_pt) and ((doc[doc[verb_end_pt].head.i].dep_ == 'nsubj' or doc[doc[verb_end_pt].head.i].dep_ == 'obl' or doc[doc[verb_end_pt].head.i].dep_ == 'obj' or doc[doc[verb_end_pt].head.i].dep_ == 'acl' or doc[doc[verb_end_pt].head.i].dep_ == 'nmod' or (doc[doc[verb_end_pt].head.i].dep_ == 'ROOT' and doc[doc[verb_end_pt].head.i].i != doc[len(doc) - 1].head.i)) and doc[doc[verb_end_pt].head.i].lemma_ != 'こと' and
+                                                 ((self.rentai_check(doc[verb_end_pt].i, *doc) or (doc[verb_end_pt].morph.get("Inflection") and '連体形' in doc[verb_end_pt].morph.get("Inflection")[0])) or
+                                                 (self.shuusi_check(doc[verb_end_pt].i, *doc) or (doc[verb_end_pt].morph.get("Inflection") and '終止' in doc[verb_end_pt].morph.get("Inflection")[0])))):
+            if (doc[doc[verb_end_pt].head.i].pos_ == 'NOUN' or doc[doc[verb_end_pt].head.i].pos_ == 'PROPN' or doc[doc[verb_end_pt].head.i].pos_ == 'NUM'):
+#                if doc[verbverb_end_pt_pt].lemma_ in self.campany_special_vaerb:
+                    if doc[verb_end_pt].head.i > verb_end_pt:
+                        ret_subj = self.num_chunk(doc[verb_end_pt].head.i, *doc)
+                    else:
+                        ret_subj = self.num_chunk(verb_end_pt + 1, *doc)
                     ret['lemma_end'] = ret_subj['lemma_end']
-                    for i in reversed(range(ret_subj['lemma_start'], ret_subj['lemma_end'] + 1)):  # 〇〇と〇〇　は切り離す
-                        if doc[i].pos_ == 'ADP' and doc[i].lemma_ == 'と':
-                            break
-                        ret['lemma'] = self.connect_word(doc[i].orth_, ret['lemma'])
-                        ret['lemma_start'] = i
-                        if len(doc) > i + 1 and doc[i + 1].pos_ == 'ADP' and doc[i + 1].lemma_ == 'を':
-                            return {'lemma': '', 'lemma_start': -1, 'lemma_end': -1}
+                    if('「' not in ret_subj["lemma"] and '”' not in ret_subj["lemma"]):
+                        for i in reversed(range(ret_subj['lemma_start'], ret_subj['lemma_end'] + 1)):  # 〇〇と〇〇　は切り離す
+                            if doc[i].pos_ == 'ADP' and doc[i].lemma_ == 'と':
+                                break
+                            ret['lemma'] = self.connect_word(doc[i].orth_, ret['lemma'])
+                            ret['lemma_start'] = i
+    #                        if len(doc) > i + 1 and doc[i + 1].pos_ == 'ADP' and doc[i + 1].lemma_ == 'を':
+    #                            return {'lemma': '', 'lemma_start': -1, 'lemma_end': -1}
+                    else:
+                        ret['lemma'] = ret_subj['lemma']
+                        ret['lemma_start'] = ret_subj['lemma_start']
                     return ret
+        # 〜して〜する〇〇　ただし　〜として〜する〇〇　は例外でだめ　
+        if (doc[verb_end_pt - 1].lemma_ != 'と' and len(doc) > verb_end_pt + 2 and doc[verb_end_pt + 1].tag_ == '助詞-接続助詞' and doc[verb_end_pt + 2].pos_ == 'VERB' and doc[doc[verb_end_pt + 2].head.i].pos_ == 'NOUN' and
+                ((self.rentai_check(doc[verb_end_pt + 2].i, *doc) or (doc[verb_end_pt + 2].morph.get("Inflection") and '連体形' in doc[verb_end_pt + 2].morph.get("Inflection")[0])) or
+                 (self.shuusi_check(doc[verb_end_pt + 2].i, *doc) or (doc[verb_end_pt + 2].morph.get("Inflection") and '終止' in doc[verb_end_pt + 2].morph.get("Inflection")[0])))):
+            if doc[verb_end_pt].head.i > verb_end_pt:
+                ret_subj = self.num_chunk(doc[verb_end_pt + 2].head.i, * doc)
+            else:
+                ret_subj = self.num_chunk(verb_end_pt + 3, *doc)
+            ret['lemma_end'] = ret_subj['lemma_end']
+            for i in reversed(range(ret_subj['lemma_start'], ret_subj['lemma_end'] + 1)):  # 〇〇と〇〇　は切り離す
+                if doc[i].pos_ == 'ADP' and doc[i].lemma_ == 'と':
+                    break
+                ret['lemma'] = self.connect_word(doc[i].orth_, ret['lemma'])
+                ret['lemma_start'] = i
+                if len(doc) > i + 1 and doc[i + 1].pos_ == 'ADP' and doc[i + 1].lemma_ == 'を':
+                    return {'lemma': '', 'lemma_start': -1, 'lemma_end': -1}
         # 〜をしている〇〇
-        if(doc[verb_pt].lemma_ == 'する' and doc[verb_pt - 1].lemma_ == 'を' and self.rentai_check(doc[verb_pt].i, *doc)):
-            ret_subj = self.num_chunk(doc[verb_pt].head.i, * doc)
+        if(doc[verb_end_pt].lemma_ == 'する' and doc[verb_end_pt - 1].lemma_ == 'を' and
+                ((self.rentai_check(doc[verb_end_pt].i, *doc) or (doc[verb_end_pt].morph.get("Inflection") and '連体形' in doc[verb_end_pt].morph.get("Inflection")[0])) or
+                 (self.shuusi_check(doc[verb_end_pt].i, *doc) or (doc[verb_end_pt].morph.get("Inflection") and '終止' in doc[verb_end_pt].morph.get("Inflection")[0])))):
+            if doc[verb_end_pt].head.i > verb_end_pt:
+                ret_subj = self.num_chunk(doc[verb_end_pt].head.i, * doc)
+            else:
+                ret_subj = self.num_chunk(verb_end_pt + 1, *doc)
+            ret['lemma_end'] = ret_subj['lemma_end']
+            for i in reversed(range(ret_subj['lemma_start'], ret_subj['lemma_end'] + 1)):  # 〇〇と〇〇　は切り離す
+                if doc[i].pos_ == 'ADP' and doc[i].lemma_ == 'と':
+                    break
+                ret['lemma'] = self.connect_word(doc[i].orth_, ret['lemma'])
+                ret['lemma_start'] = i
+                if len(doc) > i + 1 and doc[i + 1].pos_ == 'ADP' and doc[i + 1].lemma_ == 'を':
+                    return {'lemma': '', 'lemma_start': -1, 'lemma_end': -1}
+        # 〜〇〇とした（ている）〇〇
+        if(len(doc) > verb_end_pt + 2 and doc[doc[verb_end_pt].head.i].dep_ == 'acl' and doc[verb_end_pt + 1].lemma_ == 'と'and doc[verb_end_pt + 2].lemma_ == 'する' and
+                ((self.rentai_check(doc[verb_end_pt + 2].i, *doc)  or (doc[verb_end_pt + 2].morph.get("Inflection") and '連体形' in doc[verb_end_pt + 2].morph.get("Inflection")[0])) or
+                ((self.shuusi_check(doc[verb_end_pt + 2].i, *doc)  or (doc[verb_end_pt + 2].morph.get("Inflection") and '終止形' in doc[verb_end_pt + 2].morph.get("Inflection")[0]))))):
+            if doc[verb_end_pt].head.i > verb_end_pt:
+                ret_subj = self.num_chunk(doc[verb_end_pt].head.head.i, *doc)
+            else:
+                ret_subj = self.num_chunk(verb_end_pt + 1, *doc)
+            ret['lemma_end'] = ret_subj['lemma_end']
+            for i in reversed(range(ret_subj['lemma_start'], ret_subj['lemma_end'] + 1)):  # 〇〇と〇〇　は切り離す
+                if doc[i].pos_ == 'ADP' and doc[i].lemma_ == 'と':
+                    break
+                ret['lemma'] = self.connect_word(doc[i].orth_, ret['lemma'])
+                ret['lemma_start'] = i
+                if len(doc) > i + 1 and doc[i + 1].pos_ == 'ADP' and doc[i + 1].lemma_ == 'を':
+                    return {'lemma': '', 'lemma_start': -1, 'lemma_end': -1}
+        # 〜〇〇して〇〇する〇〇
+        if(len(doc) > verb_end_pt + 5 and doc[doc[verb_end_pt].head.i].dep_ == 'acl' and doc[verb_end_pt + 1].tag_ == '動詞-非自立可能' and doc[verb_end_pt + 2].tag_ == '助詞-接続助詞' and doc[verb_end_pt + 3].pos_ == 'VERB' and
+                ((self.rentai_check(doc[verb_end_pt + 3].i, *doc)  or (doc[verb_end_pt + 3].morph.get("Inflection") and '連体形' in doc[verb_end_pt + 3].morph.get("Inflection")[0])) or
+                ((self.shuusi_check(doc[verb_end_pt + 3].i, *doc)  or (doc[verb_end_pt + 3].morph.get("Inflection") and '終止形' in doc[verb_end_pt + 3].morph.get("Inflection")[0]))))):
+            if doc[verb_end_pt].head.i > verb_end_pt:
+                ret_subj = self.num_chunk(doc[verb_end_pt + 3].head.i, *doc)
+            else:
+                ret_subj = self.num_chunk(verb_end_pt + 4, *doc)
             ret['lemma_end'] = ret_subj['lemma_end']
             for i in reversed(range(ret_subj['lemma_start'], ret_subj['lemma_end'] + 1)):  # 〇〇と〇〇　は切り離す
                 if doc[i].pos_ == 'ADP' and doc[i].lemma_ == 'と':

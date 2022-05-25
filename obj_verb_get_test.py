@@ -12,7 +12,7 @@ out_file2 = open('result_nikkei.tsv', 'w')
 #"""
 for doc in solution:
   for sep_doc in doc.splitlines():
-    keyword_list = model.v_o_get2(sep_doc) # キーワードの候補の抽出
+    keyword_list = model.pas_get(sep_doc) # キーワードの候補の抽出
     out_file.write(keyword_list)
 out_file.close()
 """
