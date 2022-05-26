@@ -1,4 +1,5 @@
 from chunker import ChunkExtractor
+from  sub_verb_dic import SubVerbDic
 
 class VerbSpliter:
 
@@ -14,21 +15,14 @@ class VerbSpliter:
 
 
 
-    """
-    補助用言のチェック
-    """
 
-    # NG '発表', '実現', '拡大', '追加'
-    sub_verb_dic = ['開始', 'スタート', '始める', '始まる', '始動', '本格始動', '続ける', '終わる', '終る',
-                    '掲げる', '目指す', '達成', '予定', '計画', '実施', '行なう', '行う', '進める', '推進', '加速',
-                    '強化', '拡充', '活用', 'お知らせ', '決定', '記念',
-                    '発表', '報ずる', '検討', '公開', '図る', 'いたす', 'いただく', '目的とする', '目標とする']
 
     """
     補助動詞かどうかの判別
     """
     def sub_verb_chek(self, check_w):
-        for sub_verb_w in self.sub_verb_dic:
+        s_v_dic = SubVerbDic()
+        for sub_verb_w in s_v_dic.sub_verb_dic:
             if sub_verb_w in check_w:
 #            if check_w.startswith(sub_verb_w):
                 return True
@@ -74,10 +68,11 @@ class VerbSpliter:
     ret : 主述部　＋　補助術部　＋　主述始点　＋　主述部終点　＋　補助述部始点　＋　補助述部終点
     """
     def verb_devide(self, start, end, *doc):
+        s_v_dic = SubVerbDic()
         if start == end:
             return {'verb': self.compaound(start, end, *doc), 'sub_verb': '', 'verb_start': start, 'verb_end': end, 'sub_verb_start': -1, 'sub_verb_end': -1}
         for i in reversed(range(start, end + 1)):
-            if doc[i].norm_ in self.sub_verb_dic:
+            if doc[i].norm_ in s_v_dic.sub_verb_dic:
                 if doc[i - 1].tag_ != '名詞-普通名詞-サ変可能':  # 本格始動　など普通名詞との合成
                     if doc[end].tag_ == '名詞-普通名詞-サ変可能':
                         return {'verb': '', 'sub_verb': self.compaound(i, end, *doc) + 'する', 'verb_start': -1, 'verb_end': -1, 'sub_verb_start': i, 'sub_verb_end': end}

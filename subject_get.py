@@ -1,4 +1,5 @@
 from chunker import ChunkExtractor
+from special_verb import SpecialVerb
 
 class SubjectExtractor:
 
@@ -36,16 +37,6 @@ class SubjectExtractor:
                 find = True
         return find
 
-    campany_special_vaerb = [
-        'ある', 'おこなう', 'かかげる', 'かまえる', 'けん引', 'コンセプトと', 'コンセプトに', 'コントローラーに','コントロール',
-        'サポート', 'する', 'する', 'セットに', 'テーマに', 'ミッションと', 'ライトアップ','リード',
-        '運営', '営む', '遠隔管理', '応援', '解決', '開業', '開催', '開始','開発・運営', '開発・提供', '開発・販売', '成長',
-        '開発', '活用', '管理', '企画・開発','企画販売', '協賛', '強みと', '強化', '掲げる', '掲載', '経営', '公開',
-        '構える','構築', '行う', '行なう', '採用', '支援', '実現', '実行', '主力と', '取り扱う', '手がける','手掛ける',
-        '手伝い', '集める', '承る', '称', '進める', '図る', '推進', '生産', '製造・販売','製造', '製造販売', '説明',
-        '洗浄', '全国展開', '促進', '続ける', '担う', '置く','中心と', '提案', '提供', '展開', '得意と', '届ける','入れる',
-        '発行', '発信', '発売','発売', '発表', '販売', '販売開始', '務める', '目指す', '利用', '理念と', '立ち上げる', '抱える'
-    ]
 
     #
     #   直接つながる主語をサーチ
@@ -130,6 +121,7 @@ class SubjectExtractor:
         return self.subject_get_from_object2(verb_pt, ng_pt, *doc)
 
     def subject_get_from_object2(self, verb_pt, verb_end_pt, *doc):
+        s_v = SpecialVerb()
         ng_pt = verb_pt
         ret = {'lemma': '', 'lemma_start': -1, 'lemma_end': -1}
         # subjで直接接続をチェック
@@ -185,7 +177,7 @@ class SubjectExtractor:
                                                  ((self.rentai_check(doc[verb_end_pt].i, *doc) or (doc[verb_end_pt].morph.get("Inflection") and '連体形' in doc[verb_end_pt].morph.get("Inflection")[0])) or
                                                  (self.shuusi_check(doc[verb_end_pt].i, *doc) or (doc[verb_end_pt].morph.get("Inflection") and '終止' in doc[verb_end_pt].morph.get("Inflection")[0])))):
             if (doc[doc[verb_end_pt].head.i].pos_ == 'NOUN' or doc[doc[verb_end_pt].head.i].pos_ == 'PROPN' or doc[doc[verb_end_pt].head.i].pos_ == 'NUM'):
-#                if doc[verbverb_end_pt_pt].lemma_ in self.campany_special_vaerb:
+ #               if doc[verb_end_pt].lemma_ in s_v.campany_special_verb:
                     if doc[verb_end_pt].head.i > verb_end_pt:
                         ret_subj = self.num_chunk(doc[verb_end_pt].head.i, *doc)
                     else:
