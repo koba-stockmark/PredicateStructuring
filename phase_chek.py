@@ -7,18 +7,13 @@ class PhaseCheker:
         """
         関数`__init__`はクラスをインスタンス化した時に実行されます。
         """
-        chunker = ChunkExtractor()
-        self.connect_word = chunker.connect_word
-        self.num_chunk = chunker.num_chunk
-        self.compaound = chunker.compaound
-
-
 
     def phase_chek(self, start, end, obj_tart, obj_end, *doc):
+        chunker = ChunkExtractor()
         rule = PhaseRule()
         s_v_dic = SubVerbDic()
         ret = ''
-        verv_word = self.compaound(start ,end, *doc)
+        verv_word = chunker.compaound(start ,end, *doc)
         if(verv_word in rule.kousou_dic):
             ret = ret + '<構想・目標>,'
         if(verv_word in rule.kenkyuu_dic):
@@ -59,5 +54,24 @@ class PhaseCheker:
                         ret = ret + ret3
         return ret.rstrip(',')
 
+    #
+    #  マルチラバルをシングルラベルへ
+    #
+
+    def single_phase_get(self, phase):
+        kenkyu = ['構想・目標', '研究', '開発', '実験']
+        seihin = ['製品・サービス化', '更新', '参画', '利用']
+        sonota = ['中止', '参画', '利用', '組織変更', '連携', '告知', '手続き', 'その他']
+
+        for chek in seihin:
+            if chek in phase:
+                return '製品化・サービス化'
+        for chek in kenkyu:
+            if chek in phase:
+                return '研究・開発'
+        for chek in sonota:
+            if chek in phase:
+                return 'その他'
+        return ''
 
 

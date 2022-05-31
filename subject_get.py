@@ -114,13 +114,7 @@ class SubjectExtractor:
         in: 目的語ID
         return : 主語文字列　始点ノードID　終点ノードID
     """
-    def subject_get_from_object(self, obj_point, *doc):
-        ret = {'lemma': '', 'lemma_start': -1, 'lemma_end': -1}
-        ng_pt = obj_point
-        verb_pt = doc[obj_point].head.i
-        return self.subject_get_from_object2(verb_pt, ng_pt, *doc)
-
-    def subject_get_from_object2(self, verb_pt, verb_end_pt, *doc):
+    def subject_get_from_object(self, verb_pt, verb_end_pt, *doc):
         s_v = SpecialVerb()
         ng_pt = verb_pt
         ret = {'lemma': '', 'lemma_start': -1, 'lemma_end': -1}

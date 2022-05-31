@@ -43,13 +43,15 @@ class ParallelExtractor:
                         continue
 #                if token.tag_ == '名詞-普通名詞-サ変可能' and (doc[token.i + 1].pos_ == 'PUNCT' or doc[token.i + 1].pos_ == 'SYM'):  # サ変名詞、〇〇　は並列扱いしない
 #                    return '', 0, 0
-                if (doc[i].head.i >= sp and doc[i].head.i <= ep) and (doc[i + 1].lemma_ == 'と' or doc[i + 1].lemma_ == 'や' or doc[i + 1].lemma_ == 'など' or doc[i + 1].pos_ == 'PUNCT'):
+                if (doc[i].head.i >= sp and doc[i].head.i <= ep) and (doc[i + 1].lemma_ == 'と' or doc[i + 1].lemma_ == 'や' or doc[i + 1].lemma_ == 'など' or (doc[i + 1].pos_ == 'PUNCT' and doc[i + 1].tag_ != '補助記号-括弧開')):
+                    if len(doc) > i + 2 and doc[i + 1].pos_ == 'PUNCT' and doc[i + 2].lemma_ == 'を':
+                        break
                     ret.append((self.num_chunk(i, *doc)))
                     find_ct = find_ct + 1
                     sp = ret[find_ct - 1]['lemma_start']
                     ep = ret[find_ct - 1]['lemma_end']
                     continue
-                if (doc[i + 1].pos_ == 'ADP' and doc[i + 1].lemma_ != 'など'):
+                if (doc[i + 1].pos_ == 'ADP' and (doc[i + 1].lemma_ != 'など' or (len(doc) > i + 2 and doc[i + 2].lemma_ != 'の'))):
                     break
                 if (doc[i].head.head.i >= ep or doc[i].head.head.i < sp) and (doc[i].pos_ == 'NOUN' or doc[i].pos_ == 'PROPN') and\
                         (doc[i + 1].lemma_ == '、' or doc[doc[i].head.i].i == i + 1) and doc[doc[i].head.i].norm_ == '他' and doc[doc[i].head.i + 1].pos_ != 'ADP':
