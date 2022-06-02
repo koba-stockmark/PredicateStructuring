@@ -1,8 +1,8 @@
 import json
 import re
-from object_verb_structureing import PasExtractor
+from phase_extractor import PhaseExtractor
 
-model = PasExtractor() # KeywordExtractorのクラスのインスタンス化
+model = PhaseExtractor() # KeywordExtractorのクラスのインスタンス化
 
 articles = json.load(open('nikkei.json'))
 solution = open('solution_sentence.txt')

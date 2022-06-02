@@ -1,5 +1,3 @@
-import spacy
-from spacy.symbols import obj
 from chunker import ChunkExtractor
 from subject_get import SubjectExtractor
 from parallel_get import ParallelExtractor
@@ -11,7 +9,7 @@ from main_verb_chek import MainVerbChek
 from predicate_get import PredicateGet
 from data_dump import DataDumpSave
 
-class PasExtractor:
+class PasAnalysis:
 
     def __init__(self):
         """
@@ -19,7 +17,6 @@ class PasExtractor:
         """
 
 
-        self.nlp = spacy.load('ja_ginza_electra')  # Ginzaのロード　tranceferモデル
         chunker = ChunkExtractor()
         self.num_chunk = chunker.num_chunk
         self.verb_chunk = chunker.verb_chunk
@@ -51,41 +48,26 @@ class PasExtractor:
         self.data_dump_and_save2 = d_d_s.data_dump_and_save2
 
     """
-    フェーズの取得
-    """
-
-    def phase_get(self, text):
-        return self.pas_get(text)
-
-    """
-    述部の探索
-    """
-    def predicate_search(self, *doc):
-        for token in doc:
-            if(token.pos_ == 'VERB'):
-                self.predicate_phrase_get(token.i, *doc)
-        return ret
-
-    """
     主述部と補助術部に別れた述語項構造の取得
     """
 
-    def pas_get(self, text):
+    def pas_analysis(self, debug, text, *doc):
 
-        ret = ''
-        dummy_subj = {}
-        para_subj = [{'lemma': '', 'lemma_start': -1, 'lemma_end': -1}]
-        # 形態素解析を行い、各形態素に対して処理を行う。
-        doc = self.nlp(text)  # 文章を解析
+        argument = []
+        all_predict = []
+        ret = {}
         verb_end = -1
-        pre_rentai_subj = False
-        predicate_id = 0
-        single_phase = ''
+        predicate_id = -1
+        d_ret = ''
 
         for token in doc:
+            predicate = {}
             subject_w = ''
+            dummy_subj = {}
             sub_verb_w = ''
             sub_verb = {}
+            para_subj = [{'lemma': '', 'lemma_start': -1, 'lemma_end': -1}]
+            pre_rentai_subj = False
             #
             #  述部の検索
             #
@@ -158,27 +140,30 @@ class PasExtractor:
                     find_f = True
                     argument_map += [i]
 
-            #
+            #######################################
             #  PASの作成
-            #
-            argument = []
+            #######################################
             #
             #  主語のセット
             #
+            predicate_id = predicate_id + 1
             if subject_w:
                 ret_subj["case"] = subj_case
                 ret_subj["dummy"] = False
                 ret_subj["subject"] = True
+                ret_subj["predicate_id"] = predicate_id
                 argument.append(ret_subj)
                 if para_subj and para_subj[0]['lemma']:
                     for p_subj in para_subj:
                         p_subj["case"] = subj_case
                         p_subj["dummy"] = False
                         p_subj["subject"] = True
+                        p_subj["predicate_id"] = predicate_id
                         argument.append(p_subj)
             elif dummy_subj:
                 dummy_subj["dummy"] = True
                 dummy_subj["subject"] = True
+                dummy_subj["predicate_id"] = predicate_id
                 argument.append(dummy_subj)
             # 項のセット
             argument_id = 0
@@ -217,6 +202,7 @@ class PasExtractor:
                     ret_obj["case"] = case
                     ret_obj["subject"] = False
                     ret_obj["id"] = argument_id
+                    ret_obj["predicate_id"] = predicate_id
                     argument_id = argument_id + 1
                     argument.append(ret_obj)
                     if para_obj and para_obj[0]["lemma"]:
@@ -224,6 +210,7 @@ class PasExtractor:
                             p_obj["case"] = case
                             p_obj["subject"] = False
                             p_obj["id"] = argument_id
+                            p_obj["predicate_id"] = predicate_id
                             argument_id = argument_id + 1
                             argument.append(p_obj)
                     #
@@ -236,29 +223,14 @@ class PasExtractor:
                                 break
 
             # データダンプ
-            if find_f:
-                ret = ret + self.data_dump_and_save(text, argument, verb)
+            if find_f and debug:
+                d_ret = d_ret + self.data_dump_and_save(text, argument, verb, predicate_id)
             ##########################################################################################
-            #  メイン術部の分割処理
+            #  メイン術部の分割処理   すべての項に対してチェックして最終的な述部を判断する
             ##########################################################################################
-            main_verb = False
-            phase = ''
-            predicate = {}
             for re_arg in argument:
-                re_arg["phase"] = ''
-                case = re_arg["case"]
-                if case == 'は' or case == 'が':
-                    if len(argument) != 1:
-                        continue
-                ##########################################################################################################################################
-                #    メイン述部の判断
-                #              目的語のかかる先が　メイン述部　か　メイン述部＋補助述部　かの判断
-                #              出力は　目的語　＋　メイン述部　＋　補助述部　にする
-                ##########################################################################################################################################
-                v_rule_id = self.main_verb_chek(token.i, *doc)
-                if v_rule_id > 0:
-                    rule_id = v_rule_id
-                    main_verb = True
+                if predicate_id != re_arg["predicate_id"]:
+                    continue
 
                 ##########################################################################################################################################
                 #   述部加工処理用に現在の述部を記憶する
@@ -334,65 +306,39 @@ class PasExtractor:
                     verb["lemma_start"] = sub_verb["lemma_start"]
                     verb["lemma_end"] = sub_verb['lemma_end']
 
-                ##########################################################################################################################################
-                #    最終的な述部の整理
-                ##########################################################################################################################################
-                predicate["id"] = predicate_id
-                predicate["lemma"] = verb["lemma"]
-                predicate["lemma_start"] = verb["lemma_start"]
-                predicate["lemma_end"] = verb["lemma_end"]
-                predicate["orth"] = verb_w
-                predicate["modality"] = ', '.join([str(x) for x in modality_w])
-                predicate["rule_id"] = rule_id
-                if sub_verb and sub_verb_w:
-                    predicate["sub_lemma"] = sub_verb["lemma"]
-                    predicate["sub_lemma_start"] = sub_verb["lemma_start"]
-                    predicate["sub_lemma_end"] = sub_verb["lemma_end"]
-                    predicate["sub_orth"] = sub_verb_w
-                else:
-                    predicate["sub_lemma"] = ''
-                    predicate["sub_lemma_start"] = ''
-                    predicate["sub_lemma_end"] = ''
-                    predicate["sub_orth"] = ''
-                predicate_id = predicate_id + 1
+            ##########################################################################################################################################
+            #    最終的な述部の整理
+            ##########################################################################################################################################
+            predicate["id"] = predicate_id
+            predicate["lemma"] = verb["lemma"]
+            predicate["lemma_start"] = verb["lemma_start"]
+            predicate["lemma_end"] = verb["lemma_end"]
+            predicate["orth"] = verb_w
+            predicate["modality"] = ', '.join([str(x) for x in modality_w])
+            predicate["rule_id"] = rule_id
+            if sub_verb and sub_verb_w:
+                predicate["sub_lemma"] = sub_verb["lemma"]
+                predicate["sub_lemma_start"] = sub_verb["lemma_start"]
+                predicate["sub_lemma_end"] = sub_verb["lemma_end"]
+                predicate["sub_orth"] = sub_verb_w
+            else:
+                predicate["sub_lemma"] = ''
+                predicate["sub_lemma_start"] = ''
+                predicate["sub_lemma_end"] = ''
+                predicate["sub_orth"] = ''
+            ##########################################################################################################################################
+            #    メイン述部の判断
+            #              目的語のかかる先が　メイン述部　か　メイン述部＋補助述部　かの判断
+            #              出力は　目的語　＋　メイン述部　＋　補助述部　にする
+            ##########################################################################################################################################
+            predicate["main"] = False
+            v_rule_id = self.main_verb_chek(token.i, *doc)
+            if v_rule_id > 0:
+                predicate["main_rule_id"] = v_rule_id
+                predicate["main"] = True
+            all_predict.append(predicate)
 
-                ##########################################################################################################################################
-                #    主述部のフェイズチェック
-                ##########################################################################################################################################
-                if main_verb:
-                    phase = self.phase_chek(verb["lemma_start"], verb["lemma_end"], re_arg['lemma_start'], re_arg['lemma_end'], *doc)
-                    if sub_verb:
-                        add_phase = self.phase_chek(sub_verb["lemma_start"], sub_verb["lemma_end"],re_arg['lemma_start'], re_arg['lemma_end'], *doc)
-                        for append in add_phase.split(','):  # 重複は登録しない
-                            if append != '<その他>' and append != '<告知>' and append not in phase:
-                                phase = phase + ',' + append
-                    re_arg["phase"] = phase
+        ret["argument"] = argument
+        ret["predicate"] = all_predict
 
-                single_phase = self.single_phase_get(phase)
-            # データダンプ
-            if (main_verb):
-                ret = ret + self.data_dump_and_save2(text, argument, predicate)
-        return ret
-##        return single_phase
-
-
-
-    def text_treace(self, text):
-        """
-        デバッグ用に結果を表示
-        """
-        doc = self.nlp(text)
-
-        for token in doc:
-            print(
-                token.i,
-                token.orth_,
-                token.lemma_,
-                token.norm_,
-                token.morph.get("Reading"),
-                token.pos_,
-                token.morph.get("Inflection"),
-                token.tag_,
-                token.dep_,
-                token.head.i,
-            )
+        return ret, d_ret

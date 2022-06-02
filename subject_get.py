@@ -11,6 +11,7 @@ class SubjectExtractor:
         self.num_chunk = chunker.num_chunk
         self.head_connect_check = chunker.head_connect_check
         self.connect_word = chunker.connect_word
+        self.case_get = chunker.case_get
 
 
     """
@@ -131,7 +132,8 @@ class SubjectExtractor:
                     return ret
         # oblで直接接続をチェック
         for token in doc:
-            if token.dep_ == "obl" and doc[token.i + 1].lemma_ == 'で' and doc[token.i + 2].lemma_ == 'は' and token.head.i == verb_pt and token.i != ng_pt and token.tag_ != '名詞-普通名詞-副詞可能':
+            case = self.case_get(token.i, *doc)
+            if token.dep_ == "obl" and (case == 'では' or case == 'が') and token.head.i == verb_pt and token.i != ng_pt and token.tag_ != '名詞-普通名詞-副詞可能':
                 return self.direct_connect_chek(token.i, *doc)
         # oblで間接接続をチェック
         for i in range(0, verb_pt):

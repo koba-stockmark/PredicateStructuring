@@ -1,6 +1,6 @@
 import json
 import re
-from object_verb_structureing import VerbExtractor
+from phase_extractor import VerbExtractor
 
 model = VerbExtractor() # KeywordExtractorのクラスのインスタンス化
 

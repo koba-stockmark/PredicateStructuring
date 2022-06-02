@@ -75,3 +75,22 @@ class PhaseCheker:
         return ''
 
 
+    ##########################################################################################################################################
+    #    主述部のフェイズチェック
+    ##########################################################################################################################################
+
+    def phase_get_and_set(self, predicate, argument, *doc):
+        phase = ''
+        for chek_predicate in predicate:
+            if chek_predicate["main"]:
+                for re_arg in argument:
+                    if chek_predicate["id"] != re_arg["predicate_id"]:
+                        continue
+                    phase = self.phase_chek(chek_predicate["lemma_start"], chek_predicate["lemma_end"], re_arg['lemma_start'], re_arg['lemma_end'], *doc)
+                    if chek_predicate["sub_lemma"]:
+                        add_phase = self.phase_chek(chek_predicate["sub_lemma_start"], chek_predicate["sub_lemma_end"],re_arg['lemma_start'], re_arg['lemma_end'], *doc)
+                        for append in add_phase.split(','):  # 重複は登録しない
+                            if append != '<その他>' and append != '<告知>' and append not in phase:
+                                phase = phase + ',' + append
+                    re_arg["phase"] = phase
+        return self.single_phase_get(phase)
