@@ -145,6 +145,17 @@ class ChunkExtractor:
                 append_o = token.orth_
                 append_l = token.lemma_
                 end_pt = end_pt + 1
+            # 形式名詞の追加
+            elif ((token.lemma_ == 'もの' or token.lemma_ == 'こと' or token.lemma_ == '可能性' or token.lemma_ == 'とき' or token.lemma_ == '場合') and
+                    len(doc) > token.i + 2 and doc[token.i + 1].lemma_ == 'が' and doc[token.i + 2].lemma_ == 'ある'):
+                if find_f:
+                    ret = ret + append_o
+                find_f = True
+                append_o = tail_o + token.orth_ + doc[token.i + 1].orth_ + doc[token.i + 2].orth_
+                append_l = tail_o + token.orth_ + doc[token.i + 1].orth_ + doc[token.i + 2].lemma_
+                end_pt = token.i + 2
+                tail_o = ''
+                tail_ct = 0
             # 語幹以外の助動詞部の追加
             elif token.pos_ == 'AUX' or token.pos_ == 'SCONJ' or token.pos_ == 'VERB' or token.pos_ == 'PART' or token.pos_ == 'ADJ' or token.tag_ == '名詞-普通名詞-サ変可能':          # 句情報用に助動詞を集める。  〇〇開始　〇〇する計画　などの時制も　含める
                 tail_o = tail_o + token.orth_
@@ -175,8 +186,6 @@ class ChunkExtractor:
                 pre = ''
                 for i in range(adv_verb["lemma_start"], pt):
                     pre = pre + doc[i].orth_
-
-
 
         if(find_f):
             ret_lemma = pre + doc[pt].orth_ + ret + append_l

@@ -47,6 +47,8 @@ class CaseExtractor:
                             ret = 'に対して'
                         elif len(doc) > i + 2 and doc[i].lemma_ == 'に' and doc[i + 1].orth_ == 'よっ' and doc[i + 2].orth_ == 'て':
                             ret = 'によって'
+                        elif len(doc) > i + 2 and doc[i].lemma_ == 'に' and doc[i + 1].orth_ == 'よる' and doc[i + 2].orth_ == 'と':
+                            ret = 'によると'
                         elif doc[i].lemma_ == 'に' and doc[i + 1].orth_ == 'より':
                             ret = 'により'
                         elif doc[i].lemma_ == 'の' and doc[i + 1].norm_ == '為':

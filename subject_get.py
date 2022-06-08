@@ -145,7 +145,7 @@ class SubjectExtractor:
                     return ret
         # dislocatedで直接接続をチェック
         for token in doc:
-            if (token.dep_ == "dislocated" and (token.head.i == verb_pt and token.i != ng_pt and token.tag_ != '名詞-普通名詞-副詞可能')):
+            if (token.dep_ == "dislocated" and ((token.head.i == verb_pt or token.head.i == verb_end_pt) and token.i != ng_pt and token.tag_ != '名詞-普通名詞-副詞可能')):
                 return self.direct_connect_chek(token.i, *doc)
         # dislocatedで間接接続をチェック
         for i in range(0, verb_pt):

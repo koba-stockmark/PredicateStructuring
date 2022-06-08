@@ -87,7 +87,7 @@ class PasAnalysis:
             modality_w = verb["modality"]
             rule_id = verb["rule_id"]
             verb_rule_id = rule_id
-            if len(doc) > verb_end + 1 and doc[verb_end + 1].norm_ == '為る':
+            if len(doc) > verb_end + 1 and doc[verb_end + 1].norm_ == '為る': # 体言どめ用の補正
                 verb_end = verb_end + 1
             if not verb_w:
                 continue
@@ -140,8 +140,7 @@ class PasAnalysis:
                         if doc[i].head.head.i == token.i or (doc[i].head.morph.get("Inflection") and '連用形' not in doc[i].head.morph.get("Inflection")[0]):  # 連用形接続でもつながらない
                             if (doc[doc[i].head.i + 1].tag_ != '接尾辞-形容詞的' and (doc[doc[i].head.i].tag_ != '名詞-普通名詞-副詞可能' or doc[doc[i].head.i].lemma_ == 'ため' or doc[doc[i].head.i].lemma_ == '前')) or doc[i].head.head.pos_ == 'NOUN':
                                 continue
-#                        elif doc[i].head.pos_ == 'VERB' and doc[i].head.head.i == verb["lemma_start"] and rule_id == 28:  # rule_id 28 の特別処理　「ツールをより使いやすく、バージョンアップ」
-                        elif doc[i].head.pos_ == 'VERB' and doc[i].head.head.i == verb["lemma_start"]:  # rule_id 28 の特別処理　「ツールをより使いやすく、バージョンアップ」
+                        elif doc[i].head.pos_ == 'VERB' and doc[i].head.head.i == verb["lemma_start"]:  # 特別処理　「ツールをより使いやすく、バージョンアップ」
                             if len(doc) > doc[i].head.i + 1 and doc[doc[i].head.i + 1].pos_ == 'AUX' and doc[i].head.head.pos_ == 'NOUN' and len(doc) > doc[i].head.head.i + 1 and doc[doc[i].head.head.i + 1].lemma_ == 'する':
                                 pass
                             else:
