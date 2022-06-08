@@ -117,7 +117,7 @@ class SubjectExtractor:
         in: 目的語ID
         return : 主語文字列　始点ノードID　終点ノードID
     """
-    def subject_get_from_object(self, verb_pt, verb_end_pt, *doc):
+    def subject_get(self, verb_pt, verb_end_pt, *doc):
         s_v = SpecialVerb()
         ng_pt = verb_pt
         ret = {'lemma': '', 'lemma_start': -1, 'lemma_end': -1}

@@ -2,7 +2,7 @@ from chunker import ChunkExtractor
 from subject_get import SubjectExtractor
 from parallel_get import ParallelExtractor
 from predicate_split import VerbSpliter
-from phase_chek import PhaseCheker
+from phase_check import PhaseCheker
 from kanyouku_check import KanyoukuExtractor
 from case_information_get import CaseExtractor
 
@@ -21,7 +21,7 @@ class PredicatePhraseExtractor:
         c_g = CaseExtractor()
         self.case_get = c_g.case_get
         s_g = SubjectExtractor()
-        self.subject_get = s_g.subject_get_from_object
+        self.subject_get = s_g.subject_get
         self.rentai_check = s_g.rentai_check
         p_g = ParallelExtractor()
         self.para_get = p_g.para_get

@@ -1,5 +1,5 @@
 import spacy
-from phase_chek import PhaseCheker
+from phase_check import PhaseCheker
 from data_dump import DataDumpSave
 from pas_analysis import PasAnalysis
 

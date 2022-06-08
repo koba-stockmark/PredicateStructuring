@@ -4,10 +4,10 @@ from case_information_get import CaseExtractor
 from subject_get import SubjectExtractor
 from parallel_get import ParallelExtractor
 from predicate_split import VerbSpliter
-from phase_chek import PhaseCheker
+from phase_check import PhaseCheker
 from kanyouku_check import KanyoukuExtractor
 from predicate_phrase_analysis import PredicatePhraseExtractor
-from main_verb_chek import MainVerbChek
+from main_verb_check import MainVerbChek
 from predicate_get import PredicateGet
 from data_dump import DataDumpSave
 
@@ -26,7 +26,7 @@ class PasAnalysis:
         c_get = CaseExtractor()
         self.case_get = c_get.case_get
         s_g = SubjectExtractor()
-        self.subject_get = s_g.subject_get_from_object
+        self.subject_get = s_g.subject_get
         self.rentai_check = s_g.rentai_check
         p_g = ParallelExtractor()
         self.para_get = p_g.para_get
@@ -92,6 +92,17 @@ class PasAnalysis:
             if not verb_w:
                 continue
             #
+            #  補助用言を含む述部の範囲を判別
+            #
+            predicate_start = verb["lemma_start"]
+            predicate_end = verb["lemma_end"]
+            for check in doc[verb["lemma_end"] + 1:]:
+#                if check.head.i <= verb["lemma_end"] or check.dep_ == 'ROOT':
+                if check.head.i <= verb["lemma_end"]:
+                    predicate_end = predicate_end + 1
+                else:
+                    break
+            #
             #  主語の検索
             #
             ret_subj = self.subject_get(token.i, verb["lemma_end"], *doc)
@@ -134,7 +145,8 @@ class PasAnalysis:
                         (doc[i].dep_ == "obl" and
                          (doc[i].norm_ != 'そこ' and doc[i].norm_ != 'それ') and
                          (doc[i].tag_ != '名詞-普通名詞-副詞可能' or doc[i].norm_ == '為' or doc[i].norm_ == '下') and (doc[i].norm_ != '度' or doc[i - 1].pos_ == 'NUM'))):  # この度　はNG
-                    if doc[i].head.i < verb["lemma_start"] or doc[i].head.i > verb["lemma_end"]:  # 述部に直接かからない
+#                    if doc[i].head.i < verb["lemma_start"] or doc[i].head.i > verb["lemma_end"]:  # 述部に直接かからない
+                    if doc[i].head.i < predicate_start or doc[i].head.i > predicate_end:  # 述部に直接かからない
                         #                        continue
                         #####  要検討　条件をもっと追加しないと余計なものができる
                         if doc[i].head.head.i == token.i or (doc[i].head.morph.get("Inflection") and '連用形' not in doc[i].head.morph.get("Inflection")[0]):  # 連用形接続でもつながらない

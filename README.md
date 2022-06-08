@@ -39,10 +39,10 @@ debugモードのときは解析結果のログ(tsv)が出力となる。
 
 
 ### ライブラリ
-+ phase_chek.py (述語項構造からフェーズの獲得)
-+ main_verb_chek.py (主述部か補助述部かの判断)
++ phase_check.py (述語項構造からフェーズの獲得)
++ main_verb_check.py (主述部か補助述部かの判断)
 + pas_analysis.py (述語項構造の作成)
-+ predicate_get.py (基本術部から主述部と補助述部に別れた述部の獲得)
++ predicate_get.py (述部の判断と基本術部の獲得)
 + predicate_phrase_analysis.py　（基本述部の解析。結合するとルールIDも返る）
 + predicate_split.py　（主述部と補助述部の分離処理）
 + case_information_get.py　（格情報の獲得）
