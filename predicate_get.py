@@ -1,4 +1,4 @@
-from verb_phrase_get import VerbPhraseExtractor
+from predicate_phrase_analysis import PredicatePhraseExtractor
 class PredicateGet:
 
     def __init__(self):
@@ -8,8 +8,8 @@ class PredicateGet:
 
 
 
-        v_x = VerbPhraseExtractor()
-        self.predicate_phrase_get = v_x.predicate_phrase_get
+        p_x = PredicatePhraseExtractor()
+        self.predicate_phrase_get = p_x.predicate_phrase_get
 
     """
     主述部と補助術部に別れた述語項構造の取得

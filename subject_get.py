@@ -1,5 +1,6 @@
 from chunker import ChunkExtractor
-from special_verb import SpecialVerb
+from special_verb_dic import SpecialVerb
+from case_information_get import CaseExtractor
 
 class SubjectExtractor:
 
@@ -11,7 +12,8 @@ class SubjectExtractor:
         self.num_chunk = chunker.num_chunk
         self.head_connect_check = chunker.head_connect_check
         self.connect_word = chunker.connect_word
-        self.case_get = chunker.case_get
+        c_g = CaseExtractor()
+        self.case_get = c_g.case_get
 
 
     """
@@ -184,11 +186,13 @@ class SubjectExtractor:
                             if doc[i].pos_ == 'ADP' and doc[i].lemma_ == 'と':
                                 break
                             ret['lemma'] = self.connect_word(doc[i].orth_, ret['lemma'])
+                            ret['rentai_subject'] = True
                             ret['lemma_start'] = i
     #                        if len(doc) > i + 1 and doc[i + 1].pos_ == 'ADP' and doc[i + 1].lemma_ == 'を':
     #                            return {'lemma': '', 'lemma_start': -1, 'lemma_end': -1}
                     else:
                         ret['lemma'] = ret_subj['lemma']
+                        ret['rentai_subject'] = True
                         ret['lemma_start'] = ret_subj['lemma_start']
                     return ret
         # 〜して〜する〇〇　ただし　〜として〜する〇〇　は例外でだめ　
@@ -204,6 +208,7 @@ class SubjectExtractor:
                 if doc[i].pos_ == 'ADP' and doc[i].lemma_ == 'と':
                     break
                 ret['lemma'] = self.connect_word(doc[i].orth_, ret['lemma'])
+                ret['rentai_subject'] = True
                 ret['lemma_start'] = i
                 if len(doc) > i + 1 and doc[i + 1].pos_ == 'ADP' and doc[i + 1].lemma_ == 'を':
                     return {'lemma': '', 'lemma_start': -1, 'lemma_end': -1}
@@ -220,6 +225,7 @@ class SubjectExtractor:
                 if doc[i].pos_ == 'ADP' and doc[i].lemma_ == 'と':
                     break
                 ret['lemma'] = self.connect_word(doc[i].orth_, ret['lemma'])
+                ret['rentai_subject'] = True
                 ret['lemma_start'] = i
                 if len(doc) > i + 1 and doc[i + 1].pos_ == 'ADP' and doc[i + 1].lemma_ == 'を':
                     return {'lemma': '', 'lemma_start': -1, 'lemma_end': -1}
@@ -236,6 +242,7 @@ class SubjectExtractor:
                 if doc[i].pos_ == 'ADP' and doc[i].lemma_ == 'と':
                     break
                 ret['lemma'] = self.connect_word(doc[i].orth_, ret['lemma'])
+                ret['rentai_subject'] = True
                 ret['lemma_start'] = i
                 if len(doc) > i + 1 and doc[i + 1].pos_ == 'ADP' and doc[i + 1].lemma_ == 'を':
                     return {'lemma': '', 'lemma_start': -1, 'lemma_end': -1}
@@ -252,6 +259,7 @@ class SubjectExtractor:
                 if doc[i].pos_ == 'ADP' and doc[i].lemma_ == 'と':
                     break
                 ret['lemma'] = self.connect_word(doc[i].orth_, ret['lemma'])
+                ret['rentai_subject'] = True
                 ret['lemma_start'] = i
                 if len(doc) > i + 1 and doc[i + 1].pos_ == 'ADP' and doc[i + 1].lemma_ == 'を':
                     return {'lemma': '', 'lemma_start': -1, 'lemma_end': -1}

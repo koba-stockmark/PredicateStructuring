@@ -1,13 +1,12 @@
-import spacy
-from spacy.symbols import obj
 from chunker import ChunkExtractor
 from subject_get import SubjectExtractor
 from parallel_get import ParallelExtractor
-from verb_split import VerbSpliter
+from predicate_split import VerbSpliter
 from phase_chek import PhaseCheker
 from kanyouku_check import KanyoukuExtractor
+from case_information_get import CaseExtractor
 
-class VerbPhraseExtractor:
+class PredicatePhraseExtractor:
 
     def __init__(self):
         """
@@ -15,12 +14,12 @@ class VerbPhraseExtractor:
         """
 
 
-        self.nlp = spacy.load('ja_ginza_electra')  # Ginzaのロード　tranceferモデル
         chunker = ChunkExtractor()
         self.num_chunk = chunker.num_chunk
         self.verb_chunk = chunker.verb_chunk
-        self.case_get = chunker.case_get
         self.compaound = chunker.compaound
+        c_g = CaseExtractor()
+        self.case_get = c_g.case_get
         s_g = SubjectExtractor()
         self.subject_get = s_g.subject_get_from_object
         self.rentai_check = s_g.rentai_check
@@ -179,7 +178,7 @@ class VerbPhraseExtractor:
         #   〇〇　＋　を　＋　〇〇(名詞) + 、+ ... 　
         #
         elif (len(doc) > doc[pt].i + 1 and (doc[pt].pos_ == 'NOUN' and doc[pt].tag_ != '接尾辞-名詞的-副詞可能' and doc[pt].tag_ != '接尾辞-名詞的-助数詞' and doc[pt].tag_ != '名詞-普通名詞-助数詞可能') and
-              doc[pt].tag_ != '名詞-普通名詞-形状詞可能' and doc[doc[pt].i + 1].tag_ == '補助記号-読点'):
+              doc[pt].tag_ != '名詞-普通名詞-形状詞可能' and doc[pt].tag_ != '名詞-普通名詞-副詞可能' and doc[doc[pt].i + 1].tag_ == '補助記号-読点'):
 #            verb = self.num_chunk(doc[pt].i, *doc)
             verb = self.verb_chunk(doc[pt].i, *doc)
             verb_w = verb["lemma"] + '(する)'
@@ -305,12 +304,13 @@ class VerbPhraseExtractor:
                 modality_w = verb["modality"]
                 rule_id = 27
             ###############################
-            #    単独の動詞　普通名詞　〇〇　＋　を　＋　動詞　＋　形容詞　＋　〇〇　＋　する　ex.　使いやすくバージョンアップする。
+            #    単独の動詞　普通名詞　A〇〇　＋　を　＋　B動詞(使い)　＋　形容詞(やすく)　＋　C〇〇　＋　する　ex.　使いやすくバージョンアップする。  A-B の係り関係から A-C を作る
             ###############################
-            elif (len(doc) > doc[pt].i + 1 and doc[doc[pt].i + 1].pos_ == 'AUX'  and doc[pt].head.pos_ == 'NOUN' and doc[doc[pt].head.i + 1].lemma_ == 'する'):
+            elif (len(doc) > doc[pt].i + 1 and doc[doc[pt].i + 1].pos_ == 'AUX'  and doc[pt].head.pos_ == 'NOUN' and len(doc) > doc[pt].head.i + 1 and doc[doc[pt].head.i + 1].lemma_ == 'する'):
                 verb = self.verb_chunk(doc[pt].head.i, *doc)
                 verb_w = verb["lemma"] + 'する'
-                verb["lemma_end"] = verb["lemma_end"] + 1
+#                verb["lemma_end"] = verb["lemma_end"] + 1
+                verb["lemma_end"] = verb["lemma_end"]
                 modality_w = verb["modality"]
                 rule_id = 28
                 #### このルールだけ特別

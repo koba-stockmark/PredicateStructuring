@@ -1,5 +1,6 @@
 from chunker import ChunkExtractor
-from  sub_verb_dic import SubVerbDic
+from sub_verb_dic import SubVerbDic
+from case_information_get import CaseExtractor
 
 class VerbSpliter:
 
@@ -11,6 +12,8 @@ class VerbSpliter:
         self.connect_word = chunker.connect_word
         self.num_chunk = chunker.num_chunk
         self.compaound = chunker.compaound
+        c_g = CaseExtractor()
+        self.case_get = c_g.case_get
 
 
 
@@ -45,18 +48,20 @@ class VerbSpliter:
     ret : 目的語　＋　主述部　＋　主述始点　＋　主述部終点
     """
     def object_devide(self, start, end, *doc):
-        if start == end or doc[end].lemma_ == 'サービス':
-            return {'object': self.compaound(start, end, *doc), 'verb': '', 'verb_start': -1, 'verb_end': -1}
+#        if start == end or doc[end].lemma_ == 'サービス':
+#            return {'object': self.compaound(start, end, *doc), 'verb': '', 'verb_start': -1, 'verb_end': -1}
+        if start == end:
+            if (doc[start - 1].lemma_ == 'と' or doc[start - 1].lemma_ == 'や') and self.case_get(start, *doc) == 'を':
+                return {'object': '', 'verb': self.compaound(start, end, *doc) + 'する', 'verb_start': start, 'verb_end': end}
+            else:
+                return {'object': self.compaound(start, end, *doc), 'verb': '', 'verb_start': -1, 'verb_end': -1}
         for i in reversed(range(start, end + 1)):
             if doc[i].pos_ == 'PUNCT':
                 break
-#            if doc[i].lemma_ == 'の' and doc[i - 1].lemma_ != 'へ' and doc[i].pos_ == 'ADP':      # の　で分割。　への　は例外
-            if doc[i].lemma_ == 'の' and doc[i].pos_ == 'ADP':      # の　で分割。　への　は例外
+            if doc[i].lemma_ == 'の' and doc[i].pos_ == 'ADP' and doc[i + 1].pos_ != 'ADJ':      # の　で分割。　への　は例外
                 if doc[end].tag_ == '名詞-普通名詞-サ変可能' and i + 4 >= end:    # 述部の複合語を4語まで許す
-#                if doc[end].tag_ == '名詞-普通名詞-サ変可能':
-#                    return self.compaound(start, i - 1, *doc), self.compaound(i + 1, end, *doc) + 'する', i + 1, end
                     return {'object': self.compaound(start, i - 1, *doc), 'verb': self.compaound(i + 1, end, *doc) + 'する', 'verb_start': i + 1, 'verb_end': end}
-            elif doc[i].lemma_ == 'こと':
+            elif doc[i].lemma_ == 'こと':         # 〇〇することの発表を＋行う
                 if doc[i - 1].lemma_ == 'する':
                     return {'object': self.object_serch(start, * doc), 'verb': self.compaound(start, i - 2, *doc) + 'する', 'verb_start': start, 'verb_end': end - 2}
         return {'object': self.compaound(start, end, *doc), 'verb': '', 'verb_start': -1, 'verb_end': -1}

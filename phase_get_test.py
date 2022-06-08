@@ -1,8 +1,8 @@
 import json
 import re
-from phase_extractor import VerbExtractor
+from phase_extractor import PhaseExtractor
 
-model = VerbExtractor() # KeywordExtractorのクラスのインスタンス化
+model = PhaseExtractor() # KeywordExtractorのクラスのインスタンス化
 
 articles = json.load(open('nikkei.json'))
 solution = open('solution_sentence.txt')
@@ -11,7 +11,7 @@ out_file = open('phase_result.tsv', 'w')
 #"""
 for doc in solution:
   for sep_doc in doc.splitlines():
-    keyword_list = model.phase_get(sep_doc) # キーワードの候補の抽出
+    keyword_list = model.single_phase_extract(sep_doc) # キーワードの候補の抽出
     ret = sep_doc + '\t' + keyword_list + '\n'
     print(ret)
     out_file.write(ret)

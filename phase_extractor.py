@@ -46,18 +46,20 @@ class PhaseExtractor:
         pas_result = self.pas_analysis(debug, text, *doc)
         argument = pas_result[0]["argument"]
         predicate = pas_result[0]["predicate"]
-        # デバッグ表示データ
-        ret = ret + pas_result[1]
-        # デバッグ表示データ
+        # デバッグ表示用解析データ
+        if debug:
+            ret = ret + pas_result[1]
+        # デバッグ表示用解析データ
         ##########################################################################################################################################
         #    主述部のフェイズチェック
         ##########################################################################################################################################
         single_phase = self.phase_get_and_set(predicate, argument, *doc)
-        # デバッグ表示データ
+        # デバッグ表示用解析データ
         if debug:
             ret = ret + self.data_dump_and_save2(text, argument, predicate)
+            print(single_phase)
             return ret
-        # デバッグ表示データ
+        # デバッグ表示用解析データ
         return single_phase
 
 
