@@ -79,6 +79,8 @@ class CaseExtractor:
 #                        ret = ret + doc[i].lemma_
 #                    else:
 #                        return ret
+            elif token.tag_ == '助動詞' and token.orth_ == 'に':
+                ret = ret + token.orth_
             elif token.head.i > pt:
                 break
         if open_f and not ret:  # カッコのバランスが悪い場合は、カッコ内も対象にする

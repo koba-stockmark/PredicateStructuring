@@ -16,6 +16,31 @@ class ChunkExtractor:
     つながる場合はc_ptはh_ptの修飾部
     """
 
+    """
+    名詞＋動詞　の連体形の判別
+    """
+    def rentai_check(self, pt , *doc):
+        find = False
+        for cpt in range(pt + 1, doc[pt].head.i):
+            if(doc[cpt].pos_ != 'AUX' and doc[cpt].pos_ != 'VERB' and doc[cpt].pos_ != 'SCONJ'):
+                break
+            if doc[cpt].morph.get("Inflection") and '連体形' in doc[cpt].morph.get("Inflection")[0]:
+                find = True
+        return find
+
+    """
+    名詞＋動詞　の終止形の判別
+    """
+    def shuusi_check(self, pt , *doc):
+        find = False
+        for cpt in range(pt + 1, doc[pt].head.i):
+            if(doc[cpt].pos_ != 'AUX' and doc[cpt].pos_ != 'VERB' and doc[cpt].pos_ != 'SCONJ'):
+                break
+            if doc[cpt].morph.get("Inflection") and '終止形' in doc[cpt].morph.get("Inflection")[0]:
+                find = True
+        return find
+
+
     def head_connect_check(self, h_pt, c_pt, *doc):
         if h_pt == c_pt:
             return True
@@ -25,6 +50,31 @@ class ChunkExtractor:
                 return True
             else:
                 head_pt = doc[head_pt].head.i
+                if h_pt == head_pt:
+                    return True
+        return False
+
+    """
+    headを辿ってc_ptがh_ptにたどり着くかのチェック
+    途中に連体形がある場合はNG
+    つながる場合はc_ptはh_ptの修飾部
+    """
+
+    def predicate_connect_check(self, h_pt, c_pt, *doc):
+        if h_pt == c_pt:
+            return True
+        head_pt = doc[c_pt].head.i
+        while doc[head_pt].i != doc[head_pt].head.i:
+            if doc[head_pt].tag_ == '名詞-普通名詞-副詞可能':
+                return False
+            if self.rentai_check(head_pt, *doc) or self.shuusi_check(head_pt, *doc) or (doc[head_pt].morph.get("Inflection") and '連体形' in doc[head_pt].morph.get("Inflection")[0]) :
+                return False
+            if h_pt == head_pt:
+                return True
+            else:
+                head_pt = doc[head_pt].head.i
+                if h_pt == head_pt:
+                    return True
         return False
 
     """
@@ -91,8 +141,8 @@ class ChunkExtractor:
             elif len(doc) > i + 1 and doc[i - 1].pos_ == 'NOUN' and doc[i].orth_ == 'の' and doc[i + 1].lemma_ == 'ある':  # 名詞　＋　の　＋　ある
                 pre = 'が' + pre
                 start_pt = i
-            elif (len(doc) > i + 1 and doc[i - 1].pos_ == 'ADJ' and doc[i].orth_ == 'に' and doc[i + 1].lemma_ == 'する') or\
-                    (len(doc) > i + 2 and doc[i].pos_ == 'ADJ' and doc[i + 1].orth_ == 'に' and doc[i + 2].lemma_ == 'する'):  # 形容動詞　＋　に　＋　する
+            elif ((len(doc) > i + 1 and doc[i - 1].pos_ == 'ADJ' and doc[i].orth_ == 'に' and doc[i + 1].lemma_ == 'する') or
+                  (len(doc) > i + 2 and doc[i].pos_ == 'ADJ' and doc[i + 1].orth_ == 'に' and doc[i + 2].lemma_ == 'する')):  # 形容動詞　＋　に　＋　する
                 pre = doc[i].orth_ + pre
                 start_pt = i
 #            elif (len(doc) > i + 1 and doc[i - 1].pos_ == 'NOUN' and doc[i].orth_ == 'が' and doc[i + 1].norm_ == '出来る'):  # 名詞　＋　が　＋　できる
@@ -155,6 +205,18 @@ class ChunkExtractor:
                 append_o = token.orth_
                 append_l = token.lemma_
                 end_pt = end_pt + 1
+                """
+            # 形式名詞の追加
+            elif (len(doc) > token.i + 2 and (doc[token.i + 1].lemma_ == 'ため' or doc[token.i + 1].lemma_ == 'もの' or doc[token.i + 1].lemma_ == 'とき' or doc[token.i + 1].lemma_ == 'こと' or doc[token.i + 1].lemma_ == '場合') and
+                  (doc[token.i + 2].lemma_ == 'だ' or doc[token.i + 2].lemma_ == 'です') and
+                  (doc[token.i].tag_ == '動詞-非自立可能' or doc[token.i].tag_ == '助動詞' or doc[token.i].tag_ == '動詞-非自立可能' or doc[token.i].pos_ == 'VERB')):  # 応用するためだ
+                if find_f:
+                    ret = ret + append_o
+                find_f = True
+                append_o = tail_o + token.orth_ + doc[token.i + 1].orth_
+                append_l = tail_o + token.orth_ + doc[token.i + 1].lemma_
+                end_pt = token.i + 1
+                """
             # 形式名詞の追加
             elif ((token.lemma_ == 'もの' or token.lemma_ == 'こと' or token.lemma_ == '可能性' or token.lemma_ == 'とき' or token.lemma_ == '場合') and
                     len(doc) > token.i + 2 and doc[token.i + 1].lemma_ == 'が' and doc[token.i + 2].lemma_ == 'ある'):
@@ -441,6 +503,7 @@ class ChunkExtractor:
                         ret = self.connect_word(doc[i].orth_, ret)
                         continue
                     if not self.head_connect_check(pt, i, *doc) and doc[pt].head.i != doc[i].head.i:
+#                    if not self.head_connect_check(pt, i, *doc):
                         break
                     start_pt = i
                     ret = self.connect_word(doc[i].orth_, ret)

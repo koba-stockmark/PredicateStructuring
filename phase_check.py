@@ -86,9 +86,15 @@ class PhaseCheker:
 #                        if not all_subject:     # 主語以外の項がある場合は主語によるフェーズのチェックをしない
 #                            continue
                     if not phase:
-                        phase = self.phase_chek(chek_predicate["lemma_start"], chek_predicate["lemma_end"], re_arg['lemma_start'], re_arg['lemma_end'], *doc)
+                        check_end = chek_predicate["lemma_end"]
+                        if doc[check_end].pos_ == 'AUX':  # 形容動詞の場合は助動詞部分を覗いてチェック
+                            check_end = check_end - 1
+                        phase = self.phase_chek(chek_predicate["lemma_start"], check_end, re_arg['lemma_start'], re_arg['lemma_end'], *doc)
                         if not phase and chek_predicate["sub_lemma"]:
-                            add_phase = self.phase_chek(chek_predicate["sub_lemma_start"], chek_predicate["sub_lemma_end"],re_arg['lemma_start'], re_arg['lemma_end'], *doc)
+                            check_end = chek_predicate["sub_lemma_end"]
+                            if doc[check_end].pos_ == 'AUX':  # 形容動詞の場合は助動詞部分を覗いてチェック
+                                check_end = check_end - 1
+                            add_phase = self.phase_chek(chek_predicate["sub_lemma_start"], check_end, re_arg['lemma_start'], re_arg['lemma_end'], *doc)
                             for append in add_phase.split(','):  # 重複は登録しない
                                 if append != '<その他>' and append != '<告知>' and append not in phase:
                                     if phase:

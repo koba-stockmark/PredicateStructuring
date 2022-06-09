@@ -23,11 +23,13 @@ class PasAnalysis:
         self.num_chunk = chunker.num_chunk
         self.verb_chunk = chunker.verb_chunk
         self.compaound = chunker.compaound
+        self.head_connect_check = chunker.head_connect_check
+        self.predicate_connect_check = chunker.predicate_connect_check
+        self.rentai_check = chunker.rentai_check
         c_get = CaseExtractor()
         self.case_get = c_get.case_get
         s_g = SubjectExtractor()
         self.subject_get = s_g.subject_get
-        self.rentai_check = s_g.rentai_check
         p_g = ParallelExtractor()
         self.para_get = p_g.para_get
         v_s = VerbSpliter()
@@ -139,8 +141,10 @@ class PasAnalysis:
             find_f = False
             argument_map = []
             for i in range(0, verb["lemma_start"]):
-                if doc[i].dep_ != "nsubj" and ret_subj["lemma"] and i >= ret_subj["lemma_start"] and i <= ret_subj["lemma_end"]:  # 主語は対象外
+                if doc[i].dep_ == "nsubj" or (ret_subj["lemma"] and i >= ret_subj["lemma_start"] and i <= ret_subj["lemma_end"]):  # 主語は対象外
                     continue
+#                if ((doc[i].dep_ == "obj" and doc[i].head.dep_ != "obj") or (doc[i].dep_ == 'advcl' and doc[i].tag_ == '名詞-普通名詞-形状詞可能') or
+#                        (len(doc) > i + 1 and doc[i + 1].dep_ == 'case') or
                 if ((doc[i].dep_ == "obj" and doc[i].head.dep_ != "obj") or
                         (doc[i].dep_ == "obl" and
                          (doc[i].norm_ != 'そこ' and doc[i].norm_ != 'それ') and
@@ -157,12 +161,13 @@ class PasAnalysis:
                                 pass
                             else:
                                 continue
+                        elif len(doc) > i + 1 and doc[i + 1].dep_ == 'case' and doc[i + 1].lemma_ == 'から' and doc[i].dep_ != 'nsubj' and self.predicate_connect_check(verb["lemma_start"] ,i ,  *doc):
+                            pass
                         else:
                             continue
                         ####
                     find_f = True
                     argument_map += [i]
-
             #######################################
             #  PASの作成
             #######################################
@@ -283,6 +288,8 @@ class PasAnalysis:
                 ##########################################################################################################################################
 
                 if verb_from_object or (re_arg and not verb_w):
+                    if doc[re_arg["lemma_end"]].dep_ == 'advcl':        # 助動詞以外の　で格　は分離しない
+                        continue
                     dev_obj = self.object_devide(re_arg['lemma_start'], re_arg['lemma_end'], *doc)
                     if dev_obj["verb"]:
                         re_arg["lemma"] = dev_obj["object"]

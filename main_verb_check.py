@@ -51,8 +51,11 @@ class MainVerbChek:
             rule_id = 104
         elif doc[predic_head].pos_ == 'NOUN' and doc[predic_head].dep_ == 'ROOT' and doc[predic_head].i == doc[predic_head].head.i:  # 文末が　体言止
             rule_id = 105
-        elif doc[predic_head].head.tag_ == '名詞-普通名詞-サ変可能' and doc[predic_head].head.dep_ == 'ROOT' and doc[predic_head].head.i == doc[doc[predic_head].head.i].head.i:  # 文末が　体言止
+        elif doc[predic_head].head.tag_ == '名詞-普通名詞-サ変可能' and doc[predic_head].head.dep_ == 'ROOT' and doc[predic_head].head.i == doc[doc[predic_head].head.i].head.i and (len(doc) > predic_head + 1 and doc[predic_head + 1].orth_ != 'で'):  # 文末が　体言止
+#        elif doc[predic_head].head.tag_ == '名詞-普通名詞-サ変可能' and doc[predic_head].head.dep_ == 'ROOT' and doc[predic_head].head.i == doc[doc[predic_head].head.i].head.i:  # 文末が　体言止
             rule_id = 107
         elif len(doc) > predic_head + 2 and doc[predic_head].pos_ == 'NOUN' and doc[predic_head + 1].pos_ == 'AUX' and doc[predic_head + 1].lemma_ == 'する' and doc[predic_head + 2].lemma_ == 'ます':  # 〇〇します
             rule_id = 108
+        elif doc[predic_head].pos_ == 'AUX' and doc[predic_head].head.dep_ == 'ROOT' and (doc[predic_head].lemma_ == 'だ' or doc[predic_head].lemma_ == 'です'):  # 名詞＋です。
+            rule_id = 109
         return rule_id

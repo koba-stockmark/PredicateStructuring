@@ -12,33 +12,12 @@ class SubjectExtractor:
         self.num_chunk = chunker.num_chunk
         self.head_connect_check = chunker.head_connect_check
         self.connect_word = chunker.connect_word
+        self.rentai_check = chunker.rentai_check
+        self.shuusi_check = chunker.shuusi_check
         c_g = CaseExtractor()
         self.case_get = c_g.case_get
 
 
-    """
-    名詞＋動詞　の連体形の判別
-    """
-    def rentai_check(self, pt , *doc):
-        find = False
-        for cpt in range(pt + 1, doc[pt].head.i):
-            if(doc[cpt].pos_ != 'AUX' and doc[cpt].pos_ != 'VERB' and doc[cpt].pos_ != 'SCONJ'):
-                break
-            if doc[cpt].morph.get("Inflection") and '連体形' in doc[cpt].morph.get("Inflection")[0]:
-                find = True
-        return find
-
-    """
-    名詞＋動詞　の終止形の判別
-    """
-    def shuusi_check(self, pt , *doc):
-        find = False
-        for cpt in range(pt + 1, doc[pt].head.i):
-            if(doc[cpt].pos_ != 'AUX' and doc[cpt].pos_ != 'VERB' and doc[cpt].pos_ != 'SCONJ'):
-                break
-            if doc[cpt].morph.get("Inflection") and '終止形' in doc[cpt].morph.get("Inflection")[0]:
-                find = True
-        return find
 
 
     #

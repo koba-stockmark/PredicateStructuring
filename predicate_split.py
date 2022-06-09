@@ -61,7 +61,7 @@ class VerbSpliter:
             if doc[i].lemma_ == 'の' and doc[i].pos_ == 'ADP' and doc[i + 1].pos_ != 'ADJ':      # の　で分割。　への　は例外
                 if doc[end].tag_ == '名詞-普通名詞-サ変可能' and i + 4 >= end:    # 述部の複合語を4語まで許す
                     return {'object': self.compaound(start, i - 1, *doc), 'verb': self.compaound(i + 1, end, *doc) + 'する', 'verb_start': i + 1, 'verb_end': end}
-            elif doc[i].lemma_ == 'こと':         # 〇〇することの発表を＋行う
+            elif doc[i].lemma_ == 'こと' and len(doc) > i + 1 and (doc[i + 1].lemma_ == 'の' or doc[i + 1].lemma_ == 'を'):         # 〇〇することの発表を＋行う
                 if doc[i - 1].lemma_ == 'する':
                     return {'object': self.object_serch(start, * doc), 'verb': self.compaound(start, i - 2, *doc) + 'する', 'verb_start': start, 'verb_end': end - 2}
         return {'object': self.compaound(start, end, *doc), 'verb': '', 'verb_start': -1, 'verb_end': -1}
@@ -79,8 +79,12 @@ class VerbSpliter:
         for i in reversed(range(start, end + 1)):
             if doc[i].norm_ in s_v_dic.sub_verb_dic:
                 if doc[i - 1].tag_ != '名詞-普通名詞-サ変可能':  # 本格始動　など普通名詞との合成
-                    if doc[end].tag_ == '名詞-普通名詞-サ変可能':
+                    if doc[end].lemma_ == 'ため' or doc[end].lemma_ == 'もの' or doc[end].lemma_ == 'とき' or doc[end].lemma_ == 'こと' or doc[end].lemma_ == '場合' or doc[end].lemma_ == '人' or doc[end].lemma_ == 'とき':
+                        return {'verb': '', 'sub_verb': self.compaound(i, end, *doc) + 'だ', 'verb_start': -1, 'verb_end': -1, 'sub_verb_start': i, 'sub_verb_end': end}
+                    elif doc[end].tag_ == '名詞-普通名詞-サ変可能':
                         return {'verb': '', 'sub_verb': self.compaound(i, end, *doc) + 'する', 'verb_start': -1, 'verb_end': -1, 'sub_verb_start': i, 'sub_verb_end': end}
+                    elif doc[end].lemma_ == 'だ' or doc[end].lemma_ == 'です':
+                        return {'verb': '', 'sub_verb': self.compaound(i, end, *doc) , 'verb_start': -1,'verb_end': -1, 'sub_verb_start': i, 'sub_verb_end': end}
                     else:
                         return {'verb': '', 'sub_verb': self.compaound(i, end, *doc) + 'する', 'verb_start': -1, 'verb_end': -1, 'sub_verb_start': i, 'sub_verb_end': end}
                 if doc[end].tag_ == '名詞-普通名詞-サ変可能':

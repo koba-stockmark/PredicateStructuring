@@ -1,6 +1,5 @@
 import re
 from chunker import ChunkExtractor
-from subject_get import SubjectExtractor
 
 class ParallelExtractor:
 
@@ -10,8 +9,7 @@ class ParallelExtractor:
         """
         chunker = ChunkExtractor()
         self.num_chunk = chunker.num_chunk
-        subj_get = SubjectExtractor()
-        self.rentai_check = subj_get.rentai_check
+        self.rentai_check = chunker.rentai_check
 
 
 
