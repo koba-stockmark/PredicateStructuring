@@ -82,7 +82,7 @@ class PasAnalysis:
             if token.i <= verb_end:
                 continue
             verb = self.predicate_get(token.i, *doc)
-            if not verb:
+            if not verb or not verb["lemma"]:
                 continue
             verb_w = verb["lemma"]
             verb_end = verb["lemma_end"]
@@ -91,8 +91,6 @@ class PasAnalysis:
             verb_rule_id = rule_id
             if len(doc) > verb_end + 1 and doc[verb_end + 1].norm_ == '為る': # 体言どめ用の補正
                 verb_end = verb_end + 1
-            if not verb_w:
-                continue
             #
             #  補助用言を含む述部の範囲を判別
             #
@@ -143,9 +141,10 @@ class PasAnalysis:
             for i in range(0, verb["lemma_start"]):
                 if doc[i].dep_ == "nsubj" or (ret_subj["lemma"] and i >= ret_subj["lemma_start"] and i <= ret_subj["lemma_end"]):  # 主語は対象外
                     continue
-#                if ((doc[i].dep_ == "obj" and doc[i].head.dep_ != "obj") or (doc[i].dep_ == 'advcl' and doc[i].tag_ == '名詞-普通名詞-形状詞可能') or
-#                        (len(doc) > i + 1 and doc[i + 1].dep_ == 'case') or
-                if ((doc[i].dep_ == "obj" and doc[i].head.dep_ != "obj") or
+                if ((doc[i].dep_ == "obj" and doc[i].head.dep_ != "obj") or (doc[i].dep_ == 'advcl' and doc[i].tag_ == '名詞-普通名詞-形状詞可能') or
+                        (doc[i].dep_ == 'advcl' and len(doc) > i + 1 and doc[i + 1].tag_ == '助詞-格助詞') or
+                        (len(doc) > i + 1 and doc[i + 1].dep_ == 'case') or
+#                if ((doc[i].dep_ == "obj" and doc[i].head.dep_ != "obj") or
                         (doc[i].dep_ == "obl" and
                          (doc[i].norm_ != 'そこ' and doc[i].norm_ != 'それ') and
                          (doc[i].tag_ != '名詞-普通名詞-副詞可能' or doc[i].norm_ == '為' or doc[i].norm_ == '下') and (doc[i].norm_ != '度' or doc[i - 1].pos_ == 'NUM'))):  # この度　はNG
@@ -208,6 +207,19 @@ class PasAnalysis:
                     # 項の取得
                     #
                     if find_f:
+                        #
+                        #  他の項に包含されるかチェック
+                        #
+                        hougan_f = False
+                        for check in argument:
+                            if check["lemma_start"] <= i <= check["lemma_end"] and predicate_id == check["predicate_id"]:
+                                hougan_f = True
+                                break
+                        if hougan_f:
+                            continue
+                        #
+                        # 項の獲得
+                        #
                         ret_obj = self.num_chunk(i, *doc)
                         #
                         # 項の並列処理
@@ -215,6 +227,8 @@ class PasAnalysis:
                         para_obj = self.para_get(ret_obj['lemma_start'], ret_obj['lemma_end'], *doc)
                     elif verb["lemma"] == 'ため':     # ためだけの述部はNGとする
                         continue
+                    else:
+                        pass  # 通るか確認
                     #
                     # 格情報の取得
                     #
@@ -338,6 +352,9 @@ class PasAnalysis:
                     verb["lemma"] = sub_verb["lemma"]
                     verb["lemma_start"] = sub_verb["lemma_start"]
                     verb["lemma_end"] = sub_verb['lemma_end']
+                    sub_verb["lemma"] = ''
+                    sub_verb["lemma_start"] = -1
+                    sub_verb['lemma_end'] = -1
                     new_verb = False
                 ##########################################################################################################################################
                 #    述部が変更された場合は新しいものを保存
@@ -365,12 +382,25 @@ class PasAnalysis:
                         predicate["sub_orth"] = sub_verb_w
                     else:
                         predicate["sub_lemma"] = ''
-                        predicate["sub_lemma_start"] = ''
-                        predicate["sub_lemma_end"] = ''
+                        predicate["sub_lemma_start"] = -1
+                        predicate["sub_lemma_end"] = -1
                         predicate["sub_orth"] = ''
                     pre_predicate_id = predicate_id
                     append_predict.append(copy.deepcopy(predicate))
 
+            ##########################################################################################################################################
+            #    目的語からの主述部がない場合は補助術部を主述部へもどす
+            ##########################################################################################################################################
+            if not verb_w and sub_verb_w:  # 目的語からの主述部がない場合は補助術部を主述部へもどす
+                verb_w = sub_verb_w
+                sub_verb_w = ''
+                verb["lemma"] = sub_verb["lemma"]
+                verb["lemma_start"] = sub_verb["lemma_start"]
+                verb["lemma_end"] = sub_verb['lemma_end']
+                sub_verb["lemma"] = ''
+                sub_verb["lemma_start"] = -1
+                sub_verb['lemma_end'] = -1
+                new_verb = False
             ##########################################################################################################################################
             #    最終的な述部の整理
             ##########################################################################################################################################
@@ -390,8 +420,8 @@ class PasAnalysis:
                     predicate["sub_orth"] = sub_verb_w
                 else:
                     predicate["sub_lemma"] = ''
-                    predicate["sub_lemma_start"] = ''
-                    predicate["sub_lemma_end"] = ''
+                    predicate["sub_lemma_start"] = -1
+                    predicate["sub_lemma_end"] = -1
                     predicate["sub_orth"] = ''
                 pre_predicate_id = predicate_id
                 append_predict.append(copy.deepcopy(predicate))
@@ -402,7 +432,7 @@ class PasAnalysis:
         ##########################################################################################################################################
         for predic in append_predict:
             predic["main"] = False
-            if predic["sub_lemma_start"]:
+            if predic["sub_lemma_start"] > 0:
                 v_rule_id = self.main_verb_chek(predic["sub_lemma_end"], *doc)
                 if v_rule_id < 0:   # 補助術部が２段で分割されている場合も考慮
                     v_rule_id = self.main_verb_chek(doc[predic["sub_lemma_end"]].head.i, *doc)

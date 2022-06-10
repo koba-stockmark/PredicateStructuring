@@ -44,6 +44,7 @@ class PredicatePhraseExtractor:
         rule_id = 0
         verb = {}
         modality_w = ''
+        tonaru_dic = ['可能', 'ゼロ', '原料']
         #
         #    形容詞
         #
@@ -392,6 +393,17 @@ class PredicatePhraseExtractor:
                     verb_w = ''
                     rule_id = 37
             ###############################
+            #    〜となる
+            ###############################
+            elif doc[pt - 2].lemma_ in tonaru_dic and doc[doc[pt].i - 1].lemma_ == 'と' and doc[doc[pt].i].lemma_ == 'なる':
+                verb = self.verb_chunk(doc[pt].i, *doc)
+                modality_w = verb["modality"]
+                verb["lemma"] = doc[pt - 2].lemma_ + 'と' + verb["lemma"]
+                verb_w = verb["lemma"]
+                verb["lemma_start"] = verb["lemma_start"] - 2
+                rule_id = 42
+
+            ###############################
             #    単独の動詞
             ###############################
             else:
@@ -409,14 +421,13 @@ class PredicatePhraseExtractor:
                     rule_id = 38
                 else:
                     if len(doc) > doc[pt].i + 1 and (doc[doc[pt].i + 1].pos_ != 'VERB' or doc[doc[pt].i + 1].tag_ == '名詞-普通名詞-サ変可能'):  # 動詞の連続でない
+# koba                    if len(doc) > doc[pt].i + 1 and ((doc[doc[pt].i + 1].pos_ != 'VERB' and doc[doc[pt].i + 1].pos_ != 'AUX') or doc[doc[pt].i + 1].tag_ == '名詞-普通名詞-サ変可能'):  # 動詞の連続でない
                         if (len(doc) > doc[pt].i + 1 and (doc[doc[pt].i + 1].tag_ == '接尾辞-名詞的-サ変可能' or
                             (len(doc) > verb["lemma_end"] + 1 and (doc[doc[pt].i + 1].pos_ == 'VERB' and doc[verb["lemma_end"] + 1].lemma_ == 'する')) or
                             (doc[doc[pt].i + 1].pos_ == 'VERB' and doc[doc[pt].i + 1].tag_ == '名詞-普通名詞-サ変可能' and doc[doc[pt].i + 1].head.i == doc[doc[pt].i].head.i))):  # 〇〇化する   〇〇いたす
                             verb_w = verb_w + 'する'
                         elif doc[pt].tag_ == '形状詞-一般':
                             verb_w = verb_w + '(だ)'
-                        elif doc[pt].pos_ == 'NOUN' and doc[doc[pt].i + 1].lemma_ == 'と':
-                            verb_w = verb_w + 'とする'
                         rule_id = 39
                     elif len(doc) == doc[pt].i + 1:
                         rule_id = 40

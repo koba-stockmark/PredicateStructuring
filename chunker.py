@@ -167,6 +167,16 @@ class ChunkExtractor:
             elif (len(doc) > i + 1 and doc[i + 1].lemma_ == 'なる' and doc[i].lemma_ == 'やすい') or (len(doc) > i + 1 and doc[i + 1].lemma_ == 'やすい' and doc[i].tag_ == '動詞-非自立可能'):  # 載せやすくなる
                 pre = doc[i].orth_ + pre
                 start_pt = i
+                """
+            elif ((len(doc) > i + 1 and doc[i + 1].lemma_ == 'なる' and doc[i].lemma_ == 'と') and
+                (doc[i - 1].tag_ != '補助記号-一般' and doc[i - 1].tag_ != '名詞-普通名詞-副詞可能' and
+                 doc[i - 1].tag_ != '名詞-普通名詞-助数詞可能' and doc[i - 1].tag_ != '接尾辞-名詞的-助数詞' and doc[i - 1].tag_ != '名詞-普通名詞-助数詞可能')):  # 〇〇となる
+                pre = doc[i].orth_ + pre
+                start_pt = i
+            elif len(doc) > i + 2 and doc[i].pos_ == 'ADJ' and doc[i + 1].lemma_ == 'と' and doc[i + 2].lemma_ == 'なる':  # 可能　＋　と　＋ なる
+                pre = doc[i].orth_ + pre
+                start_pt = i
+            """
             else:
                 break
         # 後方を結合

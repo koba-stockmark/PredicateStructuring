@@ -92,8 +92,9 @@ class ParallelExtractor:
             if (doc[i + 1].pos_ == 'ADP' and doc[i + 1].lemma_ != 'など'):
                 break
         """
-
         if not find_ct:
+            if len(doc) > end + 1 and (doc[end + 1].dep_ == 'case' and doc[end + 1].lemma_ != 'は' and doc[end + 1].lemma_ != 'と' and doc[end + 1].lemma_ != 'が'):
+                return ret
             for i in reversed(range(0, doc[end].head.i)):
                 if i != end:
                     if doc[i].head.i == doc[end].head.i and doc[i].lemma_ == '共同':
