@@ -54,9 +54,10 @@ class PhaseCheker:
     def single_phase_get(self, phase):
         rule = PhaseRule()
 
-        for chek in rule.single_rule:
-            if phase in chek["labels"]:
-                return chek["single"]
+        for check in rule.single_rule:
+            for check_label in check["labels"]:
+                if check_label in phase:
+                    return check["single"]
         return ''
 
 
