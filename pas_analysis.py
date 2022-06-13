@@ -274,6 +274,8 @@ class PasAnalysis:
             for re_arg in argument:
                 if predicate_id != re_arg["predicate_id"]:
                     continue
+                if re_arg["subject"]:   # 主語から動詞生成はない
+                    continue
                 ##########################################################################################################################################
                 #   述部加工処理用に現在の述部を記憶する
                 ##########################################################################################################################################
@@ -283,7 +285,7 @@ class PasAnalysis:
                 memo_verb["lemma_end"] = verb["lemma_end"]
 
                 ##########################################################################################################################################
-                #   主述部と補助術部の判断
+                #   主述部と補助術部の判断 (どの項によって主述部が生成されるか最後までわからないので遅くなるが重複処理を行う)
                 ##########################################################################################################################################
                 sub_verb_is_original = True
                 if self.sub_verb_chek(verb_w) and verb:
@@ -307,7 +309,10 @@ class PasAnalysis:
                     dev_obj = self.object_devide(re_arg['lemma_start'], re_arg['lemma_end'], *doc)
                     if dev_obj["verb"]:
                         re_arg["lemma"] = dev_obj["object"]
-                        re_arg["lemma_end"] = dev_obj["verb_start"] - 1
+                        re_arg["lemma_end"] = dev_obj["verb_start"] - 2
+                        if "new_object_start" in dev_obj:
+                            re_arg["lemma_start"] = dev_obj["new_object_start"]
+                            re_arg["lemma_end"] = dev_obj["new_object_end"]
                         verb_w = dev_obj["verb"]
                         verb["lemma"] = verb_w
                         verb["lemma_start"] = dev_obj["verb_start"]

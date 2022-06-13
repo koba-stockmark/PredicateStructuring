@@ -5,7 +5,7 @@ from phase_extractor import PhaseExtractor
 model = PhaseExtractor() # KeywordExtractorのクラスのインスタンス化
 
 articles = json.load(open('nikkei.json'))
-solution = open('solution_sentence.txt')
+solution = open('solution_sentence2.txt')
 out_file = open('phase_result.tsv', 'w')
 
 #"""

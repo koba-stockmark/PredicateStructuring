@@ -9,6 +9,14 @@ class PhaseCheker:
         関数`__init__`はクラスをインスタンス化した時に実行されます。
         """
 
+    def rule_check(self, verb, rule):
+        if verb in rule:
+            return True
+        for check in rule:
+            if check == verb[-len(check):]:
+                return True
+        return False
+
     def phase_chek(self, start, end, obj_start, obj_end, *doc):
         chunker = ChunkExtractor()
         rule = PhaseRule()
@@ -18,7 +26,8 @@ class PhaseCheker:
         # メイン術部
         if verb_word not in s_v_dic.sub_verb_dic:
             for rule in rule.phrase_rule:
-                if verb_word in rule["words"]:
+                if self.rule_check(verb_word, rule["words"]):
+#                if verb_word in rule["words"]:
                     if ret:
                         ret = ret + ',' + rule["label"]
                     else:
@@ -54,18 +63,37 @@ class PhaseCheker:
     def single_phase_get(self, phase):
         rule = PhaseRule()
 
+        if "<時制.未来>" in phase:
+            return '研究・開発'
         for check in rule.single_rule:
             for check_label in check["labels"]:
                 if check_label in phase:
                     return check["single"]
         return ''
 
+    ##########################################################################################################################################
+    #    補助述部の時制チェック
+    ##########################################################################################################################################
+
+    def sub_phase_check(self, predicate, *doc):
+        rule = PhaseRule()
+
+        if predicate["sub_lemma"]:
+            if predicate["sub_lemma"] in rule.mirai:
+                return "<時制.未来>"
+            if predicate["sub_lemma"] in rule.genzai:
+                return "<時制.現在>"
+            if predicate["sub_lemma"] in rule.kako:
+                return "<時制.過去>"
+        return ''
 
     ##########################################################################################################################################
     #    主述部のフェイズチェック
     ##########################################################################################################################################
 
     def phase_get_and_set(self, predicate, argument, *doc):
+        rule = PhaseRule()
+
         phase = ''
         single = ''
         for chek_predicate in predicate:
@@ -75,6 +103,8 @@ class PhaseCheker:
                     if chek_predicate["id"] != re_arg["predicate_id"]:
                         continue
                     if not re_arg["case"]:
+                        continue
+                    if re_arg["case"] not in rule.phase_analyze_case:
                         continue
                     if "rentai_subject" in re_arg:
                         continue
@@ -102,7 +132,17 @@ class PhaseCheker:
                                         phase = phase + ',' + append
                                     else:
                                         phase = append
-                    re_arg["phase"] = phase
+                    if phase:
+                        ret_tence = self.sub_phase_check(chek_predicate, *doc)
+                        if ret_tence not in phase:
+                            phase = phase + ',' + ret_tence
+                    else:
+                        phase = self.sub_phase_check(chek_predicate, *doc)
+                    if phase:
+                        if "phase" not in re_arg:
+                            re_arg["phase"] = phase
+                        else:
+                            re_arg["phase"] = re_arg["phase"] + ',' + phase
                     if phase:   # phaseのある最終術部のphaesをシングルphaseにする
                         single = self.single_phase_get(phase)
         return single

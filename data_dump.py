@@ -137,3 +137,20 @@ class DataDumpSave:
         return ret
 
 
+    def text_treace(self, *doc):
+        """
+        デバッグ用に結果を表示
+        """
+        for token in doc:
+            print(
+                token.i,
+                token.orth_,
+                token.lemma_,
+                token.norm_,
+                token.morph.get("Reading"),
+                token.pos_,
+                token.morph.get("Inflection"),
+                token.tag_,
+                token.dep_,
+                token.head.i,
+            )

@@ -19,6 +19,7 @@ class PhaseExtractor:
         d_d_s = DataDumpSave()
         self.data_dump_and_save = d_d_s.data_dump_and_save
         self.data_dump_and_save2 = d_d_s.data_dump_and_save2
+        self.text_treace = d_d_s.text_treace
 
     """
     フェーズの取得
@@ -34,12 +35,14 @@ class PhaseExtractor:
     def pas_get(self, text):
 
 
-        debug = False    # デバッグ用フラグ
+        debug = True   # デバッグ用フラグ
         ret = ''
         ##########################################################################################################################################
         # 形態素解析
         ##########################################################################################################################################
         doc = self.nlp(text)  # 文章を解析
+        if debug:
+            self.text_treace(*doc)
         ##########################################################################################################################################
         # 述語項構造解析
         ##########################################################################################################################################
@@ -64,22 +67,3 @@ class PhaseExtractor:
 
 
 
-    def text_treace(self, text):
-        """
-        デバッグ用に結果を表示
-        """
-        doc = self.nlp(text)
-
-        for token in doc:
-            print(
-                token.i,
-                token.orth_,
-                token.lemma_,
-                token.norm_,
-                token.morph.get("Reading"),
-                token.pos_,
-                token.morph.get("Inflection"),
-                token.tag_,
-                token.dep_,
-                token.head.i,
-            )
