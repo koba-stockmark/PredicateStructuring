@@ -353,6 +353,9 @@ class ChunkExtractor:
                     elif doc[i].orth_ == 'に' and doc[i + 1].norm_ == '於く':    # 〜における〜
                         ret = self.connect_word(doc[i].orth_, ret)
                         start_pt = i
+                    elif doc[i].orth_ == 'で' and doc[i + 1].norm_ == '有る':  # 〜であること
+                        ret = self.connect_word(doc[i].orth_, ret)
+                        start_pt = i
                     else:
                         break
         # 動詞の名詞化

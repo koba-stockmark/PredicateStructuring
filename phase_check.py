@@ -50,14 +50,14 @@ class PhaseCheker:
         # 目的語からフェーズをチェック
         if(verb_word in s_v_dic.sub_verb_dic and obj_start):
 #        if(obj_start):
-            ret2 = self.phase_chek(obj_start, obj_end, '', '', '', *doc)
-            # 項全体としてチェック
+            ret2 = self.phase_chek(obj_start, obj_end, -1, -1, '', *doc)
+            # 項全体として重複をチェック
             for ret3 in ret2.split(','):
                 if ret3 not in ret:
                     ret = ret + ret3 + ','
-            # 項の部分要素をチェック
+            # 項の部分要素を重複をチェック
             for pt in range(obj_start, obj_end + 1):
-                ret2 = self.phase_chek(pt, pt, '', '', '', *doc)
+                ret2 = self.phase_chek(pt, pt, -1, -1, '', *doc)
                 for ret3 in ret2.split(','):
                     if ret3 not in ret:
                         ret = ret + ret3 + ','
@@ -138,7 +138,30 @@ class PhaseCheker:
                         check_end = chek_predicate["lemma_end"]
                         if doc[check_end].pos_ == 'AUX':  # 形容動詞の場合は助動詞部分を覗いてチェック
                             check_end = check_end - 1
-                        phase = self.phase_chek(chek_predicate["lemma_start"], check_end, re_arg['lemma_start'], re_arg['lemma_end'], pre_phase, *doc)
+                        # 〜こと　は例外で項の先頭を見る
+                        if doc[re_arg['lemma_end']].lemma_ == 'こと':
+                            for check_p in predicate:
+                                if check_p["lemma_start"] <= re_arg['lemma_start'] <= check_p["lemma_end"] or check_p["sub_lemma_start"] <= re_arg['lemma_start'] <= check_p["sub_lemma_end"]:
+                                    for check_a in argument:
+                                        if check_a["predicate_id"] == check_p["id"]:
+                                            phase = self.phase_chek(check_p["lemma_start"], check_p["lemma_end"], check_a["lemma_start"], check_a["lemma_end"], '', *doc)
+                                            pre_phase = phase
+                                            if not phase and chek_predicate["sub_lemma"]:
+                                                check_end = chek_predicate["sub_lemma_end"]
+                                                if doc[check_end].pos_ == 'AUX':  # 形容動詞の場合は助動詞部分を覗いてチェック
+                                                    check_end = check_end - 1
+                                                add_phase = self.phase_chek(chek_predicate["sub_lemma_start"], check_end, re_arg['lemma_start'], re_arg['lemma_end'], pre_phase, *doc)
+                                                pre_phase = add_phase
+                                                for append in add_phase.split(','):  # 重複は登録しない
+                                                    if append != '<その他>' and append != '<告知>' and append not in phase:
+                                                        if phase:
+                                                            phase = phase + ',' + append
+                                                        else:
+                                                            phase = append
+                            if not phase:
+                                phase = self.phase_chek(chek_predicate["lemma_start"], check_end, re_arg['lemma_start'], re_arg['lemma_end'], pre_phase, *doc)
+                        else:
+                            phase = self.phase_chek(chek_predicate["lemma_start"], check_end, re_arg['lemma_start'], re_arg['lemma_end'], pre_phase, *doc)
                         pre_phase = phase
                         if not phase and chek_predicate["sub_lemma"]:
                             check_end = chek_predicate["sub_lemma_end"]

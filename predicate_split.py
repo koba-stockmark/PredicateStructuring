@@ -71,7 +71,7 @@ class VerbSpliter:
                     return {'object': self.compaound(start, i - 1, *doc), 'verb': self.compaound(i + 1, end, *doc) + 'する', 'verb_start': i + 1, 'verb_end': end}
                 elif doc[end].tag_ == '補助記号-括弧閉' and i + 4 >= end:  # 述部の複合語を4語まで許す カッコ付きの目的語
                     return {'object': self.compaound(start, i - 1, *doc) + doc[end].orth_, 'verb': self.compaound(i + 1, end - 1, *doc) + 'する', 'verb_start': i + 1, 'verb_end': end - 1}
-            elif doc[i].lemma_ == 'こと' and len(doc) > i + 1 and (doc[i + 1].lemma_ == 'の' or doc[i + 1].lemma_ == 'を'):         # 〇〇することの発表を＋行う
+            elif doc[i].lemma_ == 'こと' and len(doc) > i + 1 and (doc[i + 1].lemma_ == 'の' or doc[i + 1].lemma_ == 'を' or doc[i + 1].lemma_ == 'が'):         # 〇〇することの発表を＋行う
                 if doc[i - 1].lemma_ == 'する':
                     new_obj = self.num_chunk(start - 1, *doc)
                     if new_obj:
@@ -84,6 +84,18 @@ class VerbSpliter:
                         return {'object': new_obj["lemma"], 'verb': self.compaound(start, i - 3, *doc) + 'する','verb_start': start, 'verb_end': end - 3, 'new_object_start': new_obj["lemma_start"], 'new_object_end': new_obj["lemma_end"]}
                     else:
                         return {'object': '', 'verb': self.compaound(start, i - 3, *doc) + 'する','verb_start': start, 'verb_end': end - 3}
+                if doc[i - 1].pos_ == 'VERB':   # 動詞　＋　こと　＋　（を、の、が）
+                    new_verb = self.verb_chunk(start, *doc)
+                    adp_pt = -1
+                    for adp_pt in reversed(range(0, new_verb["lemma_start"] - 1)):  # 助詞を挟んだ自立語を探す
+                        if doc[adp_pt].pos_ != 'ADP':
+                            break
+                    new_obj = self.num_chunk(adp_pt, *doc)
+                    if new_obj:
+                        return {'object': new_obj["lemma"], 'verb': new_verb["lemma"], 'verb_start': new_verb["lemma_start"], 'verb_end': new_verb["lemma_end"], 'new_object_start': new_obj["lemma_start"], 'new_object_end': new_obj["lemma_end"]}
+                    else:
+                        return {'object': '', 'verb': new_verb["lemma"], 'verb_start': new_verb["lemma_start"], 'verb_end': new_verb["lemma_end"]}
+
         return {'object': self.compaound(start, end, *doc), 'verb': '', 'verb_start': -1, 'verb_end': -1}
 
 
