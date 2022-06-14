@@ -9,46 +9,61 @@ class PhaseCheker:
         関数`__init__`はクラスをインスタンス化した時に実行されます。
         """
 
+    # 完全一致での辞書とのマッチング
     def rule_check(self, verb, rule):
         if verb in rule:
             return True
+        return False
+
+    # 後方一致での辞書とのマッチング
+    def rule_check2(self, verb, rule):
         for check in rule:
             if check == verb[-len(check):]:
                 return True
         return False
 
-    def phase_chek(self, start, end, obj_start, obj_end, *doc):
+    def phase_chek(self, start, end, obj_start, obj_end, pre_phase, *doc):
         chunker = ChunkExtractor()
-        rule = PhaseRule()
+        p_rule = PhaseRule()
         s_v_dic = SubVerbDic()
         ret = ''
         verb_word = chunker.compaound(start, end, *doc)
-        # メイン術部
+        # 補助表現以外のメイン術部
         if verb_word not in s_v_dic.sub_verb_dic:
-            for rule in rule.phrase_rule:
+            # フルマッチ
+            for rule in p_rule.phrase_rule:
                 if self.rule_check(verb_word, rule["words"]):
 #                if verb_word in rule["words"]:
                     if ret:
                         ret = ret + ',' + rule["label"]
                     else:
                         ret = ret + rule["label"]
+            # フルマッチでない場合は後方マッチ
+            if not ret:
+                for rule in p_rule.phrase_rule:
+                    if self.rule_check2(verb_word, rule["words"]):
+                        #                if verb_word in rule["words"]:
+                        if ret:
+                            ret = ret + ',' + rule["label"]
+                        else:
+                            ret = ret + rule["label"]
         # 目的語からフェーズをチェック
         if(verb_word in s_v_dic.sub_verb_dic and obj_start):
 #        if(obj_start):
-            ret2 = self.phase_chek(obj_start, obj_end, '', '', *doc)
+            ret2 = self.phase_chek(obj_start, obj_end, '', '', '', *doc)
             # 項全体としてチェック
             for ret3 in ret2.split(','):
                 if ret3 not in ret:
                     ret = ret + ret3 + ','
             # 項の部分要素をチェック
             for pt in range(obj_start, obj_end + 1):
-                ret2 = self.phase_chek(pt, pt, '', '', *doc)
+                ret2 = self.phase_chek(pt, pt, '', '', '', *doc)
                 for ret3 in ret2.split(','):
                     if ret3 not in ret:
                         ret = ret + ret3 + ','
         # 補助表現がメイン術部のとき
-        if not ret and verb_word in s_v_dic.sub_verb_dic:
-            for rule in rule.phrase_rule:
+        if not pre_phase and not ret and verb_word in s_v_dic.sub_verb_dic:
+            for rule in p_rule.phrase_rule:
                 if verb_word in rule["words"]:
                     if ret:
                         ret = ret + ',' + rule["label"]
@@ -64,6 +79,8 @@ class PhaseCheker:
         rule = PhaseRule()
 
         if "<時制.未来>" in phase:
+            return '研究・開発'
+        if "<更新>" and "<実験>" in phase:
             return '研究・開発'
         for check in rule.single_rule:
             for check_label in check["labels"]:
@@ -98,8 +115,9 @@ class PhaseCheker:
         single = ''
         for chek_predicate in predicate:
             if chek_predicate["main"]:
-                phase = ''
+                pre_phase = ''
                 for re_arg in argument:
+                    phase = ''
                     if chek_predicate["id"] != re_arg["predicate_id"]:
                         continue
                     if not re_arg["case"]:
@@ -108,8 +126,8 @@ class PhaseCheker:
                         continue
                     if "rentai_subject" in re_arg:
                         continue
-                    if re_arg["subject"]:
-                        continue
+#                    if re_arg["subject"]:
+#                        continue
 #                        all_subject = True
 #                        for chek_arg in argument:
 #                            if chek_arg["predicate_id"] == re_arg["predicate_id"] and not chek_arg["subject"]:
@@ -120,12 +138,14 @@ class PhaseCheker:
                         check_end = chek_predicate["lemma_end"]
                         if doc[check_end].pos_ == 'AUX':  # 形容動詞の場合は助動詞部分を覗いてチェック
                             check_end = check_end - 1
-                        phase = self.phase_chek(chek_predicate["lemma_start"], check_end, re_arg['lemma_start'], re_arg['lemma_end'], *doc)
+                        phase = self.phase_chek(chek_predicate["lemma_start"], check_end, re_arg['lemma_start'], re_arg['lemma_end'], pre_phase, *doc)
+                        pre_phase = phase
                         if not phase and chek_predicate["sub_lemma"]:
                             check_end = chek_predicate["sub_lemma_end"]
                             if doc[check_end].pos_ == 'AUX':  # 形容動詞の場合は助動詞部分を覗いてチェック
                                 check_end = check_end - 1
-                            add_phase = self.phase_chek(chek_predicate["sub_lemma_start"], check_end, re_arg['lemma_start'], re_arg['lemma_end'], *doc)
+                            add_phase = self.phase_chek(chek_predicate["sub_lemma_start"], check_end, re_arg['lemma_start'], re_arg['lemma_end'], pre_phase, *doc)
+                            pre_phase = add_phase
                             for append in add_phase.split(','):  # 重複は登録しない
                                 if append != '<その他>' and append != '<告知>' and append not in phase:
                                     if phase:

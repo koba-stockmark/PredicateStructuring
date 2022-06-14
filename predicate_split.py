@@ -11,6 +11,7 @@ class VerbSpliter:
         chunker = ChunkExtractor()
         self.connect_word = chunker.connect_word
         self.num_chunk = chunker.num_chunk
+        self.verb_chunk = chunker.verb_chunk
         self.compaound = chunker.compaound
         c_g = CaseExtractor()
         self.case_get = c_g.case_get

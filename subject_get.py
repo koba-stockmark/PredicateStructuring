@@ -153,7 +153,7 @@ class SubjectExtractor:
         if (doc[verb_end_pt].head.i != verb_end_pt) and ((doc[doc[verb_end_pt].head.i].dep_ == 'nsubj' or doc[doc[verb_end_pt].head.i].dep_ == 'obl' or doc[doc[verb_end_pt].head.i].dep_ == 'obj' or doc[doc[verb_end_pt].head.i].dep_ == 'acl' or doc[doc[verb_end_pt].head.i].dep_ == 'nmod' or (doc[doc[verb_end_pt].head.i].dep_ == 'ROOT' and doc[doc[verb_end_pt].head.i].i != doc[len(doc) - 1].head.i)) and doc[doc[verb_end_pt].head.i].lemma_ != 'こと' and
                                                  ((self.rentai_check(doc[verb_end_pt].i, *doc) or (doc[verb_end_pt].morph.get("Inflection") and '連体形' in doc[verb_end_pt].morph.get("Inflection")[0])) or
                                                  (self.shuusi_check(doc[verb_end_pt].i, *doc) or (doc[verb_end_pt].morph.get("Inflection") and '終止' in doc[verb_end_pt].morph.get("Inflection")[0])))):
-            if (doc[doc[verb_end_pt].head.i].pos_ == 'NOUN' or doc[doc[verb_end_pt].head.i].pos_ == 'PROPN' or doc[doc[verb_end_pt].head.i].pos_ == 'NUM'):
+            if (doc[doc[verb_end_pt].head.i].pos_ == 'NOUN' or doc[doc[verb_end_pt].head.i].pos_ == 'PROPN' or doc[doc[verb_end_pt].head.i].pos_ == 'NUM') and doc[doc[verb_end_pt].head.i].lemma_ != '予定':
  #               if doc[verb_end_pt].lemma_ in s_v.campany_special_verb:
                     if doc[verb_end_pt].head.i > verb_end_pt:
                         ret_subj = self.num_chunk(doc[verb_end_pt].head.i, *doc)

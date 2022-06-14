@@ -11,6 +11,8 @@ class CaseExtractor:
     def case_get(self, pt, *doc):
         ret = ''
         open_f = False
+        if pt < 0:
+            return ret
 
         if doc[pt - 1].norm_ == 'の' and doc[pt].norm_ == '為':
             return 'のため(に)'

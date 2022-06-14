@@ -58,4 +58,6 @@ class MainVerbChek:
             rule_id = 108
         elif doc[predic_head].pos_ == 'AUX' and doc[predic_head].head.dep_ == 'ROOT' and (doc[predic_head].lemma_ == 'だ' or doc[predic_head].lemma_ == 'です'):  # 名詞＋です。
             rule_id = 109
+        elif len(doc) > predic_head + 3 and doc[predic_head].pos_ == 'NOUN' and doc[predic_head + 1].lemma_ == 'と' and doc[predic_head + 2].lemma_ == 'する' and doc[predic_head + 3].lemma_ == 'て':  # 〇〇としている
+            rule_id = 110
         return rule_id
