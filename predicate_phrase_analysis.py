@@ -53,7 +53,7 @@ class PredicatePhraseExtractor:
             verb_w = verb["lemma"]
             modality_w = verb["modality"]
             rule_id = 1
-        elif (doc[pt].norm_ == "為る"):
+        elif doc[pt].norm_ == "為る":
             if doc[pt - 1].lemma_ == 'たり':
                 return {'lemma': '', 'lemma_start': -1, 'lemma_end': -1, 'modality': '', 'rule_id': -1}
             #
@@ -64,7 +64,7 @@ class PredicatePhraseExtractor:
                 verb["lemma_end"] = pt
                 verb_w = verb["lemma"] + doc[doc[pt].i - 1].orth_ + doc[pt].lemma_
                 modality_w = verb["modality"]
-                if (doc[doc[pt].i - 2].tag_ == '補助記号-括弧閉'):
+                if doc[doc[pt].i - 2].tag_ == '補助記号-括弧閉':
                     verb = self.verb_chunk(doc[pt].i - 3, *doc)
                     verb["lemma_end"] = pt
                     verb_w = verb["lemma"] + doc[doc[pt].i - 1].orth_ + doc[pt].lemma_
@@ -79,24 +79,23 @@ class PredicatePhraseExtractor:
             #
             #             述部が  形容詞＋する（少なくする　など）
             #
-            elif (doc[doc[pt].i - 1].pos_ == 'AUX'):
-                if (doc[pt].i - 4 >= 4 and (doc[doc[pt].i - 1].tag_ == '接尾辞-形容詞的' or doc[doc[pt].i - 1].tag_ == '助動詞') and doc[doc[pt].i - 2].pos_ == 'VERB'):
+            elif doc[doc[pt].i - 1].pos_ == 'AUX':
+                if doc[pt].i - 4 >= 4 and (doc[doc[pt].i - 1].tag_ == '接尾辞-形容詞的' or doc[doc[pt].i - 1].tag_ == '助動詞') and doc[doc[pt].i - 2].pos_ == 'VERB':
                     # ○○を使いやすくする -> 使いやすくする
                     verb = self.verb_chunk(doc[pt].i, *doc)
                     verb_w = doc[doc[pt].i - 2].orth_ + doc[doc[pt].i - 1].orth_ + verb["lemma"]
                     verb["lemma_start"] = doc[doc[pt].i - 2].i
                     modality_w = verb["modality"]
                     rule_id = 4
-            elif (doc[doc[pt].i - 1].pos_ == 'ADJ'):
-                if (doc[pt].i - 4 >= 4 and doc[doc[pt].i - 1].tag_ == '形容詞-非自立可能' and doc[
-                    doc[pt].i - 2].pos_ == 'NOUN'):
+            elif doc[doc[pt].i - 1].pos_ == 'ADJ':
+                if doc[pt].i - 4 >= 4 and doc[doc[pt].i - 1].tag_ == '形容詞-非自立可能' and doc[doc[pt].i - 2].pos_ == 'NOUN':
                     # ○○を余儀なくする -> 余儀なくする
                     verb = self.verb_chunk(doc[pt].i - 2, *doc)
                     verb_w = verb["lemma"] + doc[doc[pt].i - 1].orth_ + doc[pt].lemma_
                     verb["lemma_end"] = doc[pt].i
                     modality_w = verb["modality"]
                     rule_id = 5
-                elif (doc[doc[pt].i - 1].tag_ == '形容詞-一般' or doc[doc[pt].i - 1].tag_ == '形容詞-非自立可能' or (doc[doc[pt].i - 1].tag_ == '副詞' and doc[doc[pt].i - 1].lemma_ == 'よく')):
+                elif doc[doc[pt].i - 1].tag_ == '形容詞-一般' or doc[doc[pt].i - 1].tag_ == '形容詞-非自立可能' or (doc[doc[pt].i - 1].tag_ == '副詞' and doc[doc[pt].i - 1].lemma_ == 'よく'):
                     # ○○を少なくする -> 少なくする
                     verb = self.verb_chunk(doc[pt].i, *doc)
                     verb_w = verb["lemma"]
@@ -107,7 +106,7 @@ class PredicatePhraseExtractor:
             #
             #     「〇〇」する　→　〇〇する
             #
-            elif (doc[doc[pt].i - 1].pos_ == 'PUNCT'):
+            elif doc[doc[pt].i - 1].pos_ == 'PUNCT':
                 verb = self.verb_chunk(doc[pt].i - 2, *doc)
                 verb_w = verb["lemma"] + doc[pt].lemma_
                 verb["lemma_end"] = doc[pt].i
@@ -116,7 +115,7 @@ class PredicatePhraseExtractor:
             #
             #   どうする、そうする...
             #
-            elif (doc[doc[pt].i - 1].pos_ == 'ADV'):
+            elif doc[doc[pt].i - 1].pos_ == 'ADV':
                 verb = self.verb_chunk(doc[pt].i - 1, *doc)
                 verb_w = verb["lemma"] + doc[pt].lemma_
                 verb["lemma_end"] = doc[pt].i
@@ -170,7 +169,7 @@ class PredicatePhraseExtractor:
         #   〇〇 + を + 〇〇 + の... 　
         #
         elif len(doc) > doc[pt].i + 1 and (doc[pt].pos_ == 'NOUN' or doc[pt].pos_ == 'PROPN') and doc[doc[pt].i + 1].lemma_ == 'の':
-            if (doc[pt].tag_ == '名詞-普通名詞-副詞可能'):  # 〇〇　＋　を　＋　ため　＋　の
+            if doc[pt].tag_ == '名詞-普通名詞-副詞可能':  # 〇〇　＋　を　＋　ため　＋　の
                 verb = self.verb_chunk(doc[pt].i, *doc)
                 verb_w = verb["lemma"] + '(だ)'
                 modality_w = verb["modality"]
@@ -215,7 +214,7 @@ class PredicatePhraseExtractor:
             ###############################
             #    形式動詞
             ###############################
-            if (doc[pt].lemma_ == 'なる' and doc[pt - 1].lemma_ != 'に' and doc[pt - 1].lemma_ != 'と'):  # 形式動詞
+            if doc[pt].lemma_ == 'なる' and doc[pt - 1].lemma_ != 'に' and doc[pt - 1].lemma_ != 'と':  # 形式動詞
                 if doc[doc[pt].i - 2].pos_ != 'PUNCT' and (doc[doc[pt].i - 1].pos_ == 'ADP' or (doc[doc[pt].i - 1].pos_ == 'AUX' and doc[doc[pt].i - 1].orth_ == 'に')):  # 〜となる　〜になる
                     verb = self.verb_chunk(doc[doc[pt].i - 1].i - 1, *doc)
                     verb_w = verb["lemma"] + doc[doc[pt].i - 1].orth_ + doc[pt].lemma_
@@ -272,8 +271,8 @@ class PredicatePhraseExtractor:
             ###############################
             #    形式名詞
             ###############################
-            elif (doc[pt].lemma_ == 'ため'):  # 形式名詞
-                if (doc[doc[pt].i - 1].pos_ == 'AUX' and doc[doc[pt].i - 1].lemma_ == 'する'):
+            elif doc[pt].lemma_ == 'ため':  # 形式名詞
+                if doc[doc[pt].i - 1].pos_ == 'AUX' and doc[doc[pt].i - 1].lemma_ == 'する':
                     verb = self.verb_chunk(doc[doc[pt].i].i, *doc)
                     verb_w = verb["lemma"]
                     modality_w = verb["modality"]
@@ -315,7 +314,7 @@ class PredicatePhraseExtractor:
             ###############################
             #    単独の動詞　普通名詞　A〇〇　＋　を　＋　B動詞(使い)　＋　形容詞(やすく)　＋　C〇〇　＋　する　ex.　使いやすくバージョンアップする。  A-B の係り関係から A-C を作る
             ###############################
-            elif (len(doc) > doc[pt].i + 1 and doc[doc[pt].i + 1].pos_ == 'AUX'  and doc[pt].head.pos_ == 'NOUN' and len(doc) > doc[pt].head.i + 1 and doc[doc[pt].head.i + 1].lemma_ == 'する'):
+            elif len(doc) > doc[pt].i + 1 and doc[doc[pt].i + 1].pos_ == 'AUX'  and doc[pt].head.pos_ == 'NOUN' and len(doc) > doc[pt].head.i + 1 and doc[doc[pt].head.i + 1].lemma_ == 'する':
                 verb = self.verb_chunk(doc[pt].head.i, *doc)
                 verb_w = verb["lemma"] + 'する'
 #                verb["lemma_end"] = verb["lemma_end"] + 1

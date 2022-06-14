@@ -31,7 +31,7 @@ class PredicateGet:
                 return self.predicate_phrase_get(token.i, *doc)
             elif token.dep_ == 'acl' and token.lemma_ == 'する':  # 〜を〇〇する〇〇
                 return self.predicate_phrase_get(token.i, *doc)
-            elif (token.dep_ == 'obl' and len(doc) > token.i + 2 and doc[token.i + 1].lemma_ == 'と' and doc[token.i + 2].pos_ != 'NOUN'):  # 〇〇とする
+            elif token.dep_ == 'obl' and len(doc) > token.i + 2 and doc[token.i + 1].lemma_ == 'と' and doc[token.i + 2].pos_ != 'NOUN':  # 〇〇とする
                 return self.predicate_phrase_get(token.i, *doc)
             elif len(doc) > token.i + 1 and token.pos_ == 'NOUN' and doc[token.i + 1].pos_ == 'AUX':
                 return self.predicate_phrase_get(token.i, *doc)
@@ -61,9 +61,9 @@ class PredicateGet:
                 return {}
             elif token.i > 0 and (doc[token.i - 1].pos_ == 'ADP' or doc[token.i - 1].pos_ == 'SCONJ') and (token.pos_ == 'NOUN' and ((token.dep_ == 'ROOT' and token.i == token.head.i) or (len(doc) > token.i + 1 and doc[token.i + 1].pos_ == 'SYM'))):
                 return self.predicate_phrase_get(token.i, *doc)
-            elif (len(doc) > token.i + 1 and token.tag_ == '形状詞-一般' and doc[token.i + 1].tag_ == '助動詞'):
+            elif len(doc) > token.i + 1 and token.tag_ == '形状詞-一般' and doc[token.i + 1].tag_ == '助動詞':
                 return self.predicate_phrase_get(token.i, *doc)
-            elif (len(doc) > token.i + 1 and token.pos_ == 'NOUN' and doc[token.i + 1].tag_ == '動詞-非自立可能'):
+            elif len(doc) > token.i + 1 and token.pos_ == 'NOUN' and doc[token.i + 1].tag_ == '動詞-非自立可能':
                 return self.predicate_phrase_get(token.i, *doc)
             else:
                 return {}

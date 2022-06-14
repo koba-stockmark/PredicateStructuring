@@ -22,7 +22,7 @@ class ChunkExtractor:
     def rentai_check(self, pt , *doc):
         find = False
         for cpt in range(pt + 1, doc[pt].head.i):
-            if(doc[cpt].pos_ != 'AUX' and doc[cpt].pos_ != 'VERB' and doc[cpt].pos_ != 'SCONJ'):
+            if doc[cpt].pos_ != 'AUX' and doc[cpt].pos_ != 'VERB' and doc[cpt].pos_ != 'SCONJ':
                 break
             if doc[cpt].morph.get("Inflection") and '連体形' in doc[cpt].morph.get("Inflection")[0]:
                 find = True
@@ -34,7 +34,7 @@ class ChunkExtractor:
     def shuusi_check(self, pt , *doc):
         find = False
         for cpt in range(pt + 1, doc[pt].head.i):
-            if(doc[cpt].pos_ != 'AUX' and doc[cpt].pos_ != 'VERB' and doc[cpt].pos_ != 'SCONJ'):
+            if doc[cpt].pos_ != 'AUX' and doc[cpt].pos_ != 'VERB' and doc[cpt].pos_ != 'SCONJ':
                 break
             if doc[cpt].morph.get("Inflection") and '終止形' in doc[cpt].morph.get("Inflection")[0]:
                 find = True

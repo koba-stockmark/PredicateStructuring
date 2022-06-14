@@ -3,13 +3,13 @@ from phase_check import PhaseCheker
 from data_dump import DataDumpSave
 from pas_analysis import PasAnalysis
 
+
 class PhaseExtractor:
 
     def __init__(self):
         """
         関数`__init__`はクラスをインスタンス化した時に実行されます。
         """
-
 
         self.nlp = spacy.load('ja_ginza_electra')  # Ginzaのロード　tranceferモデル
         pas_model = PasAnalysis()
@@ -34,8 +34,7 @@ class PhaseExtractor:
 
     def pas_get(self, text):
 
-
-        debug = True   # デバッグ用フラグ
+        debug = True  # デバッグ用フラグ
         ret = ''
         ##########################################################################################################################################
         # 形態素解析
@@ -64,6 +63,3 @@ class PhaseExtractor:
             return ret
         # デバッグ表示用解析データ
         return single_phase
-
-
-

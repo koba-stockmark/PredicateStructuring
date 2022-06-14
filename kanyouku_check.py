@@ -1,8 +1,8 @@
 from chunker import ChunkExtractor
 from kanyouku_dic import KanyoukuDic
 
-class KanyoukuExtractor:
 
+class KanyoukuExtractor:
 
     def __init__(self):
         """
@@ -12,7 +12,6 @@ class KanyoukuExtractor:
         self.connect_word = chunker.connect_word
         self.num_chunk = chunker.num_chunk
         self.compaound = chunker.compaound
-
 
     def kanyouku_chek(self, pt, *doc):
         k_dic = KanyoukuDic
@@ -35,7 +34,6 @@ class KanyoukuExtractor:
                 break
             pass_data = []
         return pass_data
-
 
     def kanyouku_get(self, kanyouku_pass, *doc):
         ret = ''

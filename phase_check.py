@@ -48,7 +48,7 @@ class PhaseCheker:
                         else:
                             ret = ret + rule["label"]
         # 目的語からフェーズをチェック
-        if(verb_word in s_v_dic.sub_verb_dic and obj_start):
+        if verb_word in s_v_dic.sub_verb_dic and obj_start:
 #        if(obj_start):
             ret2 = self.phase_chek(obj_start, obj_end, -1, -1, '', *doc)
             # 項全体として重複をチェック
@@ -126,14 +126,6 @@ class PhaseCheker:
                         continue
                     if "rentai_subject" in re_arg:
                         continue
-#                    if re_arg["subject"]:
-#                        continue
-#                        all_subject = True
-#                        for chek_arg in argument:
-#                            if chek_arg["predicate_id"] == re_arg["predicate_id"] and not chek_arg["subject"]:
-#                                all_subject = False
-#                        if not all_subject:     # 主語以外の項がある場合は主語によるフェーズのチェックをしない
-#                            continue
                     if not phase:
                         check_end = chek_predicate["lemma_end"]
                         if doc[check_end].pos_ == 'AUX':  # 形容動詞の場合は助動詞部分を覗いてチェック

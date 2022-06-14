@@ -110,8 +110,8 @@ class PasAnalysis:
                 subject_w = ret_subj['lemma']
 
             if ((ret_subj["lemma_start"] <= verb["lemma_start"] and ret_subj["lemma_end"] >= verb["lemma_end"]) or
-                (ret_subj["lemma_start"] <= verb["lemma_start"] and ret_subj["lemma_start"] >= verb["lemma_end"]) or
-                (ret_subj["lemma_end"] <= verb["lemma_start"] and ret_subj["lemma_end"] >= verb["lemma_end"])):
+                (verb["lemma_start"] >= ret_subj["lemma_start"] >= verb["lemma_end"]) or
+                (verb["lemma_start"] >= ret_subj["lemma_end"] >= verb["lemma_end"])):
                 continue
 
             # 主語の表層格の取得
@@ -200,7 +200,7 @@ class PasAnalysis:
                 para_obj = [{'lemma': '', 'lemma_start': -1, 'lemma_end': -1}]
                 #
 #                if(find_f and i in argument_map) or (not find_f and  doc[i].dep_ == "nsubj" and i >= ret_subj['lemma_start'] and i <= ret_subj['lemma_end']):
-                if(find_f and i in argument_map):
+                if find_f and i in argument_map:
 #                    if(renyou_f and case == 'を'):doc[i].dep_ == "nsubj"
 #                        continue
                     #
