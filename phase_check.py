@@ -86,7 +86,7 @@ class PhaseCheker:
             for check_label in check["labels"]:
                 if check_label in phase:
                     return check["single"]
-        return ''
+        return '<その他>'
 
     ##########################################################################################################################################
     #    補助述部の時制チェック
@@ -116,11 +116,14 @@ class PhaseCheker:
         for chek_predicate in predicate:
             if chek_predicate["main"]:
                 pre_phase = ''
+                koto_f = False
                 for re_arg in argument:
                     phase = ''
                     if chek_predicate["id"] != re_arg["predicate_id"]:
                         continue
                     if not re_arg["case"]:
+                        continue
+                    if koto_f:    # 〜こと　の項があった場合は優先して　「を格」以外は拡張しない
                         continue
                     if re_arg["case"] not in rule.phase_analyze_case:
                         continue
@@ -138,6 +141,8 @@ class PhaseCheker:
                                         if check_a["predicate_id"] == check_p["id"]:
                                             phase = self.phase_chek(check_p["lemma_start"], check_p["lemma_end"], check_a["lemma_start"], check_a["lemma_end"], '', *doc)
                                             pre_phase = phase
+                                            if re_arg["subject"]:
+                                                koto_f = True
                                             if not phase and chek_predicate["sub_lemma"]:
                                                 check_end = chek_predicate["sub_lemma_end"]
                                                 if doc[check_end].pos_ == 'AUX':  # 形容動詞の場合は助動詞部分を覗いてチェック
