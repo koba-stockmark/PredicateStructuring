@@ -60,4 +60,10 @@ class MainVerbChek:
             rule_id = 109
         elif len(doc) > predic_head + 3 and doc[predic_head].pos_ == 'NOUN' and doc[predic_head + 1].lemma_ == 'と' and doc[predic_head + 2].lemma_ == 'する' and doc[predic_head + 3].lemma_ == 'て':  # 〇〇としている
             rule_id = 110
+        elif doc[predic_head].pos_ == 'VERB' and doc[doc[predic_head].head.i].dep_ == 'ROOT' and doc[doc[predic_head].head.i].pos_ == 'NOUN':  # 〇〇する〇〇。　体言止への最後の動詞
+            rule_id = 111
+        elif doc[predic_head].pos_ == 'VERB' and doc[doc[predic_head].head.i].lemma_ == 'こと' and doc[doc[doc[predic_head].head.i].head.i].dep_ == 'ROOT':  # 〇〇することを[動詞]。
+            rule_id = 112
+        elif len(doc) > doc[predic_head].i + 1 and doc[predic_head].pos_ == 'NOUN' and doc[doc[predic_head].i + 1].lemma_ == 'いたす':  # 〇〇いたします。
+            rule_id = 113
         return rule_id

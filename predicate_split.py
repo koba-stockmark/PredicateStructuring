@@ -67,19 +67,28 @@ class VerbSpliter:
             if doc[i].pos_ == 'PUNCT' and i != end:
                 break
             if doc[i].lemma_ == 'の' and doc[i].pos_ == 'ADP' and doc[i + 1].pos_ != 'ADJ' and doc[end + 1].lemma_ != 'で':      # の　で分割。　への　は例外
-                if (doc[end].tag_ == '名詞-普通名詞-サ変可能' or doc[end].tag_ == '名詞-普通名詞-一般') and i + 4 >= end:    # 述部の複合語を4語まで許す
+                if i == start:
+                    break
+#                if (doc[end].tag_ == '名詞-普通名詞-サ変可能' or doc[end].tag_ == '名詞-普通名詞-一般') and i + 4 >= end:    # 述部の複合語を4語まで許す
+                if doc[end].tag_ == '名詞-普通名詞-サ変可能' and i + 4 >= end:    # 述部の複合語を4語まで許す
                     return {'object': self.compaound(start, i - 1, *doc), 'verb': self.compaound(i + 1, end, *doc) + 'する', 'verb_start': i + 1, 'verb_end': end}
                 elif doc[end].tag_ == '補助記号-括弧閉' and i + 4 >= end:  # 述部の複合語を4語まで許す カッコ付きの目的語
                     return {'object': self.compaound(start, i - 1, *doc) + doc[end].orth_, 'verb': self.compaound(i + 1, end - 1, *doc) + 'する', 'verb_start': i + 1, 'verb_end': end - 1}
             elif doc[i].lemma_ == 'こと' and len(doc) > i + 1 and (doc[i + 1].lemma_ == 'の' or doc[i + 1].lemma_ == 'を' or doc[i + 1].lemma_ == 'が'):         # 〇〇することの発表を＋行う
                 if doc[i - 1].lemma_ == 'する':
-                    new_obj = self.num_chunk(start - 1, *doc)
+                    if doc[start - 1].tag_ == '補助記号-括弧閉':
+                        new_obj = self.num_chunk(start - 2, *doc)
+                    else:
+                        new_obj = self.num_chunk(start - 1, *doc)
                     if new_obj:
                         return {'object': new_obj["lemma"], 'verb': self.compaound(start, i - 2, *doc) + 'する', 'verb_start': start, 'verb_end': end - 2, 'new_object_start': new_obj["lemma_start"], 'new_object_end': new_obj["lemma_end"]}
                     else:
                         return {'object': '', 'verb': self.compaound(start, i - 2, *doc) + 'する','verb_start': start, 'verb_end': end - 2}
                 if doc[i - 2].lemma_ == 'する' and doc[i - 1].lemma_ == 'た':
-                    new_obj = self.num_chunk(start - 2, *doc)
+                    if doc[start - 2].tag_ == '補助記号-括弧閉':
+                        new_obj = self.num_chunk(start - 3, *doc)
+                    else:
+                        new_obj = self.num_chunk(start - 2, *doc)
                     if new_obj:
                         return {'object': new_obj["lemma"], 'verb': self.compaound(start, i - 3, *doc) + 'する','verb_start': start, 'verb_end': end - 3, 'new_object_start': new_obj["lemma_start"], 'new_object_end': new_obj["lemma_end"]}
                     else:

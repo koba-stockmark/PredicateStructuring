@@ -121,6 +121,7 @@ class PasAnalysis:
             if subject_w:
                 if (self.rentai_check(verb["lemma_end"], *doc) or (doc[verb["lemma_end"]].morph.get("Inflection") and '連体形' in doc[verb["lemma_end"]].morph.get("Inflection")[0])) and verb["lemma_start"] < ret_subj["lemma_start"]:
                     pre_rentai_subj = True
+                    subj_case = 'が'
                 else:
                     pre_rentai_subj = False
                     dummy_subj["lemma"] = ret_subj["lemma"]
@@ -141,11 +142,12 @@ class PasAnalysis:
             for i in range(0, verb["lemma_start"]):
                 if doc[i].dep_ == "nsubj" or (ret_subj["lemma"] and i >= ret_subj["lemma_start"] and i <= ret_subj["lemma_end"]):  # 主語は対象外
                     continue
+#                if ((doc[i].dep_ == "obj" and doc[i].head.dep_ != "obj") or
                 if ((doc[i].dep_ == "obj" and doc[i].head.dep_ != "obj") or (doc[i].dep_ == 'advcl' and doc[i].tag_ == '名詞-普通名詞-形状詞可能') or
                         (doc[i].dep_ == 'advcl' and len(doc) > i + 1 and doc[i + 1].tag_ == '助詞-格助詞') or
                         (len(doc) > i + 1 and doc[i + 1].dep_ == 'case') or
-#                if ((doc[i].dep_ == "obj" and doc[i].head.dep_ != "obj") or
-                        (doc[i].dep_ == "obl" and
+#                        (doc[i].dep_ == "obl" and
+                        ((doc[i].dep_ == "obl" or doc[doc[i].head.i].dep_ == "obl") and
                          (doc[i].norm_ != 'そこ' and doc[i].norm_ != 'それ') and
                          (doc[i].tag_ != '名詞-普通名詞-副詞可能' or doc[i].norm_ == '為' or doc[i].norm_ == '下') and (doc[i].norm_ != '度' or doc[i - 1].pos_ == 'NUM'))):  # この度　はNG
 #                    if doc[i].head.i < verb["lemma_start"] or doc[i].head.i > verb["lemma_end"]:  # 述部に直接かからない
@@ -275,7 +277,13 @@ class PasAnalysis:
                 if predicate_id != re_arg["predicate_id"]:
                     continue
                 if re_arg["subject"]:   # 主語から動詞生成はない
-                    continue
+                    not_all_subject = False
+                    for check in argument:
+                        if not check["subject"] and check["predicate_id"] == re_arg["predicate_id"]:
+                            not_all_subject = True
+                            break
+                    if not_all_subject:
+                        continue
                 ##########################################################################################################################################
                 #   述部加工処理用に現在の述部を記憶する
                 ##########################################################################################################################################

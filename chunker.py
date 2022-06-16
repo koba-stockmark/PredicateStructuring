@@ -1,13 +1,11 @@
 import re
-from pyknp import KNP
-
 class ChunkExtractor:
 
     def __init__(self):
         """
         関数`__init__`はクラスをインスタンス化した時に実行されます。
         """
-        self.knp = KNP()  # Default is JUMAN++. If you use JUMAN, use KNP(jumanpp=False)
+#        self.knp = KNP()  # Default is JUMAN++. If you use JUMAN, use KNP(jumanpp=False)
 
 
 
@@ -84,12 +82,14 @@ class ChunkExtractor:
 
         ret = []
         return ret
+    """
         if len(text) > 1:
             result = self.knp.parse(text)
             for tag in result.tag_list():  # 各基本句へのアクセス
                 ret = ret + re.findall("<時制.+?>", tag.fstring)
                 ret = ret + re.findall("<モダリティ.+?>", tag.fstring)
         return ret
+    """
 
     """
     英語スペースを考慮した単語結合
@@ -133,6 +133,9 @@ class ChunkExtractor:
                 pre = doc[i].orth_ + pre
                 start_pt = i
             elif doc[i].tag_ == '接頭辞' and doc[i].norm_ != '御' and doc[i].norm_ != '大':  # 接頭辞
+                pre = doc[i].orth_ + pre
+                start_pt = i
+            elif doc[i].pos_ == 'SYM' and doc[i].norm_ == '・':  #　〇〇・〇〇
                 pre = doc[i].orth_ + pre
                 start_pt = i
             elif len(doc) > i + 1 and doc[i].pos_ == 'ADJ' and doc[i + 1].lemma_ == 'する':    # 形容詞　＋　する

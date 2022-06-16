@@ -27,7 +27,12 @@ class PhaseCheker:
         p_rule = PhaseRule()
         s_v_dic = SubVerbDic()
         ret = ''
-        verb_word = chunker.compaound(start, end, *doc)
+        new_end = end
+        for c_pt in range(start, end):      # 述部の語幹だけを切り出す
+            if doc[c_pt].pos_ == 'ADP' and doc[c_pt].lemma_ != 'を':
+                new_end = c_pt - 1
+                break
+        verb_word = chunker.compaound(start, new_end, *doc)
         # 補助表現以外のメイン術部
         if verb_word not in s_v_dic.sub_verb_dic:
             # フルマッチ
@@ -86,7 +91,8 @@ class PhaseCheker:
             for check_label in check["labels"]:
                 if check_label in phase:
                     return check["single"]
-        return '<その他>'
+#        return 'その他'
+        return ''
 
     ##########################################################################################################################################
     #    補助述部の時制チェック
@@ -123,6 +129,18 @@ class PhaseCheker:
                         continue
                     if not re_arg["case"]:
                         continue
+#                    """
+                    if re_arg["subject"] and doc[re_arg["lemma_end"]].lemma_ != 'こと' and re_arg["case"] != 'が' and re_arg["case"] != 'も':  # 他の項がある主語からフェーズ生成はない
+                        continue
+                    if re_arg["case"] == 'は' and not re_arg["subject"]:
+                        no_subject = True
+                        for check in argument:
+                            if check["subject"] and check["predicate_id"] == re_arg["predicate_id"]:
+                                no_subject = False
+                                break
+                        if no_subject:
+                            continue
+    #                    """
                     if koto_f:    # 〜こと　の項があった場合は優先して　「を格」以外は拡張しない
                         continue
                     if re_arg["case"] not in rule.phase_analyze_case:
