@@ -116,6 +116,8 @@ class PhaseCheker:
 
     def phase_get_and_set(self, predicate, argument, *doc):
         rule = PhaseRule()
+        s_v_dic = SubVerbDic()
+        chunker = ChunkExtractor()
 
         phase = ''
         single = ''
@@ -131,7 +133,14 @@ class PhaseCheker:
                         continue
 #                    """
                     if re_arg["subject"] and doc[re_arg["lemma_end"]].lemma_ != 'こと' and re_arg["case"] != 'が' and re_arg["case"] != 'も':  # 他の項がある主語からフェーズ生成はない
-                        continue
+                        new_end = chek_predicate["lemma_end"]
+                        for c_pt in range(chek_predicate["lemma_start"], chek_predicate["lemma_end"]):  # 述部の語幹だけを切り出す
+                            if doc[c_pt].pos_ == 'ADP' and doc[c_pt].lemma_ != 'を':
+                                new_end = c_pt - 1
+                                break
+                        verb_word = chunker.compaound(chek_predicate["lemma_start"], new_end, *doc)
+                        if verb_word in s_v_dic.sub_verb_dic:
+                            continue
                     if re_arg["case"] == 'は' and not re_arg["subject"]:
                         no_subject = True
                         for check in argument:

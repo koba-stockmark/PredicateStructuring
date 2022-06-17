@@ -66,4 +66,6 @@ class MainVerbChek:
             rule_id = 112
         elif len(doc) > doc[predic_head].i + 1 and doc[predic_head].pos_ == 'NOUN' and doc[doc[predic_head].i + 1].lemma_ == 'いたす':  # 〇〇いたします。
             rule_id = 113
+        elif len(doc) > doc[predic_head].i + 1 and doc[predic_head].pos_ == 'NOUN' and doc[doc[predic_head].head.i].dep_ == 'ROOT' and (doc[doc[predic_head].i + 1].pos_ == 'AUX' or doc[doc[predic_head].i + 1].pos_ == 'PUNCT'):  # 〇〇します。 がROOTになっていないときの例外処理
+            rule_id = 114
         return rule_id
