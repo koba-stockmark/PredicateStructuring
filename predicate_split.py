@@ -16,9 +16,10 @@ class VerbSpliter:
         c_g = CaseExtractor()
         self.case_get = c_g.case_get
 
-
-
-
+    """
+   項を分割しない格
+    """
+    not_devide_case_dic = ["により", "などに"]
 
 
     """
@@ -56,8 +57,6 @@ class VerbSpliter:
     ret : 目的語　＋　主述部　＋　主述始点　＋　主述部終点
     """
     def object_devide(self, start, end, *doc):
-#        if start == end or doc[end].lemma_ == 'サービス':
-#            return {'object': self.compaound(start, end, *doc), 'verb': '', 'verb_start': -1, 'verb_end': -1}
         if start == end:
             if (doc[start - 1].lemma_ == 'と' or doc[start - 1].lemma_ == 'や') and self.case_get(start, *doc) == 'を':
                 return {'object': '', 'verb': self.compaound(start, end, *doc) + 'する', 'verb_start': start, 'verb_end': end}
@@ -66,21 +65,20 @@ class VerbSpliter:
         for i in reversed(range(start, end + 1)):
             if doc[i].pos_ == 'PUNCT' and i != end:
                 break
-            if doc[i].lemma_ == 'の' and doc[i].pos_ == 'ADP' and doc[i + 1].pos_ != 'ADJ' and doc[end + 1].lemma_ != 'で':      # の　で分割。　への　は例外
+            if doc[i].lemma_ == 'の' and doc[i].pos_ == 'ADP' and doc[i - 1].tag_ != '形状詞-一般' and doc[i + 1].pos_ != 'ADJ' and doc[end + 1].lemma_ != 'で':      # の　で分割。　への　は例外
                 if i == start:
                     break
-#                if (doc[end].tag_ == '名詞-普通名詞-サ変可能' or doc[end].tag_ == '名詞-普通名詞-一般') and i + 4 >= end:    # 述部の複合語を4語まで許す
                 if doc[end].tag_ == '名詞-普通名詞-サ変可能' and i + 4 >= end:    # 述部の複合語を4語まで許す
                     return {'object': self.compaound(start, i - 1, *doc), 'verb': self.compaound(i + 1, end, *doc) + 'する', 'verb_start': i + 1, 'verb_end': end}
-                elif doc[end].tag_ == '補助記号-括弧閉' and i + 4 >= end:  # 述部の複合語を4語まで許す カッコ付きの目的語
+                elif doc[end].tag_ == '補助記号-括弧閉' and doc[end - 1].tag_ == '名詞-普通名詞-サ変可能' and i + 4 >= end:  # 述部の複合語を4語まで許す カッコ付きの目的語
                     return {'object': self.compaound(start, i - 1, *doc) + doc[end].orth_, 'verb': self.compaound(i + 1, end - 1, *doc) + 'する', 'verb_start': i + 1, 'verb_end': end - 1}
             elif doc[i].lemma_ == 'こと' and len(doc) > i + 1 and (doc[i + 1].lemma_ == 'の' or doc[i + 1].lemma_ == 'を' or doc[i + 1].lemma_ == 'が'):         # 〇〇することの発表を＋行う
                 if doc[i - 1].lemma_ == 'する':
-                    if doc[start - 1].tag_ == '補助記号-括弧閉':
-                        new_obj = self.num_chunk(start - 2, *doc)
+                    if doc[start - 2].tag_ == '補助記号-括弧閉':
+                        new_obj = self.num_chunk(start - 3, *doc)
                     else:
-                        new_obj = self.num_chunk(start - 1, *doc)
-                    if new_obj:
+                        new_obj = self.num_chunk(start - 2, *doc)
+                    if new_obj and doc[new_obj["lemma_end"] + 1].lemma_ != 'に':
                         return {'object': new_obj["lemma"], 'verb': self.compaound(start, i - 2, *doc) + 'する', 'verb_start': start, 'verb_end': end - 2, 'new_object_start': new_obj["lemma_start"], 'new_object_end': new_obj["lemma_end"]}
                     else:
                         return {'object': '', 'verb': self.compaound(start, i - 2, *doc) + 'する','verb_start': start, 'verb_end': end - 2}

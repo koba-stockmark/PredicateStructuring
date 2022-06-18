@@ -36,6 +36,7 @@ class PasAnalysis:
         self.verb_devide = v_s.verb_devide
         self.sub_verb_chek = v_s.sub_verb_chek
         self.object_devide = v_s.object_devide
+        self.not_devide_case_dic = v_s.not_devide_case_dic
         p_c = PhaseCheker()
         self.phase_chek = p_c.phase_chek
         self.single_phase_get = p_c.single_phase_get
@@ -146,8 +147,8 @@ class PasAnalysis:
                 if ((doc[i].dep_ == "obj" and doc[i].head.dep_ != "obj") or (doc[i].dep_ == 'advcl' and doc[i].tag_ == '名詞-普通名詞-形状詞可能') or
                         (doc[i].dep_ == 'advcl' and len(doc) > i + 1 and doc[i + 1].tag_ == '助詞-格助詞') or
                         (len(doc) > i + 1 and doc[i + 1].dep_ == 'case') or
-#                        (doc[i].dep_ == "obl" and
-                        ((doc[i].dep_ == "obl" or doc[doc[i].head.i].dep_ == "obl") and
+                        (doc[i].dep_ == "obl" and
+#                        ((doc[i].dep_ == "obl" or doc[doc[i].head.i].dep_ == "obl") and
                          (doc[i].norm_ != 'そこ' and doc[i].norm_ != 'それ') and
                          (doc[i].tag_ != '名詞-普通名詞-副詞可能' or doc[i].norm_ == '為' or doc[i].norm_ == '下') and (doc[i].norm_ != '度' or doc[i - 1].pos_ == 'NUM'))):  # この度　はNG
 #                    if doc[i].head.i < verb["lemma_start"] or doc[i].head.i > verb["lemma_end"]:  # 述部に直接かからない
@@ -314,10 +315,13 @@ class PasAnalysis:
                 if verb_from_object or (re_arg and not verb_w):
                     if doc[re_arg["lemma_end"]].dep_ == 'advcl':        # 助動詞以外の　で格　は分離しない
                         continue
+                    if re_arg['case'] in self.not_devide_case_dic:
+                        continue
                     dev_obj = self.object_devide(re_arg['lemma_start'], re_arg['lemma_end'], *doc)
                     if dev_obj["verb"]:
                         re_arg["lemma"] = dev_obj["object"]
                         re_arg["lemma_end"] = dev_obj["verb_start"] - 2
+                        re_arg["case"] = "を"
                         if "new_object_start" in dev_obj:
                             re_arg["lemma_start"] = dev_obj["new_object_start"]
                             re_arg["lemma_end"] = dev_obj["new_object_end"]
