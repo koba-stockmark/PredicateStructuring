@@ -127,7 +127,7 @@ class ChunkExtractor:
         for i in reversed(range(0, pt)):
             if ((pt == doc[i].head.i or pt == doc[i].head.head.i) and doc[i].pos_ != 'PUNCT' and doc[i].tag_ != '接頭辞' and (doc[i].pos_ != 'AUX' or doc[i].orth_ == 'する') and
                     (not doc[i].morph.get("Inflection") or '連体形' not in doc[i].morph.get("Inflection")[0]) and
-                  (doc[i].pos_ != 'ADP' or (doc[i].tag_ == '助詞-副助詞' and doc[i].lemma_ != 'まで')) and doc[i].pos_ != 'ADV' and doc[i].pos_ != 'ADJ' and doc[i].pos_ != 'SCONJ' and
+                  (doc[i].pos_ != 'ADP' or (doc[i].tag_ == '助詞-副助詞' and doc[i].lemma_ != 'まで' and doc[i].lemma_ != 'だけ')) and doc[i].pos_ != 'ADV' and doc[i].pos_ != 'ADJ' and doc[i].pos_ != 'SCONJ' and
                     doc[i].norm_ != 'から' and
                     doc[i].tag_ != '補助記号-一般' and doc[i].tag_ != '名詞-普通名詞-副詞可能' and doc[i].tag_ != '名詞-普通名詞-助数詞可能' and doc[i].tag_ != '接尾辞-名詞的-助数詞' and doc[i].tag_ != '名詞-普通名詞-助数詞可能'):
                 pre = doc[i].orth_ + pre
@@ -373,7 +373,8 @@ class ChunkExtractor:
         else:
             # 後方のチャンク
             for token in doc[pt+1:]:
-                if (self.head_connect_check(pt, token.head.i, *doc)) or punc_ct < 0 or (doc[pt].head.i == pt + 1 and doc[pt].head.pos_ == 'NOUN'):
+#                if (self.head_connect_check(pt, token.head.i, *doc)) or punc_ct < 0 or (doc[pt].head.i == pt + 1 and doc[pt].head.pos_ == 'NOUN'):
+                if (self.head_connect_check(pt, token.head.i, *doc)) or punc_ct < 0 or (doc[pt].head.i == pt + 1 and doc[pt].head.pos_ == 'NOUN') or (token.i == doc[pt].head.i and token.tag_ == '名詞-普通名詞-副詞可能'):
                     if punc_ct >= 0:
                         if token.pos_ == 'ADP' and (token.lemma_ == 'を' or token.lemma_ == 'は' or token.lemma_ == 'が' or token.lemma_ == 'で' or token.lemma_ == 'も' or token.lemma_ == 'に' or token.lemma_ == 'にて' or token.orth_ == 'で' or token.orth_ == 'より'):  # 名詞の名詞　名詞と名詞　は接続させたい
                             if len(doc) > token.i + 1 and doc[token.i + 1].tag_ != '補助記号-括弧閉':
@@ -394,7 +395,7 @@ class ChunkExtractor:
                             break
                         if token.pos_ == 'ADP' and token.lemma_ == 'まで':    # 名詞で名詞　は切り離す
                             break
-                        if token.pos_ == 'ADP' and token.lemma_ == 'の' and token.head.i < doc[token.i + 1].head.i:    # 後方は　の　で切る　ただし、その先の語が　の　の前にかかるときはつなげる
+                        if token.pos_ == 'ADP' and token.lemma_ == 'の' and token.head.i < doc[token.i + 1].head.i and doc[token.i + 1].lemma_ != '間':    # 後方は　の　で切る　ただし、その先の語が　の　の前にかかるときはつなげる
                             break
                         if token.pos_ == 'CCONJ':
                             break
