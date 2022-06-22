@@ -374,7 +374,7 @@ class ChunkExtractor:
             # 後方のチャンク
             for token in doc[pt+1:]:
 #                if (self.head_connect_check(pt, token.head.i, *doc)) or punc_ct < 0 or (doc[pt].head.i == pt + 1 and doc[pt].head.pos_ == 'NOUN'):
-                if (self.head_connect_check(pt, token.head.i, *doc)) or punc_ct < 0 or (doc[pt].head.i == pt + 1 and doc[pt].head.pos_ == 'NOUN') or (token.i == doc[pt].head.i and token.tag_ == '名詞-普通名詞-副詞可能'):
+                if (self.head_connect_check(pt, token.head.i, *doc)) or token.head.i == end_pt or punc_ct < 0 or (doc[pt].head.i == pt + 1 and doc[pt].head.pos_ == 'NOUN') or (token.i == doc[pt].head.i and token.tag_ == '名詞-普通名詞-副詞可能'):
                     if punc_ct >= 0:
                         if token.pos_ == 'ADP' and (token.lemma_ == 'を' or token.lemma_ == 'は' or token.lemma_ == 'が' or token.lemma_ == 'で' or token.lemma_ == 'も' or token.lemma_ == 'に' or token.lemma_ == 'にて' or token.orth_ == 'で' or token.orth_ == 'より'):  # 名詞の名詞　名詞と名詞　は接続させたい
                             if len(doc) > token.i + 1 and doc[token.i + 1].tag_ != '補助記号-括弧閉':
@@ -395,7 +395,7 @@ class ChunkExtractor:
                             break
                         if token.pos_ == 'ADP' and token.lemma_ == 'まで':    # 名詞で名詞　は切り離す
                             break
-                        if token.pos_ == 'ADP' and token.lemma_ == 'の' and token.head.i < doc[token.i + 1].head.i and doc[token.i + 1].lemma_ != '間':    # 後方は　の　で切る　ただし、その先の語が　の　の前にかかるときはつなげる
+                        if token.pos_ == 'ADP' and token.lemma_ == 'の' and token.head.i < doc[token.i + 1].head.i and (doc[token.i + 1].lemma_ != '間' and doc[token.i + 1].lemma_ != '日'):    # 後方は　の　で切る　ただし、その先の語が　の　の前にかかるときはつなげる
                             break
                         if token.pos_ == 'CCONJ':
                             break
@@ -529,6 +529,9 @@ class ChunkExtractor:
 #                    ret = self.connect_word(doc[i].orth_, ret)
                 elif((doc[i].pos_ == 'VERB' and doc[i + 1].pos_ == 'AUX' and doc[i + 2].orth_ == 'か') or
                     ((doc[i].pos_ == 'AUX' or doc[i].pos_ == 'VERB') and doc[i + 1].orth_ == 'か')):  # 〇〇か〇〇
+                    start_pt = i
+                    ret = self.connect_word(doc[i].orth_, ret)
+                elif doc[i].pos_ == 'VERB' and doc[i + 1].lemma_ == '方':  # 〇〇する方
                     start_pt = i
                     ret = self.connect_word(doc[i].orth_, ret)
                 elif (doc[i].tag_ == '補助記号-読点' and doc[i - 1].tag_ == '補助記号-括弧閉' and

@@ -1,6 +1,7 @@
 from chunker import ChunkExtractor
 from sub_verb_dic import SubVerbDic
 from case_information_get import CaseExtractor
+import re
 
 class VerbSpliter:
 
@@ -50,6 +51,14 @@ class VerbSpliter:
                 self.num_chunk(token.i, *doc)
         return ''
 
+    """
+    カタカナ動詞の複合語のチェック
+    """
+    def all_katakana(self, word1, word2):
+        re_katakana = re.compile(r'[\u30A1-\u30F4ー]+')
+        if re_katakana.fullmatch(word1) and re_katakana.fullmatch(word2):
+            return True
+        return False
 
     """
     目的語の中の述部を分割
@@ -57,6 +66,8 @@ class VerbSpliter:
     ret : 目的語　＋　主述部　＋　主述始点　＋　主述部終点
     """
     def object_devide(self, start, end, *doc):
+        compound_word = ['商品', '技術', '製品', '無料', '限定', '特別', '本格', '社会', '新', '国内', '顧客', '一般', '全国', '早期', '事前']    # 複合動を作っても良い普通名詞
+
         if start == end:
             if (doc[start - 1].lemma_ == 'と' or doc[start - 1].lemma_ == 'や') and self.case_get(start, *doc) == 'を':
                 return {'object': '', 'verb': self.compaound(start, end, *doc) + 'する', 'verb_start': start, 'verb_end': end}
@@ -69,8 +80,12 @@ class VerbSpliter:
                 if i == start:
                     break
                 if doc[end].tag_ == '名詞-普通名詞-サ変可能' and i + 4 >= end:    # 述部の複合語を4語まで許す
+                    if doc[end - 1].pos_ == 'NOUN' and doc[end - 1].tag_ != '名詞-普通名詞-サ変可能' and doc[end - 1].lemma_ not in compound_word and not self.all_katakana(doc[end - 1].lemma_, doc[end].lemma_):
+                        break
                     return {'object': self.compaound(start, i - 1, *doc), 'verb': self.compaound(i + 1, end, *doc) + 'する', 'verb_start': i + 1, 'verb_end': end}
                 elif doc[end].tag_ == '補助記号-括弧閉' and doc[end - 1].tag_ == '名詞-普通名詞-サ変可能' and i + 4 >= end:  # 述部の複合語を4語まで許す カッコ付きの目的語
+                    if doc[end - 2].pos_ == 'NOUN' and doc[end - 2].tag_ != '名詞-普通名詞-サ変可能' and doc[end - 2].lemma_ not in compound_word and not self.all_katakana(doc[end - 2].lemma_, doc[end - 1].lemma_):
+                        break
                     return {'object': self.compaound(start, i - 1, *doc) + doc[end].orth_, 'verb': self.compaound(i + 1, end - 1, *doc) + 'する', 'verb_start': i + 1, 'verb_end': end - 1}
             elif doc[i].lemma_ == 'こと' and len(doc) > i + 1 and (doc[i + 1].lemma_ == 'の' or doc[i + 1].lemma_ == 'を' or doc[i + 1].lemma_ == 'が'):         # 〇〇することの発表を＋行う
                 if doc[i - 1].lemma_ == 'する':

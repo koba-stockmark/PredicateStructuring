@@ -19,6 +19,7 @@ class PhaseExtractor:
         d_d_s = DataDumpSave()
         self.data_dump_and_save = d_d_s.data_dump_and_save
         self.data_dump_and_save2 = d_d_s.data_dump_and_save2
+        self.data_dump_and_save3 = d_d_s.data_dump_and_save3
         self.text_treace = d_d_s.text_treace
 
     """
@@ -59,6 +60,7 @@ class PhaseExtractor:
         # デバッグ表示用解析データ
         if debug:
             ret = ret + self.data_dump_and_save2(text, argument, predicate)
+            self.data_dump_and_save3(text, argument, predicate)
             print(single_phase)
             return ret
         # デバッグ表示用解析データ

@@ -136,6 +136,32 @@ class DataDumpSave:
                             ret = ret + text + '\tMain\t' + subject_w + '\t' + obj_w + '\t' + case + '\t' + verb_w + '\t' + sub_verb_w + '\t' + phase + '\t' + modal + '\t' + str(rule_id) + '\n'
         return ret
 
+    def data_dump_and_save3(self, text, argument, predicate):
+        ret = ''
+        print(text)
+        for predic in predicate:
+            if predic["main"]:
+                if "main_rule_id" in predic:
+                    print("ID = %d 【%s - (%s) 】 modality = %s ruleID = %d\t main_ruleID= %d" % (predic["id"], predic["lemma"], predic["sub_lemma"], predic["modality"], predic["rule_id"], predic["main_rule_id"]))
+                    ret = ret + text + '\tMain\t' + predic["lemma"] + '\t' + predic["sub_lemma"] + '\t' + predic["modality"] + '\t' + str(predic["rule_id"]) + '\t' + str(predic["main_rule_id"]) + '\n'
+                else:
+                    print("ID = %d 【%s - (%s) 】 modality = %s ruleID = %d\t main_ruleID= " % (predic["id"], predic["lemma"], predic["sub_lemma"], predic["modality"], predic["rule_id"]))
+            else:
+                if "main_rule_id" in predic:
+                    print("ID = %d sub_【%s - (%s) 】 modality = %s ruleID = %d\t main_ruleID= %d" % (predic["id"], predic["lemma"], predic["sub_lemma"], predic["modality"], predic["rule_id"],predic["main_rule_id"]))
+                else:
+                    print("ID = %d sub_【%s - (%s) 】 modality = %s ruleID = %d\t main_ruleID= " % (predic["id"], predic["lemma"], predic["sub_lemma"], predic["modality"], predic["rule_id"]))
+            for a_id, arg in enumerate(argument):
+                if predic["id"] == arg["predicate_id"]:
+                    if "phase" in arg:
+                        phase = arg["phase"]
+                    else:
+                        phase = ''
+                    if arg["subject"]:
+                        print("\tID = %d %s(%s)_主語 phase = %s" % (a_id, arg["lemma"], arg["case"], phase))
+                    else:
+                        print("\tID = %d %s(%s) phase = %s" % (a_id , arg["lemma"], arg["case"], phase))
+        return ret
 
     def text_treace(self, *doc):
         """

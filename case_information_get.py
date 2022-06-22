@@ -18,6 +18,8 @@ class CaseExtractor:
             return 'のため(に)'
         elif doc[pt - 1].norm_ == 'の' and doc[pt].norm_ == '下':
             return 'のもと(に)'
+        elif doc[pt].norm_ == '為':
+            return 'に'
         for token in doc[pt + 1:]:
             if token.tag_ == '補助記号-括弧開' or open_f:
                 if token.tag_ == '補助記号-括弧閉':
@@ -30,7 +32,6 @@ class CaseExtractor:
                 continue
             if len(doc) > token.i + 2 and doc[token.i + 1].tag_ == '補助記号-句点' and doc[token.i + 2].tag_ == '補助記号-括弧閉':
                 continue
-#            if (token.dep_ == "case" or token.tag_ == '助詞-格助詞') and token.tag_ != '名詞-普通名詞-一般' and token.head.i == pt and len(doc) > token.i + 1 and doc[token.i + 1].tag_ != '補助記号-括弧閉':
             if (token.dep_ == "case" or token.tag_ == '助詞-格助詞') and token.tag_ != '名詞-普通名詞-一般' and token.head.i <= pt:
                 for i in range(token.i, len(doc)):
                     if (doc[i].dep_ == "case" or doc[i].tag_ == '助詞-格助詞') and doc[i].lemma_ != '～':
@@ -75,12 +76,14 @@ class CaseExtractor:
                             ret = ret + doc[i].lemma_
                     else:
                         return ret
-#            elif token.dep_ == "case" and token.head.head.i == doc[pt].head.i:    # 括弧書きを挟んだ係り受けの場合　ex.新事業としてフローズンミール定期配送サービス「nonpi A.R.U.」を開始すると発表した。
-#               for i in range(token.i, len(doc)):
-#                    if doc[i].dep_ == "case":
-#                        ret = ret + doc[i].lemma_
-#                    else:
-#                        return ret
+            elif token.dep_ == "case" and token.head.head.i == doc[pt].head.i:    # 括弧書きを挟んだ係り受けの場合　ex.新事業としてフローズンミール定期配送サービス「nonpi A.R.U.」を開始すると発表した。
+                if doc[pt].norm_ == '日' or doc[pt].norm_ == '月' or doc[pt].norm_ == '年' or doc[pt].norm_ == '期間':
+                    return 'に'
+                for i in range(token.i, len(doc)):
+                    if doc[i].dep_ == "case":
+                        ret = ret + doc[i].lemma_
+                    else:
+                        return ret
             elif token.tag_ == '助動詞' and (token.orth_ == 'に' or token.orth_ == 'で'):
                 ret = ret + token.orth_ + '-副詞的'
             elif token.head.i > pt:

@@ -147,7 +147,8 @@ class PasAnalysis:
                 if ((doc[i].dep_ == "obj" and doc[i].head.dep_ != "obj") or (doc[i].dep_ == 'advcl' and doc[i].tag_ == '名詞-普通名詞-形状詞可能') or
                         (doc[i].dep_ == 'advcl' and len(doc) > i + 1 and doc[i + 1].tag_ == '助詞-格助詞') or
                         (len(doc) > i + 1 and doc[i + 1].dep_ == 'case') or
-                        (doc[i].dep_ == "obl" and
+                        (doc[i].dep_ == "obl" and doc[i - 1].lemma_ != 'が' and
+                         (len(doc) > i + 1 and (doc[i + 1].pos_ != 'AUX' or doc[i + 1].lemma_ == 'で' or doc[i + 1].tag_ == '助詞-格助詞')) and
 #                        ((doc[i].dep_ == "obl" or doc[doc[i].head.i].dep_ == "obl") and
                          (doc[i].norm_ != 'そこ' and doc[i].norm_ != 'それ') and
                          (doc[i].tag_ != '名詞-普通名詞-副詞可能' or doc[i].norm_ == '為' or doc[i].norm_ == '下') and (doc[i].norm_ != '度' or doc[i - 1].pos_ == 'NUM'))):  # この度　はNG
