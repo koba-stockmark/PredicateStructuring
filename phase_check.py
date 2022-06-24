@@ -38,7 +38,6 @@ class PhaseCheker:
             # フルマッチ
             for rule in p_rule.phrase_rule:
                 if self.rule_check(verb_word, rule["words"]):
-#                if verb_word in rule["words"]:
                     if ret:
                         ret = ret + ',' + rule["label"]
                     else:
@@ -47,14 +46,12 @@ class PhaseCheker:
             if not ret:
                 for rule in p_rule.phrase_rule:
                     if self.rule_check2(verb_word, rule["words"]):
-                        #                if verb_word in rule["words"]:
                         if ret:
                             ret = ret + ',' + rule["label"]
                         else:
                             ret = ret + rule["label"]
         # 目的語からフェーズをチェック
         if verb_word in s_v_dic.sub_verb_dic and obj_start:
-#        if(obj_start):
             ret2 = self.phase_chek(obj_start, obj_end, -1, -1, '', *doc)
             # 項全体として重複をチェック
             for ret3 in ret2.split(','):
@@ -119,7 +116,6 @@ class PhaseCheker:
         s_v_dic = SubVerbDic()
         chunker = ChunkExtractor()
 
-        phase = ''
         single = ''
         for chek_predicate in predicate:
             if chek_predicate["main"]:
@@ -131,7 +127,6 @@ class PhaseCheker:
                         continue
                     if not re_arg["case"]:
                         continue
-#                    """
                     if re_arg["subject"] and doc[re_arg["lemma_end"]].lemma_ != 'こと' and re_arg["case"] != 'が' and re_arg["case"] != 'も':  # 他の項がある主語からフェーズ生成はない
                         new_end = chek_predicate["lemma_end"]
                         for c_pt in range(chek_predicate["lemma_start"], chek_predicate["lemma_end"]):  # 述部の語幹だけを切り出す
@@ -149,7 +144,6 @@ class PhaseCheker:
                                 break
                         if no_subject:
                             continue
-    #                    """
                     if koto_f:    # 〜こと　の項があった場合は優先して　「を格」以外は拡張しない
                         continue
                     if re_arg["case"] not in rule.phase_analyze_case:

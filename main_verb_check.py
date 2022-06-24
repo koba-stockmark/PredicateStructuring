@@ -36,14 +36,6 @@ class MainVerbChek:
         #
         elif doc[predic_head].pos_ == "VERB" and doc[doc[predic_head].i].head.i == doc[doc[predic_head].i].head.head.i and doc[doc[predic_head].i].head.pos_ == "VERB":  # 最後の動詞を修飾する動詞？
             rule_id = 102
-            """
-        #
-        # 最終述部でない場合 (終止形は主述部とする)  多くですぎるので要検討
-        #
-        elif ((len(doc) > predic_head + 1 and doc[predic_head].pos_ == "VERB" and doc[predic_head + 1].pos_ == "AUX" and doc[predic_head + 1].morph.get("Inflection") and '終止形' in doc[predic_head + 1].morph.get("Inflection")[0]) or
-            (doc[predic_head].morph.get("Inflection") and '終止形' in doc[predic_head].morph.get("Inflection")[0])):
-            rule_id = 106
-        """
         #
         #  最終術部が名詞から形成される場合
         #
@@ -68,4 +60,12 @@ class MainVerbChek:
             rule_id = 113
         elif len(doc) > doc[predic_head].i + 1 and doc[predic_head].pos_ == 'NOUN' and doc[doc[predic_head].head.i].dep_ == 'ROOT' and (doc[doc[predic_head].i + 1].pos_ == 'AUX' or doc[doc[predic_head].i + 1].pos_ == 'PUNCT'):  # 〇〇します。 がROOTになっていないときの例外処理
             rule_id = 114
+            """
+        #
+        # 最終述部でない場合 (終止形は主述部とする)  多くですぎるので要検討
+        #
+        elif ((len(doc) > predic_head + 1 and doc[predic_head].pos_ == "VERB" and doc[predic_head + 1].pos_ == "AUX" and doc[predic_head + 1].morph.get("Inflection") and '終止形' in doc[predic_head + 1].morph.get("Inflection")[0]) or
+            (doc[predic_head].morph.get("Inflection") and '終止形' in doc[predic_head].morph.get("Inflection")[0])):
+            rule_id = 103
+        """
         return rule_id

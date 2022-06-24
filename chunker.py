@@ -125,7 +125,7 @@ class ChunkExtractor:
         pre = ''        # 前方文字
         # 前方を結合
         for i in reversed(range(0, pt)):
-            if ((pt == doc[i].head.i or pt == doc[i].head.head.i) and doc[i].pos_ != 'PUNCT' and doc[i].tag_ != '接頭辞' and (doc[i].pos_ != 'AUX' or doc[i].orth_ == 'する') and
+            if ((pt == doc[i].head.i or pt == doc[i].head.head.i or i < doc[i].head.i <= pt) and doc[i].pos_ != 'PRON' and doc[i].pos_ != 'PUNCT' and doc[i].tag_ != '接頭辞' and (doc[i].pos_ != 'AUX' or doc[i].orth_ == 'する') and
                     (not doc[i].morph.get("Inflection") or '連体形' not in doc[i].morph.get("Inflection")[0]) and
                   (doc[i].pos_ != 'ADP' or (doc[i].tag_ == '助詞-副助詞' and doc[i].lemma_ != 'まで' and doc[i].lemma_ != 'だけ')) and doc[i].pos_ != 'ADV' and doc[i].pos_ != 'ADJ' and doc[i].pos_ != 'SCONJ' and
                     doc[i].norm_ != 'から' and
@@ -148,9 +148,12 @@ class ChunkExtractor:
                   (len(doc) > i + 2 and doc[i].pos_ == 'ADJ' and doc[i + 1].orth_ == 'に' and doc[i + 2].lemma_ == 'する')):  # 形容動詞　＋　に　＋　する
                 pre = doc[i].orth_ + pre
                 start_pt = i
-#            elif (len(doc) > i + 1 and doc[i - 1].pos_ == 'NOUN' and doc[i].orth_ == 'が' and doc[i + 1].norm_ == '出来る'):  # 名詞　＋　が　＋　できる
-#                pre = doc[i].orth_ + pre
-#                start_pt = i
+            elif len(doc) > i + 1 and doc[i - 1].pos_ == 'NOUN' and doc[i].orth_ == 'が' and doc[i + 1].norm_ == '出来る':  # 名詞　＋　が　＋　できる
+                pre = doc[i].orth_ + pre
+                start_pt = i
+            elif len(doc) > i + 3 and doc[i].orth_ == 'と' and doc[i + 1].pos_ == 'NOUN' and doc[i + 2].orth_ == 'が' and doc[i + 3].norm_ == '出来る':  # 名詞と名詞　＋　が　＋　できる
+                pre = doc[i].orth_ + pre
+                start_pt = i
             elif i != 0 and (doc[i].tag_ == '補助記号-読点' and doc[i - 1].head.i == doc[i].i + 1 and doc[i - 1].pos_ != 'VERB' and
                              doc[i - 1].tag_ != '名詞-普通名詞-助数詞可能' and doc[i - 1].tag_ != '接尾辞-名詞的-助数詞' and doc[i - 1].tag_ != '名詞-普通名詞-形状詞可能'):      # 〇〇、〇〇する　などの並列術部
                 pre = doc[i].orth_ + pre
@@ -359,6 +362,9 @@ class ChunkExtractor:
                     elif doc[i].orth_ == 'で' and doc[i + 1].norm_ == '有る':  # 〜であること
                         ret = self.connect_word(doc[i].orth_, ret)
                         start_pt = i
+                    elif doc[i].pos_ == 'VERB' and doc[i + 1].norm_ == 'の' and doc[i + 2].norm_ == '方':  # 〜動詞＋の方
+                        ret = self.connect_word(doc[i].orth_, ret)
+                        start_pt = i
                     else:
                         break
         # 動詞の名詞化
@@ -462,6 +468,7 @@ class ChunkExtractor:
                         doc[i].pos_ != 'VERB' and doc[i].pos_ != 'AUX' and doc[i].pos_ != 'DET' and doc[i].pos_ != 'CCONJ' and doc[i].tag_ != '補助記号-読点' and
                         doc[i].pos_ != 'ADP' and doc[i].pos_ != 'SCONJ' and doc[i].tag_ != '助詞-副助詞' and
                         (doc[i].tag_ != '名詞-普通名詞-助数詞可能' or doc[i].lemma_ != '日') and
+                        (doc[i].tag_ != '形容詞-非自立可能' or doc[i].lemma_ != 'ない') and
                         (doc[i].tag_ != '補助記号-括弧閉' or doc[i - 1].tag_ != '補助記号-読点') and
                         (not doc[i].morph.get("Inflection") or (not doc[i].morph.get("Inflection") or '連体形' not in doc[i].morph.get("Inflection")[0])) and
                         (doc[i].tag_ != '名詞-普通名詞-副詞可能' or (doc[i].lemma_ != 'なか' and doc[i].lemma_ != 'ため' and doc[i].lemma_ != 'もと')) and doc[i].norm_ != '～' and doc[i].norm_ != '・' and doc[i].norm_ != '＊'):
@@ -506,6 +513,8 @@ class ChunkExtractor:
                     if (doc[i].pos_ == 'NOUN' or doc[i].pos_ == 'ADV') and (doc[i].lemma_ == 'なか' or  doc[i].lemma_ == 'ため' or doc[i].lemma_ == 'もと' or doc[i].lemma_ == '今後'):
                         break
                     if doc[i].pos_ == 'ADJ' and not self.head_connect_check(pt, i, *doc):   # objを修飾しない形容詞
+                        break
+                    if doc[i].pos_ == 'ADJ' and doc[i].lemma_ == 'ない':   # 〜ない/〇〇　は切り離す
                         break
                     if doc[i].pos_ == 'CCONJ' and doc[i].norm_ != '及び':    # 〜の製造及び販売をする　などの述部部分を含む場合があるため例外　あとで並列処理する
                         break
@@ -555,6 +564,9 @@ class ChunkExtractor:
                     start_pt = i
                     ret = self.connect_word(doc[i].orth_, ret)
                 elif doc[i].dep_ == 'compound' and doc[i].pos_ != 'ADP':
+                    start_pt = i
+                    ret = self.connect_word(doc[i].orth_, ret)
+                elif doc[i].lemma_ == 'を' and len(doc) > i + 1 and doc[i + 1].norm_ == '基':     # 〜を基に
                     start_pt = i
                     ret = self.connect_word(doc[i].orth_, ret)
                 else:

@@ -65,7 +65,7 @@ class VerbSpliter:
 
     ret : 目的語　＋　主述部　＋　主述始点　＋　主述部終点
     """
-    def object_devide(self, start, end, *doc):
+    def object_devide(self, start, end, argument, predicate, *doc):
         compound_word = ['商品', '技術', '製品', '無料', '限定', '特別', '本格', '社会', '新', '国内', '顧客', '一般', '全国', '早期', '事前']    # 複合動を作っても良い普通名詞
 
         if start == end:
@@ -88,8 +88,17 @@ class VerbSpliter:
                         break
                     return {'object': self.compaound(start, i - 1, *doc) + doc[end].orth_, 'verb': self.compaound(i + 1, end - 1, *doc) + 'する', 'verb_start': i + 1, 'verb_end': end - 1}
             elif doc[i].lemma_ == 'こと' and len(doc) > i + 1 and (doc[i + 1].lemma_ == 'の' or doc[i + 1].lemma_ == 'を' or doc[i + 1].lemma_ == 'が'):         # 〇〇することの発表を＋行う
+                for predic in predicate:
+                    if predic["lemma_start"] == start:
+                        for arg in argument:
+                            if arg["predicate_id"] == predic["id"] and arg["case"] == "を":
+                                if doc[i - 1].lemma_ == 'する':
+                                    return {'object': arg["lemma"], 'verb': self.compaound(start, i - 2, *doc) + 'する', 'verb_start': start, 'verb_end': end - 2, 'new_object_start': arg["lemma_start"], 'new_object_end': arg["lemma_end"]}
+                                if doc[i - 2].lemma_ == 'する' and doc[i - 1].lemma_ == 'た':
+                                    return {'object': arg["lemma"], 'verb': self.compaound(start, i - 3, *doc) + 'する', 'verb_start': start, 'verb_end': end - 3, 'new_object_start': arg["lemma_start"], 'new_object_end': arg["lemma_end"]}
+
                 if doc[i - 1].lemma_ == 'する':
-                    if doc[start - 2].tag_ == '補助記号-括弧閉':
+                    if doc[start - 2].tag_ == '補助記号-括弧閉' or doc[start - 2].lemma_ == '＂':
                         new_obj = self.num_chunk(start - 3, *doc)
                     else:
                         new_obj = self.num_chunk(start - 2, *doc)
@@ -139,6 +148,11 @@ class VerbSpliter:
                         return {'verb': '', 'sub_verb': self.compaound(i, end, *doc) + 'する', 'verb_start': -1, 'verb_end': -1, 'sub_verb_start': i, 'sub_verb_end': end}
                     elif doc[end].lemma_ == 'だ' or doc[end].lemma_ == 'です':
                         return {'verb': '', 'sub_verb': self.compaound(i, end, *doc) , 'verb_start': -1,'verb_end': -1, 'sub_verb_start': i, 'sub_verb_end': end}
+                    elif doc[end].norm_ == '出来る':
+                        if doc[end - 1].pos_ == 'ADP':
+                            return {'verb': self.compaound(start, i - 2, *doc) + 'する', 'sub_verb': 'できる', 'verb_start': start, 'verb_end': i - 2, 'sub_verb_start': end, 'sub_verb_end': end}
+                        else:
+                            return {'verb': self.compaound(start, i - 1, *doc) + 'する', 'sub_verb': 'できる', 'verb_start': start, 'verb_end': i - 1, 'sub_verb_start': end, 'sub_verb_end': end}
                     else:
                         return {'verb': '', 'sub_verb': self.compaound(i, end, *doc) + 'する', 'verb_start': -1, 'verb_end': -1, 'sub_verb_start': i, 'sub_verb_end': end}
                 if doc[end].tag_ == '名詞-普通名詞-サ変可能':
