@@ -150,7 +150,9 @@ class SubjectExtractor:
                         ret['lemma'] = self.connect_word(doc[i].orth_, ret['lemma'])
                         ret['lemma_start'] = i
                     return ret
+        #
         # 連体修飾をチェック
+        #
         if (doc[verb_end_pt].head.i != verb_end_pt) and ((doc[doc[verb_end_pt].head.i].dep_ == 'nsubj' or doc[doc[verb_end_pt].head.i].dep_ == 'obl' or doc[doc[verb_end_pt].head.i].dep_ == 'obj' or doc[doc[verb_end_pt].head.i].dep_ == 'acl' or doc[doc[verb_end_pt].head.i].dep_ == 'nmod' or (doc[doc[verb_end_pt].head.i].dep_ == 'ROOT' and doc[doc[verb_end_pt].head.i].i != doc[len(doc) - 1].head.i)) and doc[doc[verb_end_pt].head.i].lemma_ != 'こと' and
                                                  ((self.rentai_check(doc[verb_end_pt].i, *doc) or (doc[verb_end_pt].morph.get("Inflection") and '連体形' in doc[verb_end_pt].morph.get("Inflection")[0])) or
                                                  (self.shuusi_check(doc[verb_end_pt].i, *doc) or (doc[verb_end_pt].morph.get("Inflection") and '終止' in doc[verb_end_pt].morph.get("Inflection")[0])))):

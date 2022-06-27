@@ -125,7 +125,7 @@ class ChunkExtractor:
         pre = ''        # 前方文字
         # 前方を結合
         for i in reversed(range(0, pt)):
-            if ((pt == doc[i].head.i or pt == doc[i].head.head.i or i < doc[i].head.i <= pt) and doc[i].pos_ != 'PRON' and doc[i].pos_ != 'PUNCT' and doc[i].tag_ != '接頭辞' and (doc[i].pos_ != 'AUX' or doc[i].orth_ == 'する') and
+            if ((pt == doc[i].head.i or pt == doc[i].head.head.i or i < doc[i].head.i <= pt) and doc[i].pos_ != 'PRON' and doc[i].pos_ != 'PUNCT' and doc[i].tag_ != '接頭辞' and (doc[i].pos_ != 'AUX' or doc[i].orth_ == 'する' or doc[i].orth_ == 'な') and
                     (not doc[i].morph.get("Inflection") or '連体形' not in doc[i].morph.get("Inflection")[0]) and
                   (doc[i].pos_ != 'ADP' or (doc[i].tag_ == '助詞-副助詞' and doc[i].lemma_ != 'まで' and doc[i].lemma_ != 'だけ')) and doc[i].pos_ != 'ADV' and doc[i].pos_ != 'ADJ' and doc[i].pos_ != 'SCONJ' and
                     doc[i].norm_ != 'から' and
@@ -173,16 +173,25 @@ class ChunkExtractor:
             elif (len(doc) > i + 1 and doc[i + 1].lemma_ == 'なる' and doc[i].lemma_ == 'やすい') or (len(doc) > i + 1 and doc[i + 1].lemma_ == 'やすい' and doc[i].tag_ == '動詞-非自立可能'):  # 載せやすくなる
                 pre = doc[i].orth_ + pre
                 start_pt = i
-                """
+#                """
             elif ((len(doc) > i + 1 and doc[i + 1].lemma_ == 'なる' and doc[i].lemma_ == 'と') and
                 (doc[i - 1].tag_ != '補助記号-一般' and doc[i - 1].tag_ != '名詞-普通名詞-副詞可能' and
                  doc[i - 1].tag_ != '名詞-普通名詞-助数詞可能' and doc[i - 1].tag_ != '接尾辞-名詞的-助数詞' and doc[i - 1].tag_ != '名詞-普通名詞-助数詞可能')):  # 〇〇となる
-                pre = doc[i].orth_ + pre
-                start_pt = i
-            elif len(doc) > i + 2 and doc[i].pos_ == 'ADJ' and doc[i + 1].lemma_ == 'と' and doc[i + 2].lemma_ == 'なる':  # 可能　＋　と　＋ なる
-                pre = doc[i].orth_ + pre
-                start_pt = i
-            """
+                if doc[i - 1].pos_ == 'PUNCT':
+                    pre_part = self.num_chunk(i - 2, *doc)
+                else:
+                    pre_part = self.num_chunk(i - 1, *doc)
+                start_pt = pre_part["lemma_start"]
+                for c_pt in reversed(range(pre_part["lemma_start"], pre_part["lemma_end"])):
+                    if doc[c_pt].pos_ == 'ADP':
+                        start_pt = c_pt + 1
+                        break
+                if doc[start_pt - 1].orth_ == 'な' and doc[start_pt].pos_ == 'NOUN':  # 〇〇な　〇〇　＋　と　＋ なる
+                    pre_part = self.num_chunk(start_pt - 2, *doc)
+                    start_pt = pre_part["lemma_start"]
+                pre = self.compaound(start_pt, i - 1, *doc) + doc[i].orth_ + pre
+                break
+ #           """
             else:
                 break
         # 後方を結合
@@ -252,6 +261,20 @@ class ChunkExtractor:
                 append_o = tail_o + token.orth_ + doc[token.i + 1].orth_
                 append_l = tail_o + token.orth_ + doc[token.i + 1].lemma_
                 end_pt = token.i
+            # 出来るようになる
+            elif tail_ct == 0 and doc[token.i - 1].pos_ == 'VERB' and doc[token.i].tag_ == '形状詞-助動詞語幹' and len(doc) > token.i + 1 and doc[token.i + 1].orth_ == 'に':
+                if find_f:
+                    ret = ret + append_o
+                find_f = True
+                if len(doc) > token.i + 2 and doc[token.i + 2].pos_ == 'VERB':
+                    append_o = tail_o + token.orth_ + doc[token.i + 1].orth_ + doc[token.i + 2].orth_
+                    append_l = tail_o + token.orth_ + doc[token.i + 1].orth_ + doc[token.i + 2].lemma_
+                    end_pt = token.i + 2
+                else:
+                    append_o = tail_o + token.orth_ + doc[token.i + 1].orth_
+                    append_l = tail_o + token.orth_ + doc[token.i + 1].lemma_
+                    end_pt = token.i + 1
+
             # 語幹以外の助動詞部の追加
             elif token.pos_ == 'AUX' or token.pos_ == 'SCONJ' or token.pos_ == 'VERB' or token.pos_ == 'PART' or token.pos_ == 'ADJ' or token.tag_ == '名詞-普通名詞-サ変可能':          # 句情報用に助動詞を集める。  〇〇開始　〇〇する計画　などの時制も　含める
                 tail_o = tail_o + token.orth_

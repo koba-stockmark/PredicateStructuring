@@ -79,6 +79,27 @@ class PasAnalysis:
         append_predict.append(copy.deepcopy(predicate))
         return
 
+    """
+    短い述部の併合
+    """
+    def short_predicate_delete(self, append_predict, predicate, argument):
+        ret = False
+        del_id = 0
+        for chek in append_predict:
+            if chek["lemma_start"] >= predicate["lemma_start"] and chek["lemma_end"] <= predicate["lemma_end"]:
+                for arg in reversed(argument):
+                    if arg["predicate_id"] == chek["id"]:
+                        del argument[argument.index(arg)]
+                for arg in argument:
+                    if arg["predicate_id"] >= chek["id"]:
+                        arg["predicate_id"] = arg["predicate_id"] - 1
+                del_id = chek["id"]
+                del append_predict[chek["id"]]
+                ret = True
+            if ret and chek["id"] > del_id:
+                append_predict[chek["id"]]["id"] = append_predict[chek["id"]]["id"] - 1
+        return ret
+
 
     """
     主述部と補助術部に別れた述語項構造の取得
@@ -111,6 +132,9 @@ class PasAnalysis:
             verb = self.predicate_get(token.i, *doc)
             if not verb or not verb["lemma"]:
                 continue
+            if self.short_predicate_delete(append_predict, verb, argument):    # 新しい述部より短い過去の述部を削除
+                predicate_id = predicate_id - 1
+                pre_predicate_id = pre_predicate_id - 1
             verb_w = verb["lemma"]
             verb_end = verb["lemma_end"]
             modality_w = verb["modality"]

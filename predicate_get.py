@@ -33,7 +33,7 @@ class PredicateGet:
                 return self.predicate_phrase_get(token.i, *doc)
             elif token.dep_ == 'acl' and token.lemma_ == 'する':  # 〜を〇〇する〇〇
                 return self.predicate_phrase_get(token.i, *doc)
-            elif token.dep_ == 'obl' and len(doc) > token.i + 2 and doc[token.i + 1].lemma_ == 'と' and doc[token.i + 2].pos_ != 'NOUN':  # 〇〇とする
+            elif token.dep_ == 'obl' and len(doc) > token.i + 2 and doc[token.i + 1].lemma_ == 'と' and doc[token.i + 2].pos_ == 'AUX':  # 〇〇とする
                 return self.predicate_phrase_get(token.i, *doc)
             elif len(doc) > token.i + 1 and token.pos_ == 'NOUN' and doc[token.i + 1].pos_ == 'AUX':
                 return self.predicate_phrase_get(token.i, *doc)

@@ -213,7 +213,7 @@ class PredicatePhraseExtractor:
             ###############################
             #    形式動詞
             ###############################
-            if doc[pt].lemma_ == 'なる' and doc[pt - 1].lemma_ != 'に' and doc[pt - 1].lemma_ != 'と':  # 形式動詞
+            if doc[pt].lemma_ == 'なる' and doc[pt - 1].lemma_ != 'に' and doc[pt - 1].lemma_ != 'と' and (doc[pt - 2].pos_ != 'AUX' or doc[pt - 3].lemma_ != 'の'):  # 形式動詞   〜のようになる　は例でNG
                 if doc[doc[pt].i - 2].pos_ != 'PUNCT' and (doc[doc[pt].i - 1].pos_ == 'ADP' or (doc[doc[pt].i - 1].pos_ == 'AUX' and doc[doc[pt].i - 1].orth_ == 'に')):  # 〜となる　〜になる
                     verb = self.verb_chunk(doc[doc[pt].i - 1].i - 1, *doc)
                     verb_w = verb["lemma"] + doc[doc[pt].i - 1].orth_ + doc[pt].lemma_
@@ -392,6 +392,7 @@ class PredicatePhraseExtractor:
             ###############################
             #    〜となる
             ###############################
+                """
             elif doc[pt - 2].lemma_ in tonaru_dic and doc[doc[pt].i - 1].lemma_ == 'と' and doc[doc[pt].i].lemma_ == 'なる':
                 verb = self.verb_chunk(doc[pt].i, *doc)
                 modality_w = verb["modality"]
@@ -399,6 +400,7 @@ class PredicatePhraseExtractor:
                 verb_w = verb["lemma"]
                 verb["lemma_start"] = verb["lemma_start"] - 2
                 rule_id = 42
+            """
 
             ###############################
             #    単独の動詞
@@ -417,7 +419,7 @@ class PredicatePhraseExtractor:
                     verb["lemma_end"] = kanyouku[-1]
                     rule_id = 38
                 else:
-                    if len(doc) > doc[pt].i + 2 and doc[doc[pt].i + 1].lemma_ == 'と' and doc[doc[pt].i + 2].norm_ == '為る':
+                    if len(doc) > doc[pt].i + 2 and doc[doc[pt].i + 1].lemma_ == 'と' and (doc[doc[pt].i + 2].norm_ == '為る' or doc[doc[pt].i + 2].norm_ == '成る'):
                         verb_w = ''
                         rule_id = 42
                     elif len(doc) > doc[pt].i + 1 and (doc[doc[pt].i + 1].pos_ != 'VERB' or doc[doc[pt].i + 1].tag_ == '名詞-普通名詞-サ変可能'):  # 動詞の連続でない

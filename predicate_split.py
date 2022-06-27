@@ -153,6 +153,11 @@ class VerbSpliter:
                             return {'verb': self.compaound(start, i - 2, *doc) + 'する', 'sub_verb': 'できる', 'verb_start': start, 'verb_end': i - 2, 'sub_verb_start': end, 'sub_verb_end': end}
                         else:
                             return {'verb': self.compaound(start, i - 1, *doc) + 'する', 'sub_verb': 'できる', 'verb_start': start, 'verb_end': i - 1, 'sub_verb_start': end, 'sub_verb_end': end}
+                    elif doc[end - 3].norm_ == '出来る' and doc[end - 2].orth_ == 'よう' and doc[end - 1].orth_ == 'に' and doc[end].norm_ == '成る':
+                        if doc[end - 4].pos_ == 'ADP':
+                            return {'verb': self.compaound(start, end - 5, *doc) + 'する', 'sub_verb': 'できるようになる', 'verb_start': start, 'verb_end': end - 5, 'sub_verb_start': end - 4, 'sub_verb_end': end}
+                        else:
+                            return {'verb': self.compaound(start, end - 4, *doc) + 'する', 'sub_verb': 'できるようになる', 'verb_start': start, 'verb_end': end - 4, 'sub_verb_start': end - 4, 'sub_verb_end': end}
                     else:
                         return {'verb': '', 'sub_verb': self.compaound(i, end, *doc) + 'する', 'verb_start': -1, 'verb_end': -1, 'sub_verb_start': i, 'sub_verb_end': end}
                 if doc[end].tag_ == '名詞-普通名詞-サ変可能':
