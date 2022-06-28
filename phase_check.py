@@ -34,7 +34,7 @@ class PhaseCheker:
                 break
         verb_word = chunker.compaound(start, new_end, *doc)
         # 補助表現以外のメイン術部
-        if verb_word not in s_v_dic.sub_verb_dic:
+        if verb_word not in s_v_dic.sub_verb_dic or verb_word in s_v_dic.special_sub_verb_dic:
             # フルマッチ
             for rule in p_rule.phrase_rule:
                 if self.rule_check(verb_word, rule["words"]):
@@ -51,7 +51,7 @@ class PhaseCheker:
                         else:
                             ret = ret + rule["label"]
         # 目的語からフェーズをチェック
-        if verb_word in s_v_dic.sub_verb_dic and obj_start:
+        if verb_word in s_v_dic.sub_verb_dic and verb_word not in s_v_dic.special_sub_verb_dic and obj_start:
             ret2 = self.phase_chek(obj_start, obj_end, -1, -1, '', *doc)
             # 項全体として重複をチェック
             for ret3 in ret2.split(','):
@@ -59,6 +59,8 @@ class PhaseCheker:
                     ret = ret + ret3 + ','
             # 項の部分要素を重複をチェック
             for pt in range(obj_start, obj_end + 1):
+                if (len(doc) > pt + 1 and doc[pt + 1].lemma_ == '方' or doc[pt + 1].lemma_ == 'ため') or (len(doc) > pt + 2 and doc[pt + 1].pos_ == 'AUX' and doc[pt + 2].lemma_ == '方' or doc[pt + 2].lemma_ == 'ため'):      # 〇〇する方　はフェーズ判断に用いな
+                    continue
                 ret2 = self.phase_chek(pt, pt, -1, -1, '', *doc)
                 for ret3 in ret2.split(','):
                     if ret3 not in ret:

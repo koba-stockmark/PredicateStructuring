@@ -429,6 +429,8 @@ class PredicatePhraseExtractor:
                             verb_w = verb_w + 'する'
                         elif doc[pt].tag_ == '形状詞-一般':
                             verb_w = verb_w + '(だ)'
+                        elif doc[pt].pos_ == 'NOUN':
+                            verb_w = verb_w + '(です)'
                         rule_id = 39
                     elif len(doc) == doc[pt].i + 1:
                         rule_id = 40

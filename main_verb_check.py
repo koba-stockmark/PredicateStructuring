@@ -44,7 +44,6 @@ class MainVerbChek:
         elif doc[predic_head].pos_ == 'NOUN' and doc[predic_head].dep_ == 'ROOT' and doc[predic_head].i == doc[predic_head].head.i:  # 文末が　体言止
             rule_id = 105
         elif doc[predic_head].head.tag_ == '名詞-普通名詞-サ変可能' and doc[predic_head].head.dep_ == 'ROOT' and doc[predic_head].head.i == doc[doc[predic_head].head.i].head.i and (len(doc) > predic_head + 1 and doc[predic_head + 1].orth_ != 'で'):  # 文末が　体言止
-#        elif doc[predic_head].head.tag_ == '名詞-普通名詞-サ変可能' and doc[predic_head].head.dep_ == 'ROOT' and doc[predic_head].head.i == doc[doc[predic_head].head.i].head.i:  # 文末が　体言止
             rule_id = 107
         elif len(doc) > predic_head + 2 and doc[predic_head].pos_ == 'NOUN' and doc[predic_head + 1].pos_ == 'AUX' and doc[predic_head + 1].lemma_ == 'する' and doc[predic_head + 2].lemma_ == 'ます':  # 〇〇します
             rule_id = 108
@@ -60,12 +59,4 @@ class MainVerbChek:
             rule_id = 113
         elif len(doc) > doc[predic_head].i + 1 and doc[predic_head].pos_ == 'NOUN' and doc[doc[predic_head].head.i].dep_ == 'ROOT' and (doc[doc[predic_head].i + 1].pos_ == 'AUX' or doc[doc[predic_head].i + 1].pos_ == 'PUNCT'):  # 〇〇します。 がROOTになっていないときの例外処理
             rule_id = 114
-            """
-        #
-        # 最終述部でない場合 (終止形は主述部とする)  多くですぎるので要検討
-        #
-        elif ((len(doc) > predic_head + 1 and doc[predic_head].pos_ == "VERB" and doc[predic_head + 1].pos_ == "AUX" and doc[predic_head + 1].morph.get("Inflection") and '終止形' in doc[predic_head + 1].morph.get("Inflection")[0]) or
-            (doc[predic_head].morph.get("Inflection") and '終止形' in doc[predic_head].morph.get("Inflection")[0])):
-            rule_id = 103
-        """
         return rule_id

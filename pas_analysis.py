@@ -26,6 +26,7 @@ class PasAnalysis:
         self.head_connect_check = chunker.head_connect_check
         self.predicate_connect_check = chunker.predicate_connect_check
         self.rentai_check = chunker.rentai_check
+        self.shuusi_check = chunker.shuusi_check
         c_get = CaseExtractor()
         self.case_get = c_get.case_get
         s_g = SubjectExtractor()
@@ -313,7 +314,35 @@ class PasAnalysis:
                             if subj["subject"] and subj["dummy"]:
                                 argument.remove(subj)
                                 break
-
+            #################################
+            #  主語が前にある連体修飾で項がない場合は連体修飾先を項とする
+            #################################
+            if subject_w and ret_subj["case"] == 'が' and ("rentai_subject" not in ret_subj or not ret_subj["rentai_subject"]) and not argument_map and \
+                    (self.shuusi_check(verb["lemma_end"], *doc) or self.rentai_check(verb["lemma_end"], *doc)) and\
+                    doc[doc[verb["lemma_end"]].head.i].pos_ == 'NOUN' and doc[doc[verb["lemma_end"]].head.i].lemma_ != 'こと' and doc[verb["lemma_end"]].pos_ != "ADJ":
+                ret_obj = self.num_chunk(doc[verb["lemma_end"]].head.i, *doc)
+                #
+                # 項の並列処理
+                #
+                para_obj = self.para_get(ret_obj['lemma_start'], ret_obj['lemma_end'], *doc)
+                case = 'を'
+                #
+                # 項のセット
+                #
+                ret_obj["case"] = case
+                ret_obj["subject"] = False
+                ret_obj["id"] = argument_id
+                ret_obj["predicate_id"] = predicate_id
+                argument_id = argument_id + 1
+                argument.append(ret_obj)
+                if para_obj and para_obj[0]["lemma"]:
+                    for p_obj in para_obj:
+                        p_obj["case"] = case
+                        p_obj["subject"] = False
+                        p_obj["id"] = argument_id
+                        p_obj["predicate_id"] = predicate_id
+                        argument_id = argument_id + 1
+                        argument.append(p_obj)
             # データダンプ
             if find_f and debug:
                 d_ret = d_ret + self.data_dump_and_save(text, argument, verb, predicate_id)
