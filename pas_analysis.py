@@ -295,8 +295,6 @@ class PasAnalysis:
                         case = self.case_get(i, *doc)
                     if not case and doc[i].tag_ == '名詞-普通名詞-サ変可能':
                         continue
-#                    if doc[ret_obj['lemma_end']].dep_ == 'nsubj' and case == 'が' and doc[ret_obj['lemma_end']].lemma_ != '化':   # nsubj で目的語の場合
-#                        case = 'を'
                     #
                     # 項のセット
                     #
