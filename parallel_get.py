@@ -56,6 +56,17 @@ class ParallelExtractor:
                     sp = ret[find_ct - 1]['lemma_start']
                     ep = ret[find_ct - 1]['lemma_end']
                     continue
+            elif doc[i].tag_ == '接尾辞-名詞的-一般':     # 派生名詞の場合
+                if (sp <= doc[i].head.head.i <= ep) and (doc[i + 1].lemma_ == 'と' or doc[i + 1].lemma_ == 'や' or doc[i + 1].lemma_ == 'など' or (doc[i + 1].pos_ == 'PUNCT' and doc[i + 1].tag_ != '補助記号-括弧開')):
+                    if len(doc) > i + 2 and doc[i + 1].pos_ == 'PUNCT' and doc[i + 2].lemma_ == 'を':
+                        break
+                    ret.append((self.num_chunk(doc[i].head.i, *doc)))
+                    find_ct = find_ct + 1
+                    sp = ret[find_ct - 1]['lemma_start']
+                    ep = ret[find_ct - 1]['lemma_end']
+                    continue
+            elif doc[i].lemma_ == 'を' or doc[i].lemma_ == 'が' or doc[i].lemma_ == 'は':
+                break
         # （主語1）が（主語2）と…　のパターン
         if doc[end + 1].lemma_ == 'が':
             for i in range(end + 1, doc[end].head.i):

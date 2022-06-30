@@ -86,19 +86,25 @@ class PasAnalysis:
     def short_predicate_delete(self, append_predict, predicate, argument):
         ret = False
         del_id = 0
-        for chek in append_predict:
+        for chek in reversed(append_predict):
             if chek["lemma_start"] >= predicate["lemma_start"] and chek["lemma_end"] <= predicate["lemma_end"]:
                 for arg in reversed(argument):
                     if arg["predicate_id"] == chek["id"]:
-                        del argument[argument.index(arg)]
+                        arg["predicate_id"] = predicate["id"]
                 for arg in argument:
                     if arg["predicate_id"] >= chek["id"]:
                         arg["predicate_id"] = arg["predicate_id"] - 1
+                for arg in reversed(argument):
+                    if arg["predicate_id"] == chek["id"]:
+                        for c_arg in reversed(range(argument.index(arg) + 1, len(argument))):
+                            if argument[c_arg]["lemma"] == arg["lemma"]:
+                                del argument[c_arg]
                 del_id = chek["id"]
-                del append_predict[chek["id"]]
                 ret = True
-            if ret and chek["id"] > del_id:
-                append_predict[chek["id"]]["id"] = append_predict[chek["id"]]["id"] - 1
+                for chek_p in append_predict:
+                    if chek_p["id"] > del_id:
+                        append_predict[chek_p["id"]]["id"] = append_predict[chek_p["id"]]["id"] - 1
+                del append_predict[chek["id"]]
         return ret
 
 
@@ -133,9 +139,6 @@ class PasAnalysis:
             verb = self.predicate_get(token.i, *doc)
             if not verb or not verb["lemma"]:
                 continue
-            if self.short_predicate_delete(append_predict, verb, argument):    # 新しい述部より短い過去の述部を削除
-                predicate_id = predicate_id - 1
-                pre_predicate_id = pre_predicate_id - 1
             verb_w = verb["lemma"]
             verb_end = verb["lemma_end"]
             modality_w = verb["modality"]
@@ -193,16 +196,17 @@ class PasAnalysis:
             find_f = False
             argument_map = []
             for i in range(0, verb["lemma_start"]):
-                if doc[i].pos_ == 'ADP':
+                if doc[i].pos_ == 'ADP' or doc[i].pos_ == 'PART':
                     continue
-                if doc[i].dep_ == "nsubj" or (ret_subj["lemma"] and ret_subj["lemma_start"] <= i <= ret_subj["lemma_end"]):  # 主語は対象外
+                if ret_subj["lemma"] and ret_subj["lemma_start"] <= i <= ret_subj["lemma_end"]:  # 主語は対象外
                     if doc[doc[i].head.i].norm_ == '出来る': # 〇〇が出来る　は例外
                         pass
                     else:
                         continue
                 if ((doc[i].dep_ == "obj" and doc[i].head.dep_ != "obj") or (doc[i].dep_ == 'advcl' and doc[i].tag_ == '名詞-普通名詞-形状詞可能') or
                         (doc[i].dep_ == 'advcl' and len(doc) > i + 1 and doc[i + 1].tag_ == '助詞-格助詞') or
-                        (len(doc) > i + 1 and doc[i + 1].dep_ == 'case') or
+                        (len(doc) > i + 1 and doc[i + 1].dep_ == 'case' and doc[i].orth_ != ret_subj["lemma"]) or
+                        (doc[i].dep_ == 'nsubj' and doc[i].orth_ != ret_subj["lemma"]) or
                         (doc[i].dep_ == "obl" and doc[i - 1].lemma_ != 'が' and
                          (len(doc) > i + 1 and (doc[i + 1].pos_ != 'AUX' or doc[i + 1].lemma_ == 'で' or doc[i + 1].tag_ == '助詞-格助詞')) and
                          (doc[i].norm_ != 'そこ' and doc[i].norm_ != 'それ') and
@@ -210,6 +214,8 @@ class PasAnalysis:
                     if doc[i].head.i < predicate_start or doc[i].head.i > predicate_end:  # 述部に直接かからない
                         if doc[i].head.head.i == token.i or (doc[i].head.morph.get("Inflection") and '連用形' not in doc[i].head.morph.get("Inflection")[0]):  # 連用形接続でもつながらない
                             if (doc[doc[i].head.i + 1].tag_ != '接尾辞-形容詞的' and (doc[doc[i].head.i].tag_ != '名詞-普通名詞-副詞可能' or doc[doc[i].head.i].lemma_ == 'ため' or doc[doc[i].head.i].lemma_ == '前')) or doc[i].head.head.pos_ == 'NOUN':
+                                continue
+                            elif doc[doc[i].head.i].dep_ == 'obj':
                                 continue
                         elif doc[i].head.pos_ == 'VERB' and doc[i].head.head.i == verb["lemma_start"]:  # 特別処理　「ツールをより使いやすく、バージョンアップ」
                             if len(doc) > doc[i].head.i + 1 and doc[doc[i].head.i + 1].pos_ == 'AUX' and doc[i].head.head.pos_ == 'NOUN' and len(doc) > doc[i].head.head.i + 1 and doc[doc[i].head.head.i + 1].lemma_ == 'する':
@@ -289,6 +295,8 @@ class PasAnalysis:
                         case = self.case_get(i, *doc)
                     if not case and doc[i].tag_ == '名詞-普通名詞-サ変可能':
                         continue
+#                    if doc[ret_obj['lemma_end']].dep_ == 'nsubj' and case == 'が' and doc[ret_obj['lemma_end']].lemma_ != '化':   # nsubj で目的語の場合
+#                        case = 'を'
                     #
                     # 項のセット
                     #
@@ -470,6 +478,10 @@ class PasAnalysis:
                         predicate["sub_lemma_end"] = -1
                         predicate["sub_orth"] = ''
                     pre_predicate_id = predicate_id
+                    if self.short_predicate_delete(append_predict, predicate, argument):  # 新しい述部より短い過去の述部を削除
+                        predicate_id = predicate_id - 1
+                        pre_predicate_id = pre_predicate_id - 1
+                        predicate["id"] = predicate["id"] - 1
                     self.predicate_merge(append_predict, predicate, argument)
 
             ##########################################################################################################################################
@@ -507,6 +519,10 @@ class PasAnalysis:
                     predicate["sub_lemma_end"] = -1
                     predicate["sub_orth"] = ''
                 pre_predicate_id = predicate_id
+                if self.short_predicate_delete(append_predict, predicate, argument):  # 新しい述部より短い過去の述部を削除
+                    predicate_id = predicate_id - 1
+                    predicate["id"] = predicate["id"] - 1
+                    pre_predicate_id = pre_predicate_id - 1
                 self.predicate_merge(append_predict, predicate, argument)
         ##########################################################################################################################################
         #    メイン述部の判断

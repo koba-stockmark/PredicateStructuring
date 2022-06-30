@@ -1,6 +1,7 @@
 from chunker import ChunkExtractor
 from sub_verb_dic import SubVerbDic
 from case_information_get import CaseExtractor
+from special_verb_dic import SpecialVerb
 import re
 
 class VerbSpliter:
@@ -16,6 +17,9 @@ class VerbSpliter:
         self.compaound = chunker.compaound
         c_g = CaseExtractor()
         self.case_get = c_g.case_get
+        s_v = SpecialVerb()
+        self.campany_special_verb = s_v.campany_special_verb
+
 
     """
    項を分割しない格
@@ -88,6 +92,17 @@ class VerbSpliter:
                         break
                     return {'object': self.compaound(start, i - 1, *doc) + doc[end].orth_, 'verb': self.compaound(i + 1, end - 1, *doc) + 'する', 'verb_start': i + 1, 'verb_end': end - 1}
             elif doc[i].lemma_ == 'こと' and len(doc) > i + 1 and (doc[i + 1].lemma_ == 'の' or doc[i + 1].lemma_ == 'を' or doc[i + 1].lemma_ == 'が'):         # 〇〇することの発表を＋行う
+                not_special = False
+                for c_pt in reversed(range(0, i - 1)):
+                    if doc[c_pt].head.i == i:
+                        if (doc[c_pt].lemma_ == '導入' or doc[c_pt].lemma_ == '発足') and doc[c_pt - 1].lemma_ == 'が':
+                            not_special = True
+                            break
+                        if doc[c_pt].lemma_ not in self.campany_special_verb:
+                            not_special = True
+                            break
+                if not_special: # 〜こと　は企業特別述部以外は分割しない
+                    continue
                 for predic in predicate:
                     if predic["lemma_start"] == start:
                         for arg in argument:

@@ -1,4 +1,6 @@
 from predicate_phrase_analysis import PredicatePhraseExtractor
+from chunker import ChunkExtractor
+
 class PredicateGet:
 
     def __init__(self):
@@ -10,6 +12,9 @@ class PredicateGet:
 
         p_x = PredicatePhraseExtractor()
         self.predicate_phrase_get = p_x.predicate_phrase_get
+        chunker = ChunkExtractor()
+        self.rentai_check = chunker.rentai_check
+
 
     """
     指定された形態素を含む述部の可能性をチェックして述部の場合は述部の取得を行う
@@ -17,9 +22,12 @@ class PredicateGet:
 
     def predicate_get(self, pt, *doc):
         token = doc[pt]
+        if (len(doc) > token.i + 1 and doc[token.i + 1].tag_ == '接尾辞-名詞的-一般') or (len(doc) > token.i + 2 and doc[token.i + 1].pos_ == 'AUX' and doc[token.i + 2].tag_ == '接尾辞-名詞的-一般'):     # 生成名詞はNG
+            return {}
         if (token.pos_ == 'VERB' or token.pos_ == 'ADJ' or token.dep_ == 'ROOT' or token.dep_ == 'ROOT' or token.dep_ == 'obl' or token.dep_ == 'acl' or token.dep_ == 'advcl' or token.tag_ == '名詞-普通名詞-副詞可能' or
                 (len(doc) > token.i + 1 and token.pos_ == 'NOUN' and doc[token.i + 1].pos_ == 'AUX') or
                 (len(doc) > token.i + 1 and token.pos_ == 'NOUN' and doc[token.i + 1].tag_ == '動詞-非自立可能') or
+                (len(doc) > token.i + 2 and token.tag_ == '名詞-普通名詞-サ変可能' and token.dep_ == 'nmod' and token.head.dep_ == 'obj' and doc[token.i + 1].lemma_ == 'や' and self.rentai_check(token.i + 2, *doc)) or
                 (len(doc) > token.i + 1 and token.tag_ == '名詞-普通名詞-サ変可能' and token.dep_ == 'nmod' and (doc[token.i + 1].lemma_ == '、' or doc[token.i + 1].lemma_ == '：'))):
             if token.dep_ == 'fixed':
                 return {}
@@ -68,6 +76,8 @@ class PredicateGet:
             elif len(doc) > token.i + 1 and token.pos_ == 'NOUN' and doc[token.i + 1].tag_ == '動詞-非自立可能':
                 return self.predicate_phrase_get(token.i, *doc)
             elif token.dep_ == 'ROOT' and doc[len(doc) - 1].head.i == token.i:
+                return self.predicate_phrase_get(token.i, *doc)
+            elif len(doc) > token.i + 2 and token.tag_ == '名詞-普通名詞-サ変可能' and token.dep_ == 'nmod' and token.head.dep_ == 'obj' and doc[token.i + 1].lemma_ == 'や' and self.rentai_check(token.i + 2, *doc):
                 return self.predicate_phrase_get(token.i, *doc)
             else:
                 return {}

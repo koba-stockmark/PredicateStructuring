@@ -110,7 +110,10 @@ class ChunkExtractor:
         ret = ''
         for i in range(start, end):
             ret = self.connect_word(ret, doc[i].orth_)
-        ret = ret + doc[end].lemma_
+        if re.compile(r'^[a-zA-Z]+$').search(doc[end].lemma_):
+            ret = ret + doc[end].orth_
+        else:
+            ret = ret + doc[end].lemma_
         return ret
 
     """
@@ -201,6 +204,8 @@ class ChunkExtractor:
         ret = ''        # チャンク結果
         for token in doc[pt + 1:]:
             if token.head.i != pt and doc[pt].head.i != token.i and doc[pt].head.i != token.head.i:
+                break
+            if token.tag_ == '接尾辞-名詞的-一般':
                 break
             if ((tail_ct == 0 and pt == token.head.i and token.pos_ != 'ADP' and token.pos_ != 'SCONJ' and token.pos_ != 'PART' and token.pos_ != 'AUX' and token.pos_ != 'VERB' and token.pos_ != 'PUNCT' and token.pos_ != 'SYM') and
                     (not doc[token.i - 1].morph.get("Inflection") or (not doc[token.i - 1].morph.get("Inflection") or '連体形' not in doc[token.i - 1].morph.get("Inflection")[0]))):
@@ -368,12 +373,19 @@ class ChunkExtractor:
                         break
         # 動詞の名詞化
         elif doc[pt].pos_ == 'VERB':
-            for token in doc[0:]:
-                if token.head.i == pt:
-                    start_pt = token.i
+            if doc[pt - 1].lemma_ != 'と':   # 並列処理のため結合しない
+                for token in doc[0:]:
+                    if token.head.i == pt:
+                        start_pt = token.i
+                        break
+                for i in reversed(range(start_pt, pt)):
+                    ret = self.connect_word(doc[i].orth_, ret)
+            for i in range(pt + 1, len(doc)):
+                if doc[i].pos_ == 'ADP':
                     break
-            for i in reversed(range(start_pt, pt)):
-                ret = self.connect_word(doc[i].orth_, ret)
+                if doc[i].head.i == pt:
+                    ret = ret + doc[i].orth_
+                    end_pt = end_pt + 1
         # 一般の名詞
         else:
             # 後方のチャンク
