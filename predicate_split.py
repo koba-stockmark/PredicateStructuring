@@ -112,6 +112,8 @@ class VerbSpliter:
                                 if doc[i - 2].lemma_ == 'する' and doc[i - 1].lemma_ == 'た':
                                     return {'object': arg["lemma"], 'verb': self.compaound(start, i - 3, *doc) + 'する', 'verb_start': start, 'verb_end': end - 3, 'new_object_start': arg["lemma_start"], 'new_object_end': arg["lemma_end"]}
 
+                if doc[start - 1].pos_ != 'ADP':
+                    return {'object': self.compaound(start, end, *doc), 'verb': '', 'verb_start': -1, 'verb_end': -1}
                 if doc[i - 1].lemma_ == 'する':
                     if doc[start - 2].tag_ == '補助記号-括弧閉' or doc[start - 2].lemma_ == '＂':
                         new_obj = self.num_chunk(start - 3, *doc)

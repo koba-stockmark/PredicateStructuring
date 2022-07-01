@@ -91,6 +91,12 @@ class PasAnalysis:
                 for arg in reversed(argument):
                     if arg["predicate_id"] == chek["id"]:
                         arg["predicate_id"] = predicate["id"]
+                        if "not_direct_subject" in arg:
+                            for check2 in argument:
+                                if check2["predicate_id"] == predicate["id"]:
+                                    if check2["subject"] and not "not_direct_subject" in check2:
+                                        del argument[argument.index(arg)]
+                                        break
                 for arg in argument:
                     if arg["predicate_id"] >= chek["id"]:
                         arg["predicate_id"] = arg["predicate_id"] - 1
@@ -172,6 +178,9 @@ class PasAnalysis:
             subj_case = self.case_get(ret_subj['lemma_end'], *doc)
             if "rentai_subject" in ret_subj and ret_subj["rentai_subject"]:
                 subj_case = "が"
+            if subj_case == "を":    # を　格の主語は誤解析
+                subject_w = ''
+                ret_subj = {'lemma': '', 'lemma_start': -1, 'lemma_end': -1}
 
             # 省略主語のセット
             if subject_w:
@@ -190,6 +199,9 @@ class PasAnalysis:
             # 主語の並列化
             if subject_w:
                 para_subj = self.para_get(ret_subj['lemma_start'], ret_subj['lemma_end'], *doc)
+                if "not_direct_subject" in ret_subj:
+                    for para in para_subj:
+                        para["not_direct_subject"] = True
             #
             #  つながる項の検索
             #

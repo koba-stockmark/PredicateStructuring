@@ -112,6 +112,7 @@ class SubjectExtractor:
                     continue
                 ret = self.relational_connect_check(i, ng_pt, verb_pt, *doc)
                 if ret['lemma']:
+                    ret['not_direct_subject'] = True
                     return ret
         # oblで直接接続をチェック
         for token in doc:
@@ -123,6 +124,7 @@ class SubjectExtractor:
             if doc[i].dep_ == "obl" and doc[i + 1].lemma_ == 'で' and doc[i + 2].lemma_ == 'は' and doc[i].tag_ != '名詞-普通名詞-副詞可能':
                 ret = self.relational_connect_check(i, ng_pt, verb_pt, *doc)
                 if ret['lemma']:
+                    ret['not_direct_subject'] = True
                     return ret
         # dislocatedで直接接続をチェック
         for token in doc:
@@ -133,6 +135,7 @@ class SubjectExtractor:
             if doc[i].dep_ == "dislocated" and doc[i + 1].lemma_ == 'で' and doc[i + 2].lemma_ == 'は' and doc[i].tag_ != '名詞-普通名詞-副詞可能':
                 ret = self.relational_connect_check(i, ng_pt, verb_pt, *doc)
                 if ret['lemma']:
+                    ret['not_direct_subject'] = True
                     return ret
         # 〇〇は.....〇〇を△△すると〇〇した　本来なら主語も目的語も△△にかかってほしいものが主語が〇〇にかかってしまって関係が取れない場合の処理
         if doc[verb_pt].dep_ != 'ROOT' and doc[doc[verb_pt].head.i].dep_ == 'ROOT' and (doc[doc[verb_pt].head.head.i - 2].lemma_ == 'た' or doc[doc[verb_pt].head.head.i - 2].lemma_ == 'する') and doc[doc[verb_pt].head.head.i -1].lemma_ == 'と':

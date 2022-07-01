@@ -65,7 +65,7 @@ class ParallelExtractor:
                     sp = ret[find_ct - 1]['lemma_start']
                     ep = ret[find_ct - 1]['lemma_end']
                     continue
-            elif doc[i].lemma_ == 'を' or doc[i].lemma_ == 'が' or doc[i].lemma_ == 'は':
+            elif doc[i].lemma_ == 'を' or doc[i].lemma_ == 'が' or doc[i].lemma_ == 'は' or doc[i].lemma_ == 'に' or doc[i].lemma_ == 'で':
                 break
         # （主語1）が（主語2）と…　のパターン
         if doc[end + 1].lemma_ == 'が':

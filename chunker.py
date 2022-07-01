@@ -499,7 +499,10 @@ class ChunkExtractor:
                       (doc[i].pos_ != 'ADP' or doc[i].orth_ == 'の' or doc[i].orth_ == 'や' or doc[i].orth_ == 'と' or
                        (doc[i].pos_ == 'ADP' and doc[i + 1].orth_ == 'の'))):
                     if doc[i].orth_ == 'の' and (doc[i - 1].pos_ == 'ADP' or doc[i - 1].pos_ == 'SCONJ') and (doc[i - 2].pos_ == 'VERB' or doc[i - 2].pos_ == 'AUX' or doc[i - 2].pos_ == 'SCONJ'):
-                        break
+                        if doc[i - 3].orth_ == 'に' and doc[i - 2].orth_ == 'つい' and doc[i - 1].orth_ == 'て':  # 〇〇についての〇〇
+                            pass
+                        else:
+                            break
                     if doc[i].pos_ == 'SYM' and (doc[i].lemma_ == '〜' or doc[i].lemma_ == '～' or doc[i].lemma_ == '＊'):
                         break
                     if doc[i].pos_ == 'SYM' and doc[i].tag_ == '助詞-格助詞':      # 〜　が格助詞の朱鷺　
@@ -560,6 +563,15 @@ class ChunkExtractor:
                     start_pt = i
                     ret = self.connect_word(doc[i].orth_, ret)
                 elif doc[i].pos_ == 'ADP' and doc[i].orth_ == 'に' and doc[i + 1].orth_ == 'なる':
+                    start_pt = i
+                    ret = self.connect_word(doc[i].orth_, ret)
+                elif doc[i - 2].orth_ == 'に' and doc[i - 1].orth_ == 'つい' and doc[i].orth_ == 'て':  # 〇〇についての〇〇
+                    start_pt = i
+                    ret = self.connect_word(doc[i].orth_, ret)
+                elif len(doc) > i + 1 and doc[i - 1].orth_ == 'に' and doc[i].orth_ == 'つい' and doc[i + 1].orth_ == 'て':  # 〇〇についての〇〇
+                    start_pt = i
+                    ret = self.connect_word(doc[i].orth_, ret)
+                elif len(doc) > i + 2 and doc[i].orth_ == 'に' and doc[i + 1].orth_ == 'つい' and doc[i + 2].orth_ == 'て':  # 〇〇についての〇〇
                     start_pt = i
                     ret = self.connect_word(doc[i].orth_, ret)
                 elif len(doc) > i + 1 and doc[i + 1].tag_ == '接尾辞-名詞的-サ変可能':
