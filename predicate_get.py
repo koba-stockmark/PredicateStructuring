@@ -55,11 +55,11 @@ class PredicateGet:
                 return self.predicate_phrase_get(token.i, *doc)
             #   〇〇 + を + 〇〇 + に、... 　
             #
-            elif token.i > 0 and doc[token.i - 1].pos_ == 'ADP' and len(doc) > token.i + 2 and token.pos_ == 'NOUN' and doc[token.i + 1].lemma_ == 'に' and doc[token.i + 2].tag_ == '補助記号-読点':
+            elif token.i > 0 and doc[token.i - 1].lemma_ == 'を' and len(doc) > token.i + 2 and token.pos_ == 'NOUN' and doc[token.i + 1].lemma_ == 'に' and doc[token.i + 2].tag_ == '補助記号-読点':
                 return self.predicate_phrase_get(token.i, *doc)
             #   〇〇 + を + 〇〇 + の... 　
             #
-            elif token.i > 0 and doc[token.i - 1].pos_ == 'ADP' and len(doc) > token.i + 1 and (token.pos_ == 'NOUN' or token.pos_ == 'PROPN') and doc[token.i + 1].lemma_ == 'の':
+            elif token.i > 0 and doc[token.i - 1].lemma_ == 'を' and len(doc) > token.i + 1 and (token.pos_ == 'NOUN' or token.pos_ == 'PROPN') and doc[token.i + 1].lemma_ == 'の':
                 return self.predicate_phrase_get(token.i, *doc)
             #   〇〇　＋　を　＋　〇〇(名詞) + 、+ ... 　
             #

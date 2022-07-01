@@ -499,7 +499,7 @@ class ChunkExtractor:
                       (doc[i].pos_ != 'ADP' or doc[i].orth_ == 'の' or doc[i].orth_ == 'や' or doc[i].orth_ == 'と' or
                        (doc[i].pos_ == 'ADP' and doc[i + 1].orth_ == 'の'))):
                     if doc[i].orth_ == 'の' and (doc[i - 1].pos_ == 'ADP' or doc[i - 1].pos_ == 'SCONJ') and (doc[i - 2].pos_ == 'VERB' or doc[i - 2].pos_ == 'AUX' or doc[i - 2].pos_ == 'SCONJ'):
-                        if doc[i - 3].orth_ == 'に' and doc[i - 2].orth_ == 'つい' and doc[i - 1].orth_ == 'て':  # 〇〇についての〇〇
+                        if doc[i - 3].orth_ == 'に' and doc[i - 2].orth_ == 'つい' and doc[i - 1].orth_ == 'て' and doc[i].orth_ == 'の':  # 〇〇についての〇〇
                             pass
                         else:
                             break
@@ -565,13 +565,13 @@ class ChunkExtractor:
                 elif doc[i].pos_ == 'ADP' and doc[i].orth_ == 'に' and doc[i + 1].orth_ == 'なる':
                     start_pt = i
                     ret = self.connect_word(doc[i].orth_, ret)
-                elif doc[i - 2].orth_ == 'に' and doc[i - 1].orth_ == 'つい' and doc[i].orth_ == 'て':  # 〇〇についての〇〇
+                elif len(doc) > i + 1 and doc[i - 2].orth_ == 'に' and doc[i - 1].orth_ == 'つい' and doc[i].orth_ == 'て' and doc[i + 1].orth_ == 'の':  # 〇〇についての〇〇
                     start_pt = i
                     ret = self.connect_word(doc[i].orth_, ret)
-                elif len(doc) > i + 1 and doc[i - 1].orth_ == 'に' and doc[i].orth_ == 'つい' and doc[i + 1].orth_ == 'て':  # 〇〇についての〇〇
+                elif len(doc) > i + 2 and doc[i - 1].orth_ == 'に' and doc[i].orth_ == 'つい' and doc[i + 1].orth_ == 'て' and doc[i + 2].orth_ == 'の':  # 〇〇についての〇〇
                     start_pt = i
                     ret = self.connect_word(doc[i].orth_, ret)
-                elif len(doc) > i + 2 and doc[i].orth_ == 'に' and doc[i + 1].orth_ == 'つい' and doc[i + 2].orth_ == 'て':  # 〇〇についての〇〇
+                elif len(doc) > i + 3 and doc[i].orth_ == 'に' and doc[i + 1].orth_ == 'つい' and doc[i + 2].orth_ == 'て' and doc[i + 3].orth_ == 'の':  # 〇〇についての〇〇
                     start_pt = i
                     ret = self.connect_word(doc[i].orth_, ret)
                 elif len(doc) > i + 1 and doc[i + 1].tag_ == '接尾辞-名詞的-サ変可能':

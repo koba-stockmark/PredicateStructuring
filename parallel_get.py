@@ -22,6 +22,8 @@ class ParallelExtractor:
         sp = start
         ep = end
         find_ct = 0
+        if doc[start].norm_ == '共' and doc[start - 1].lemma_ == 'と':   # 〜と共に　は並列でない
+            return ret
         # 〇〇と（主語）が…　のパターン
         for i in reversed(range(0, start)):
             if sp <= i:

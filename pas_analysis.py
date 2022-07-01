@@ -208,7 +208,7 @@ class PasAnalysis:
             find_f = False
             argument_map = []
             for i in range(0, verb["lemma_start"]):
-                if doc[i].pos_ == 'ADP' or doc[i].pos_ == 'PART':
+                if doc[i].pos_ == 'ADP' or doc[i].pos_ == 'PART' or doc[i].pos_ == 'PUNCT':
                     continue
                 if ret_subj["lemma"] and ret_subj["lemma_start"] <= i <= ret_subj["lemma_end"]:  # 主語は対象外
                     if doc[doc[i].head.i].norm_ == '出来る': # 〇〇が出来る　は例外
@@ -219,13 +219,14 @@ class PasAnalysis:
                         (doc[i].dep_ == 'advcl' and len(doc) > i + 1 and doc[i + 1].tag_ == '助詞-格助詞') or
                         (len(doc) > i + 1 and doc[i + 1].dep_ == 'case' and doc[i].orth_ != ret_subj["lemma"]) or
                         (doc[i].dep_ == 'nsubj' and doc[i].orth_ != ret_subj["lemma"]) or
+                        (doc[doc[i].head.i - 1].lemma_ == 'と' and doc[doc[i].head.i].lemma_ == '共' and doc[doc[i].head.i + 1].lemma_ == 'に') or
                         (doc[i].dep_ == "obl" and doc[i - 1].lemma_ != 'が' and
                          (len(doc) > i + 1 and (doc[i + 1].pos_ != 'AUX' or doc[i + 1].lemma_ == 'で' or doc[i + 1].tag_ == '助詞-格助詞')) and
                          (doc[i].norm_ != 'そこ' and doc[i].norm_ != 'それ') and
                          (doc[i].tag_ != '名詞-普通名詞-副詞可能' or doc[i].norm_ == '為' or doc[i].norm_ == '下') and (doc[i].norm_ != '度' or doc[i - 1].pos_ == 'NUM'))):  # この度　はNG
                     if doc[i].head.i < predicate_start or doc[i].head.i > predicate_end:  # 述部に直接かからない
                         if doc[i].head.head.i == token.i or (doc[i].head.morph.get("Inflection") and '連用形' not in doc[i].head.morph.get("Inflection")[0]):  # 連用形接続でもつながらない
-                            if (doc[doc[i].head.i + 1].tag_ != '接尾辞-形容詞的' and (doc[doc[i].head.i].tag_ != '名詞-普通名詞-副詞可能' or doc[doc[i].head.i].lemma_ == 'ため' or doc[doc[i].head.i].lemma_ == '前')) or doc[i].head.head.pos_ == 'NOUN':
+                            if (doc[doc[i].head.i + 1].tag_ != '接尾辞-形容詞的' and doc[doc[i].head.i].lemma_ != '共' and (doc[doc[i].head.i].tag_ != '名詞-普通名詞-副詞可能' or doc[doc[i].head.i].lemma_ == 'ため' or doc[doc[i].head.i].lemma_ == '前')) or doc[i].head.head.pos_ == 'NOUN':
                                 continue
                             elif doc[doc[i].head.i].dep_ == 'obj':
                                 continue
