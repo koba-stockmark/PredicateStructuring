@@ -18,7 +18,7 @@ out_file.close()
 """
 for doc in articles:
   for sep_doc in doc.splitlines():
-    keyword_list = model.v_o_get(sep_doc) # キーワードの候補の抽出
+    keyword_list = model.pas_get(sep_doc) # キーワードの候補の抽出
     out_file2.write(keyword_list)
 out_file2.close()
 """

@@ -41,7 +41,7 @@ class MainVerbChek:
         #
         elif len(doc) > doc[predic_head].i + 1 and doc[predic_head].head.head.lemma_ == "する" and doc[doc[predic_head].i + 1].lemma_ == '決定':  # 文末が　〇〇をする　の例外処理（サ変名詞による補助用言相当の処理）
             rule_id = 104
-        elif doc[predic_head].pos_ == 'NOUN' and doc[predic_head].dep_ == 'ROOT' and doc[predic_head].i == doc[predic_head].head.i:  # 文末が　体言止
+        elif (doc[predic_head].pos_ == 'NOUN' or doc[predic_head].pos_ == 'PROPN') and doc[predic_head].dep_ == 'ROOT' and doc[predic_head].i == doc[predic_head].head.i:  # 文末が　体言止
             rule_id = 105
         elif doc[predic_head].head.tag_ == '名詞-普通名詞-サ変可能' and doc[predic_head].head.dep_ == 'ROOT' and doc[predic_head].head.i == doc[doc[predic_head].head.i].head.i and (len(doc) > predic_head + 1 and doc[predic_head + 1].orth_ != 'で'):  # 文末が　体言止
             rule_id = 107

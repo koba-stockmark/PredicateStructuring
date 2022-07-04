@@ -70,7 +70,7 @@ class ParallelExtractor:
             elif doc[i].lemma_ == 'を' or doc[i].lemma_ == 'が' or doc[i].lemma_ == 'は' or doc[i].lemma_ == 'に' or doc[i].lemma_ == 'で':
                 break
         # （主語1）が（主語2）と…　のパターン
-        if doc[end + 1].lemma_ == 'が':
+        if len(doc) > end + 1 and doc[end + 1].lemma_ == 'が':
             for i in range(end + 1, doc[end].head.i):
                 if doc[i].tag_ == '名詞-数詞' or doc[i].tag_ == '名詞-普通名詞-助数詞可能' or doc[i].tag_ == '名詞-普通名詞-副詞可能':
                     break

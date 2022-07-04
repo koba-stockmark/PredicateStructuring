@@ -199,7 +199,7 @@ class PredicatePhraseExtractor:
                 verb["lemma_end"] = doc[doc[pt].i + 1].i
             elif verb["lemma"].endswith('中'):
                 verb_w = verb["lemma"] + '(です)'
-            elif doc[verb["lemma_end"]].tag_ == '接尾辞-名詞的-助数詞' or (doc[verb["lemma_end"]].tag_ == '名詞-普通名詞-一般' and doc[verb["lemma_end"]].lemma_ != 'お知らせ'):
+            elif doc[verb["lemma_end"]].tag_ == '接尾辞-名詞的-助数詞' or doc[verb["lemma_end"]].tag_ == '名詞-普通名詞-形状詞可能' or (doc[verb["lemma_end"]].tag_ == '名詞-普通名詞-一般' and doc[verb["lemma_end"]].lemma_ != 'お知らせ'):
                 verb_w = verb["lemma"] + '(です)'
             elif doc[doc[pt].i].morph.get("Inflection") and '連用形' in doc[doc[pt].i].morph.get("Inflection")[0]:
                 verb_w = verb["lemma"]
@@ -281,6 +281,15 @@ class PredicatePhraseExtractor:
                     verb_w = verb["lemma"]
                     modality_w = verb["modality"]
                     rule_id = 24
+            ###############################
+            #    普通名詞　〇〇　＋　です
+            ###############################
+            elif len(doc) > doc[pt].i + 1 and doc[pt].tag_ == '名詞-普通名詞-形状詞可能' and doc[doc[pt].i + 1].lemma_ == 'です':
+                verb = self.verb_chunk(doc[doc[pt].i].i, *doc)
+                verb_w = verb["lemma"] + doc[doc[pt].i + 1].orth_
+                verb["lemma_end"] = doc[doc[pt].i + 1].i
+                modality_w = verb["modality"]
+                rule_id = 42
             ###############################
             #    普通名詞　〇〇　＋　を　＋　〇〇　に（で、と、から...） + する
             ###############################
@@ -369,7 +378,7 @@ class PredicatePhraseExtractor:
             ###############################
             #    〜にある
             ###############################
-            elif doc[doc[pt].i - 2].pos_ != 'PUNCT' and doc[pt].lemma_ == 'ある' and (((doc[doc[pt].i - 1].lemma_ == 'に' or doc[doc[pt].i - 1].lemma_ == 'が') and
+            elif doc[pt].i > 2 and doc[doc[pt].i - 2].pos_ != 'PUNCT' and doc[pt].lemma_ == 'ある' and (((doc[doc[pt].i - 1].lemma_ == 'に' or doc[doc[pt].i - 1].lemma_ == 'が') and
                 doc[doc[pt].i - 1].tag_ == '助詞-格助詞') or (doc[doc[pt].i - 2].lemma_ == 'に' and doc[doc[pt].i - 1].lemma_ == 'は') or
                 (doc[doc[pt].i - 1].lemma_ == 'で' and doc[doc[pt].i - 1].tag_ == '助動詞') or (doc[doc[pt].i - 2].lemma_ == 'で' and doc[doc[pt].i - 1].lemma_ == 'は')):
                 if doc[pt].i != doc[pt].i - 2 and doc[pt].i != doc[pt].i - 3:
@@ -419,7 +428,7 @@ class PredicatePhraseExtractor:
                             if len(doc) > pt + 1 and doc[pt + 1].pos_ == 'NOUN':
                                 return {'lemma': '', 'lemma_start': -1, 'lemma_end': -1, 'modality': '', 'rule_id': -1}
                             verb_w = verb_w + '(だ)'
-                        elif doc[pt].pos_ == 'NOUN':
+                        elif doc[pt].pos_ == 'NOUN' or doc[pt].pos_ == 'PROPN':
                             verb_w = verb_w + '(です)'
                         rule_id = 39
                     elif len(doc) == doc[pt].i + 1:

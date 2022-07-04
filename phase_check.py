@@ -59,7 +59,7 @@ class PhaseCheker:
                     ret = ret + ret3 + ','
             # 項の部分要素を重複をチェック
             for pt in range(obj_start, obj_end + 1):
-                if (len(doc) > pt + 1 and doc[pt + 1].lemma_ == '方' or doc[pt + 1].lemma_ == 'ため') or (len(doc) > pt + 2 and doc[pt + 1].pos_ == 'AUX' and doc[pt + 2].lemma_ == '方' or doc[pt + 2].lemma_ == 'ため'):      # 〇〇する方　はフェーズ判断に用いな
+                if (len(doc) > pt + 1 and (doc[pt + 1].lemma_ == '方' or doc[pt + 1].lemma_ == 'ため')) or (len(doc) > pt + 2 and doc[pt + 1].pos_ == 'AUX' and (doc[pt + 2].lemma_ == '方' or doc[pt + 2].lemma_ == 'ため')):      # 〇〇する方　はフェーズ判断に用いな
                     continue
                 ret2 = self.phase_chek(pt, pt, -1, -1, '', *doc)
                 for ret3 in ret2.split(','):
