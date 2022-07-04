@@ -41,7 +41,7 @@ class ParallelExtractor:
                         return ret
                     else:
                         continue
-                if (sp <= doc[i].head.i <= ep) and (doc[i + 1].lemma_ == 'と' or doc[i + 1].lemma_ == 'や' or doc[i + 1].lemma_ == 'など' or (doc[i + 1].pos_ == 'PUNCT' and doc[i + 1].tag_ != '補助記号-括弧開')):
+                if (sp <= doc[i].head.i <= ep or start <= doc[i].head.i <= end) and (doc[i + 1].lemma_ == 'と' or doc[i + 1].lemma_ == 'や' or doc[i + 1].lemma_ == 'など' or doc[i + 1].norm_ == '及び' or (doc[i + 1].pos_ == 'PUNCT' and doc[i + 1].tag_ != '補助記号-括弧開')):
                     if len(doc) > i + 2 and doc[i + 1].pos_ == 'PUNCT' and doc[i + 2].lemma_ == 'を':
                         break
                     ret.append((self.num_chunk(i, *doc)))
@@ -59,7 +59,7 @@ class ParallelExtractor:
                     ep = ret[find_ct - 1]['lemma_end']
                     continue
             elif doc[i].tag_ == '接尾辞-名詞的-一般':     # 派生名詞の場合
-                if (sp <= doc[i].head.head.i <= ep) and (doc[i + 1].lemma_ == 'と' or doc[i + 1].lemma_ == 'や' or doc[i + 1].lemma_ == 'など' or (doc[i + 1].pos_ == 'PUNCT' and doc[i + 1].tag_ != '補助記号-括弧開')):
+                if (sp <= doc[i].head.head.i <= ep or start <= doc[i].head.i <= end) and (doc[i + 1].lemma_ == 'と' or doc[i + 1].lemma_ == 'や' or doc[i + 1].lemma_ == 'など' or doc[i + 1].norm_ == '及び' or (doc[i + 1].pos_ == 'PUNCT' and doc[i + 1].tag_ != '補助記号-括弧開')):
                     if len(doc) > i + 2 and doc[i + 1].pos_ == 'PUNCT' and doc[i + 2].lemma_ == 'を':
                         break
                     ret.append((self.num_chunk(doc[i].head.i, *doc)))
@@ -83,7 +83,7 @@ class ParallelExtractor:
                         return ret
                     else:
                         continue
-                if doc[i].head.i == doc[end].head.i and (doc[i + 1].lemma_ == 'と' or doc[i + 1].lemma_ == 'や' or (doc[i + 1].lemma_ == 'など' and (doc[i + 2].lemma_ == 'と' or doc[i + 2].lemma_ == 'や' or doc[i + 2].pos_ != 'ADP')) or (doc[i + 1].lemma_ == '、' and doc[i + 2].pos_ != 'ADP')) and doc[i + 2].lemma_ != 'する' and doc[i + 2].lemma_ != 'なる':
+                if doc[i].head.i == doc[end].head.i and (doc[i + 1].lemma_ == 'と' or doc[i + 1].lemma_ == 'や' or doc[i + 1].norm_ == '及び' or (doc[i + 1].lemma_ == 'など' and (doc[i + 2].lemma_ == 'と' or doc[i + 2].lemma_ == 'や' or doc[i + 2].norm_ == '及び' or doc[i + 2].pos_ != 'ADP')) or (doc[i + 1].lemma_ == '、' and doc[i + 2].pos_ != 'ADP')) and doc[i + 2].lemma_ != 'する' and doc[i + 2].lemma_ != 'なる':
                     if doc[i].head.i != doc[end].head.i:
                         continue
                     ret.append((self.num_chunk(i, *doc)))

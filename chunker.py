@@ -157,7 +157,7 @@ class ChunkExtractor:
             elif len(doc) > i + 3 and doc[i].orth_ == 'と' and doc[i + 1].pos_ == 'NOUN' and doc[i + 2].orth_ == 'が' and doc[i + 3].norm_ == '出来る':  # 名詞と名詞　＋　が　＋　できる
                 pre = doc[i].orth_ + pre
                 start_pt = i
-            elif i != 0 and (doc[i].tag_ == '補助記号-読点' and doc[i - 1].head.i == doc[i].i + 1 and doc[i - 1].pos_ != 'VERB' and
+            elif i != 0 and (doc[i].tag_ == '補助記号-読点' and doc[i - 1].head.i == doc[i].i + 1 and doc[i - 1].pos_ != 'VERB' and doc[i - 1].pos_ != 'ADJ' and
                              doc[i - 1].tag_ != '名詞-普通名詞-助数詞可能' and doc[i - 1].tag_ != '接尾辞-名詞的-助数詞' and doc[i - 1].tag_ != '名詞-普通名詞-形状詞可能'):      # 〇〇、〇〇する　などの並列術部
                 pre = doc[i].orth_ + pre
                 start_pt = i
@@ -373,13 +373,24 @@ class ChunkExtractor:
                         break
         # 動詞の名詞化
         elif doc[pt].pos_ == 'VERB':
-            if doc[pt - 1].lemma_ != 'と':   # 並列処理のため結合しない
+            if len(doc) > pt + 1 and doc[pt + 1].pos_ == 'PUNCT' and doc[pt + 1].head.i == pt:  # 動詞の後ろがカッコ
                 for token in doc[0:]:
-                    if token.head.i == pt:
+                    if token.head.head.i == pt and token.pos_ == 'PUNCT':
+                        start_pt = token.i
+                        break
+                    if token.head.i == pt and (token.pos_ == 'AUX' or token.pos_ == 'VERB'):
                         start_pt = token.i
                         break
                 for i in reversed(range(start_pt, pt)):
                     ret = self.connect_word(doc[i].orth_, ret)
+            else:
+                if doc[pt - 1].lemma_ != 'と':   # 並列処理のため結合しない
+                    for token in doc[0:]:
+                        if token.head.i == pt and (token.pos_ == 'AUX' or token.pos_ == 'VERB' or token.pos_ == 'PUNCT'):
+                            start_pt = token.i
+                            break
+                    for i in reversed(range(start_pt, pt)):
+                        ret = self.connect_word(doc[i].orth_, ret)
             for i in range(pt + 1, len(doc)):
                 if doc[i].pos_ == 'ADP':
                     break
@@ -513,7 +524,7 @@ class ChunkExtractor:
                         break
                     if doc[i].tag_ == '接尾辞-名詞的-助数詞' and (doc[i].lemma_ == '日' or doc[i].lemma_ == '月' or doc[i].lemma_ == '年'):
                         break
-                    if doc[i].tag_ == '名詞-普通名詞-助数詞可能' and len(doc) > i + 1 and doc[i + 1].lemma_ != 'の' and doc[i + 1].tag_ != '接尾辞-名詞的-一般' and doc[i].lemma_ == '日':
+                    if doc[i].tag_ == '名詞-普通名詞-助数詞可能' and len(doc) > i + 1 and doc[i + 1].lemma_ != 'の' and doc[i + 1].lemma_ != 'まで' and doc[i + 1].tag_ != '接尾辞-名詞的-一般' and doc[i].lemma_ == '日':
                         break
                     if doc[i].orth_ == 'の' and doc[i - 1].tag_ == '助詞-副助詞' and (doc[i - 2].pos_ == 'AUX' or doc[i - 2].pos_ == 'VERB'):
                         break

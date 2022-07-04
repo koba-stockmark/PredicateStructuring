@@ -32,7 +32,8 @@ class SubjectExtractor:
             ret_subj['lemma_start'] = append_subj['lemma_start']
         ret['lemma_end'] = ret_subj['lemma_end']
         for i in reversed(range(ret_subj['lemma_start'], ret_subj['lemma_end'] + 1)):  # 〇〇と〇〇　は切り離す
-            if doc[i].pos_ == 'ADP' and doc[i].lemma_ == 'と':
+            if doc[i].pos_ == 'CCONJ' or (doc[i].pos_ == 'ADP' and doc[i].lemma_ == 'と'):
+#            if doc[i].pos_ == 'ADP' and doc[i].lemma_ == 'と':
                 break
             ret['lemma'] = self.connect_word(doc[i].orth_, ret['lemma'])
             ret['lemma_start'] = i
@@ -156,7 +157,10 @@ class SubjectExtractor:
         #
         # 連体修飾をチェック
         #
-        if (doc[verb_end_pt].head.i != verb_end_pt) and ((doc[doc[verb_end_pt].head.i].dep_ == 'nsubj' or doc[doc[verb_end_pt].head.i].dep_ == 'obl' or doc[doc[verb_end_pt].head.i].dep_ == 'obj' or doc[doc[verb_end_pt].head.i].dep_ == 'acl' or doc[doc[verb_end_pt].head.i].dep_ == 'nmod' or (doc[doc[verb_end_pt].head.i].dep_ == 'ROOT' and doc[doc[verb_end_pt].head.i].i != doc[len(doc) - 1].head.i)) and doc[doc[verb_end_pt].head.i].lemma_ != 'こと' and
+        kakoo_insert = False    # 間にカッコがないかチェック
+        if len(doc) > verb_end_pt + 1 and doc[verb_end_pt + 1].tag_ == '補助記号-括弧閉':
+            kakoo_insert = True
+        if not kakoo_insert and (doc[verb_end_pt].head.i != verb_end_pt) and ((doc[doc[verb_end_pt].head.i].dep_ == 'nsubj' or doc[doc[verb_end_pt].head.i].dep_ == 'obl' or doc[doc[verb_end_pt].head.i].dep_ == 'obj' or doc[doc[verb_end_pt].head.i].dep_ == 'acl' or doc[doc[verb_end_pt].head.i].dep_ == 'nmod' or (doc[doc[verb_end_pt].head.i].dep_ == 'ROOT' and doc[doc[verb_end_pt].head.i].i != doc[len(doc) - 1].head.i)) and doc[doc[verb_end_pt].head.i].lemma_ != 'こと' and
                                                  ((self.rentai_check(doc[verb_end_pt].i, *doc) or (doc[verb_end_pt].morph.get("Inflection") and '連体形' in doc[verb_end_pt].morph.get("Inflection")[0])) or
                                                  (self.shuusi_check(doc[verb_end_pt].i, *doc) or (doc[verb_end_pt].morph.get("Inflection") and '終止' in doc[verb_end_pt].morph.get("Inflection")[0])))):
             if (doc[doc[verb_end_pt].head.i].pos_ == 'NOUN' or doc[doc[verb_end_pt].head.i].pos_ == 'PROPN' or doc[doc[verb_end_pt].head.i].pos_ == 'NUM') and doc[doc[verb_end_pt].head.i].lemma_ != '予定':
