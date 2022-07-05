@@ -177,7 +177,7 @@ class PasAnalysis:
             # 主語の表層格の取得
             subj_case = self.case_get(ret_subj['lemma_end'], *doc)
             if "rentai_subject" in ret_subj and ret_subj["rentai_subject"]:
-                subj_case = "が"
+                subj_case = "が(連体)"
             if subj_case == "を":    # を　格の主語は誤解析
                 subject_w = ''
                 ret_subj = {'lemma': '', 'lemma_start': -1, 'lemma_end': -1}
@@ -186,7 +186,7 @@ class PasAnalysis:
             if subject_w:
                 if (self.rentai_check(verb["lemma_end"], *doc) or (doc[verb["lemma_end"]].morph.get("Inflection") and '連体形' in doc[verb["lemma_end"]].morph.get("Inflection")[0])) and verb["lemma_start"] < ret_subj["lemma_start"]:
                     pre_rentai_subj = True
-                    subj_case = 'が'
+                    subj_case = 'が(連体)'
                 else:
                     pre_rentai_subj = False
                     dummy_subj["lemma"] = ret_subj["lemma"]

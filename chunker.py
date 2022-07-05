@@ -130,7 +130,7 @@ class ChunkExtractor:
         for i in reversed(range(0, pt)):
             if ((pt == doc[i].head.i or pt == doc[i].head.head.i or i < doc[i].head.i <= pt) and doc[i].pos_ != 'PRON' and doc[i].pos_ != 'PUNCT' and doc[i].tag_ != '接頭辞' and (doc[i].pos_ != 'AUX' or doc[i].orth_ == 'する' or doc[i].orth_ == 'な') and
                     (not doc[i].morph.get("Inflection") or '連体形' not in doc[i].morph.get("Inflection")[0]) and
-                  (doc[i].pos_ != 'ADP' or (doc[i].tag_ == '助詞-副助詞' and doc[i].lemma_ != 'まで' and doc[i].lemma_ != 'だけ')) and doc[i].pos_ != 'ADV' and doc[i].pos_ != 'ADJ' and doc[i].pos_ != 'SCONJ' and
+                  (doc[i].pos_ != 'ADP' or (doc[i].tag_ == '助詞-副助詞' and doc[i].lemma_ != 'まで' and doc[i].lemma_ != 'だけ')) and doc[i].pos_ != 'ADV' and doc[i].pos_ != 'ADJ' and doc[i].pos_ != 'PART' and doc[i].pos_ != 'SCONJ' and
                     doc[i].norm_ != 'から' and
                     doc[i].tag_ != '補助記号-一般' and doc[i].tag_ != '名詞-普通名詞-副詞可能' and doc[i].tag_ != '名詞-普通名詞-助数詞可能' and doc[i].tag_ != '接尾辞-名詞的-助数詞' and doc[i].tag_ != '名詞-普通名詞-助数詞可能'):
                 pre = doc[i].orth_ + pre
@@ -146,6 +146,9 @@ class ChunkExtractor:
                 start_pt = i
             elif len(doc) > i + 1 and doc[i - 1].pos_ == 'NOUN' and doc[i].orth_ == 'の' and doc[i + 1].lemma_ == 'ある':  # 名詞　＋　の　＋　ある
                 pre = 'が' + pre
+                start_pt = i
+            elif len(doc) > i + 1 and doc[i - 1].pos_ == 'NOUN' and doc[i].orth_ == 'の' and doc[i + 1].lemma_ == 'まま':  # 名詞　＋　の　＋　まま
+                pre = doc[i].orth_ + pre
                 start_pt = i
             elif ((len(doc) > i + 1 and doc[i - 1].pos_ == 'ADJ' and doc[i].orth_ == 'に' and doc[i + 1].lemma_ == 'する') or
                   (len(doc) > i + 2 and doc[i].pos_ == 'ADJ' and doc[i + 1].orth_ == 'に' and doc[i + 2].lemma_ == 'する')):  # 形容動詞　＋　に　＋　する
@@ -174,6 +177,12 @@ class ChunkExtractor:
                 pre = doc[i].orth_ + pre
                 start_pt = i
             elif (len(doc) > i + 1 and doc[i + 1].lemma_ == 'なる' and doc[i].lemma_ == 'やすい') or (len(doc) > i + 1 and doc[i + 1].lemma_ == 'やすい' and doc[i].tag_ == '動詞-非自立可能'):  # 載せやすくなる
+                pre = doc[i].orth_ + pre
+                start_pt = i
+            elif len(doc) > i + 2 and doc[i + 1].lemma_ == 'なる' and doc[i + 2].lemma_ == 'ため':  # 〜になるためだ
+                pre = doc[i].orth_ + pre
+                start_pt = i
+            elif len(doc) > i + 1 and (doc[i + 1].tag_ == '接尾辞-名詞的-副詞可能' or doc[i + 1].tag_ == '名詞-普通名詞-助数詞可能') and doc[i].pos_ == 'NOUN':
                 pre = doc[i].orth_ + pre
                 start_pt = i
             elif ((len(doc) > i + 1 and doc[i + 1].lemma_ == 'なる' and doc[i].lemma_ == 'と') and
@@ -242,6 +251,19 @@ class ChunkExtractor:
                 append_o = tail_o + token.orth_ + doc[token.i + 1].orth_
                 append_l = tail_o + token.orth_ + doc[token.i + 1].lemma_
                 end_pt = token.i
+            # VERB　＋　VERB 複合動詞
+            elif tail_ct == 0 and doc[token.i - 1].pos_ == 'VERB' and doc[token.i].pos_ == 'VERB':
+                if find_f:
+                    ret = ret + append_o
+                find_f = True
+                append_o = tail_o + token.orth_
+                if len(doc) > token.i + 1 and (doc[token.i + 1].pos_ == 'VERB' or doc[token.i + 1].pos_ == 'AUX'):
+                    append_o = tail_o + token.orth_
+                    append_l = tail_o + token.orth_
+                else:
+                    append_o = tail_o + token.orth_
+                    append_l = tail_o + token.lemma_
+                end_pt = token.i
             # 出来るようになる
             elif tail_ct == 0 and doc[token.i - 1].pos_ == 'VERB' and doc[token.i].tag_ == '形状詞-助動詞語幹' and len(doc) > token.i + 1 and doc[token.i + 1].orth_ == 'に':
                 if find_f:
@@ -281,6 +303,7 @@ class ChunkExtractor:
                     for i in reversed(range(0, adv_top)):
                         if doc[i].head.i == adv_top:
                             adv_top2 = i
+                            start_pt = i
                             break
                     adv_verb = self.verb_chunk(adv_top2, *doc)
                 pre = ''

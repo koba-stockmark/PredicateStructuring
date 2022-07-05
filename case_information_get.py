@@ -84,6 +84,9 @@ class CaseExtractor:
                         ret = ret + doc[i].lemma_
                     else:
                         return ret
+            elif len(doc) > token. i + 1 and token.orth_ == 'だ' and doc[token.i + 1].orth_ == 'が':
+                ret = 'だが'
+                break
             elif token.tag_ == '助動詞' and (token.orth_ == 'に' or token.orth_ == 'で'):
                 ret = ret + token.orth_ + '-副詞的'
             elif token.head.i > pt:
