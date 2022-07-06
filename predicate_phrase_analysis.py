@@ -73,9 +73,18 @@ class PredicatePhraseExtractor:
             #
             #             述部が  ○○の＋名詞＋を＋する（調査をする　など）、　名詞＋サ変名詞＋する（内部調査をする　など）
             #
-            elif doc[doc[pt].i - 1].orth_ == 'を' and doc[doc[pt].i - 2].pos_ == 'PRON':  # 何をする　　→　候補から外す
-                verb_w = ''
-                rule_id = 3
+            elif doc[doc[pt].i - 1].orth_ == 'を':
+                if doc[doc[pt].i - 2].pos_ == 'PRON':  # 何をする　　→　候補から外す
+                    verb_w = ''
+                else:
+                    verb = self.verb_chunk(doc[pt].i - 2, *doc)
+                    if doc[doc[pt].i - 2].tag_ == '名詞-普通名詞-サ変可能':
+                        verb_w = verb["lemma"] + doc[pt].lemma_
+                    else:
+                        verb_w = verb["lemma"] + doc[pt - 1].lemma_ + doc[pt].lemma_
+                    verb["lemma_end"] = doc[pt].i
+                    modality_w = verb["modality"]
+                    rule_id = 3
             #
             #             述部が  形容詞＋する（少なくする　など）
             #
@@ -179,7 +188,7 @@ class PredicatePhraseExtractor:
         #   〇〇　＋　を　＋　〇〇(名詞) + 、+ ... 　
         #
         elif (len(doc) > doc[pt].i + 1 and (doc[pt].pos_ == 'NOUN' and doc[pt].tag_ != '接尾辞-名詞的-副詞可能' and doc[pt].tag_ != '接尾辞-名詞的-助数詞' and doc[pt].tag_ != '名詞-普通名詞-助数詞可能') and
-              doc[pt].tag_ != '名詞-普通名詞-形状詞可能' and doc[pt].tag_ != '名詞-普通名詞-副詞可能' and doc[doc[pt].i + 1].tag_ == '補助記号-読点'):
+              doc[pt].tag_ != '名詞-普通名詞-形状詞可能' and doc[pt].tag_ != '名詞-普通名詞-副詞可能' and doc[doc[pt].i + 1].tag_ == '補助記号-読点' and doc[doc[pt].i - 1].lemma_ != 'の'):
             verb = self.verb_chunk(doc[pt].i, *doc)
             verb_w = verb["lemma"] + '(する)'
             rule_id = 16
@@ -437,8 +446,12 @@ class PredicatePhraseExtractor:
                             if len(doc) > pt + 1 and doc[pt + 1].pos_ == 'NOUN':
                                 return {'lemma': '', 'lemma_start': -1, 'lemma_end': -1, 'modality': '', 'rule_id': -1}
                             verb_w = verb_w + '(だ)'
-                        elif doc[pt].pos_ == 'NOUN' or doc[pt].pos_ == 'PROPN':
+                        elif (doc[pt].pos_ == 'NOUN' and doc[pt].tag_ != '動詞-一般') and doc[doc[pt].head.i].norm_ == '為る':
+                            verb_w = verb_w + 'する'
+                        elif ((doc[pt].pos_ == 'NOUN' and doc[pt].tag_ != '動詞-一般') or doc[pt].pos_ == 'PROPN') and (doc[pt].dep_ == 'obl' or doc[pt].dep_ == 'advcl' or doc[pt].dep_ == 'acl'):
                             verb_w = verb_w + '(です)'
+                        elif ((doc[pt].pos_ == 'NOUN' and doc[pt].tag_ != '動詞-一般') or doc[pt].pos_ == 'PROPN') and doc[pt].dep_ == 'nmod':
+                            verb_w = verb_w + '(する)'
                         rule_id = 39
                     elif len(doc) == doc[pt].i + 1:
                         rule_id = 40

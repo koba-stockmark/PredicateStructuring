@@ -80,7 +80,7 @@ class VerbSpliter:
         for i in reversed(range(start, end + 1)):
             if doc[i].pos_ == 'PUNCT' and i != end:
                 break
-            if doc[i].lemma_ == 'の' and doc[i].pos_ == 'ADP' and doc[i - 1].tag_ != '形状詞-一般' and doc[i + 1].pos_ != 'ADJ' and doc[end + 1].lemma_ != 'で':      # の　で分割。　への　は例外
+            if doc[i].lemma_ == 'の' and doc[i].pos_ == 'ADP' and doc[i - 1].tag_ != '形状詞-一般' and len(doc) > i + 1 and doc[i + 1].pos_ != 'ADJ' and len(doc) > end + 1 and doc[end + 1].lemma_ != 'で':      # の　で分割。　への　は例外
                 if i == start:
                     break
                 if doc[end].tag_ == '名詞-普通名詞-サ変可能' and i + 4 >= end:    # 述部の複合語を4語まで許す
@@ -157,6 +157,8 @@ class VerbSpliter:
         if start == end:
             return {'verb': self.compaound(start, end, *doc), 'sub_verb': '', 'verb_start': start, 'verb_end': end, 'sub_verb_start': -1, 'sub_verb_end': -1}
         for i in reversed(range(start, end + 1)):
+            if i > start and doc[i - 1].tag_ == '動詞-一般':
+                continue
             if doc[i].norm_ in s_v_dic.sub_verb_dic:
                 if doc[i - 1].tag_ != '名詞-普通名詞-サ変可能':  # 本格始動　など普通名詞との合成
                     if doc[end].lemma_ == 'ため' or doc[end].lemma_ == 'もの' or doc[end].lemma_ == 'とき' or doc[end].lemma_ == 'こと' or doc[end].lemma_ == '場合' or doc[end].lemma_ == '人' or doc[end].lemma_ == 'とき':

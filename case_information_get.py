@@ -38,8 +38,6 @@ class CaseExtractor:
                         if doc[i].lemma_ == 'と' and doc[i + 1].lemma_ == 'する' and doc[i + 2].lemma_ == 'て':
                             ret = ret + doc[i].lemma_ + 'して'
                             return ret
-                        elif doc[i].lemma_ == 'や':
-                            ret = self.case_get(doc[i].head.head.i, *doc)
                         elif len(doc) > i + 2 and doc[i].lemma_ == 'に' and doc[i + 1].orth_ == 'おい' and doc[i + 2].orth_ == 'て':
                             ret = 'において'
                         elif len(doc) > i + 2 and doc[i].lemma_ == 'に' and doc[i + 1].orth_ == 'つい' and doc[i + 2].orth_ == 'て':
@@ -52,12 +50,14 @@ class CaseExtractor:
                             ret = 'によって'
                         elif len(doc) > i + 2 and doc[i].lemma_ == 'に' and doc[i + 1].orth_ == 'よる' and doc[i + 2].orth_ == 'と':
                             ret = 'によると'
-                        elif doc[i].lemma_ == 'に' and doc[i + 1].orth_ == 'より':
+                        elif len(doc) > i + 1 and doc[i].lemma_ == 'に' and doc[i + 1].orth_ == 'より':
                             ret = 'により'
-                        elif doc[i].lemma_ == 'の' and doc[i + 1].norm_ == '為':
+                        elif len(doc) > i + 1 and doc[i].lemma_ == 'の' and doc[i + 1].norm_ == '為':
                             ret = 'のため(に)'
-                        elif doc[i].lemma_ == 'の' and doc[i + 1].norm_ == '下':
+                        elif len(doc) > i + 1 and doc[i].lemma_ == 'の' and doc[i + 1].norm_ == '下':
                             ret = 'のもと(に)'
+                        elif len(doc) > i + 3 and doc[i].lemma_ == 'の' and doc[i + 1].pos_ == 'NOUN' and doc[i + 2].lemma_ == 'を' and doc[i + 3].norm_ == '為る':
+                            ret = 'を'
                         else:
                             ret = ret + doc[i].orth_
                     else:

@@ -218,6 +218,7 @@ class PasAnalysis:
                 if ((doc[i].dep_ == "obj" and doc[i].head.dep_ != "obj") or (doc[i].dep_ == 'advcl' and doc[i].tag_ == '名詞-普通名詞-形状詞可能') or
                         (doc[i].dep_ == 'advcl' and len(doc) > i + 1 and doc[i + 1].tag_ == '助詞-格助詞') or
                         (len(doc) > i + 1 and doc[i + 1].dep_ == 'case' and doc[i].orth_ != ret_subj["lemma"]) or
+                        (len(doc) > i + 2 and doc[i + 1].tag_ == '補助記号-読点' and doc[i + 2].dep_ == 'case' and doc[i].orth_ != ret_subj["lemma"]) or
                         (doc[i].dep_ == 'nsubj' and doc[i].orth_ != ret_subj["lemma"]) or
                         (doc[doc[i].head.i - 1].lemma_ == 'と' and doc[doc[i].head.i].lemma_ == '共' and doc[doc[i].head.i + 1].lemma_ == 'に') or
                         (doc[i].dep_ == "obl" and doc[i - 1].lemma_ != 'が' and
@@ -403,6 +404,8 @@ class PasAnalysis:
                     if doc[re_arg["lemma_end"]].dep_ == 'advcl':        # 助動詞以外の　で格　は分離しない
                         continue
                     if re_arg['case'] in self.not_devide_case_dic:
+                        continue
+                    if 'subject' in re_arg and re_arg['subject'] and re_arg['case'] != 'も':
                         continue
                     dev_obj = self.object_devide(re_arg['lemma_start'], re_arg['lemma_end'], argument, append_predict, *doc)
                     if dev_obj["verb"]:

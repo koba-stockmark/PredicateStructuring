@@ -257,7 +257,7 @@ class ChunkExtractor:
                     ret = ret + append_o
                 find_f = True
                 append_o = tail_o + token.orth_
-                if len(doc) > token.i + 1 and (doc[token.i + 1].pos_ == 'VERB' or doc[token.i + 1].pos_ == 'AUX'):
+                if len(doc) > token.i + 1 and doc[token.i + 1].pos_ == 'VERB':
                     append_o = tail_o + token.orth_
                     append_l = tail_o + token.orth_
                 else:
@@ -277,6 +277,15 @@ class ChunkExtractor:
                     append_o = tail_o + token.orth_ + doc[token.i + 1].orth_
                     append_l = tail_o + token.orth_ + doc[token.i + 1].lemma_
                     end_pt = token.i + 1
+
+            # 〇〇したとする
+            elif tail_ct == 0 and doc[token.i - 1].pos_ == 'VERB' and doc[token.i].norm_ == '為る' and len(doc) > token.i + 3 and doc[token.i + 1].lemma_ == 'た' and doc[token.i + 2].lemma_ == 'と' and doc[token.i + 3].norm_ == '為る':
+                if find_f:
+                    ret = ret + append_o
+                find_f = True
+                append_o = tail_o + token.orth_ + doc[token.i + 1].orth_ + doc[token.i + 2].orth_ + doc[token.i + 3].orth_
+                append_l = tail_o + token.orth_ + doc[token.i + 1].orth_ + doc[token.i + 2].orth_ + doc[token.i + 3].lemma_
+                end_pt = token.i + 3
 
             # 語幹以外の助動詞部の追加
             elif token.pos_ == 'AUX' or token.pos_ == 'SCONJ' or token.pos_ == 'VERB' or token.pos_ == 'PART' or token.pos_ == 'ADJ' or token.tag_ == '名詞-普通名詞-サ変可能':          # 句情報用に助動詞を集める。  〇〇開始　〇〇する計画　などの時制も　含める
@@ -530,7 +539,7 @@ class ChunkExtractor:
                 #
                 elif (doc[i].pos_ != 'DET' and doc[i].pos_ != 'VERB'  and doc[i].pos_ != 'AUX' and doc[i].pos_ != 'SCONJ' and
                       doc[i].pos_ != 'PART' and doc[i].pos_ != 'PRON' and doc[i].tag_ != '補助記号-読点' and doc[i].tag_ != '補助記号-句点' and
-                      (doc[i].pos_ != 'ADP' or doc[i].orth_ == 'の' or doc[i].orth_ == 'や' or doc[i].orth_ == 'と' or
+                      (doc[i].pos_ != 'ADP' or doc[i].orth_ == 'の' or doc[i].orth_ == 'や' or doc[i].orth_ == 'と' or doc[i].orth_ == 'か' or
                        (doc[i].pos_ == 'ADP' and doc[i + 1].orth_ == 'の'))):
                     if doc[i].orth_ == 'の' and (doc[i - 1].pos_ == 'ADP' or doc[i - 1].pos_ == 'SCONJ') and (doc[i - 2].pos_ == 'VERB' or doc[i - 2].pos_ == 'AUX' or doc[i - 2].pos_ == 'SCONJ'):
                         if doc[i - 3].orth_ == 'に' and doc[i - 2].orth_ == 'つい' and doc[i - 1].orth_ == 'て' and doc[i].orth_ == 'の':  # 〇〇についての〇〇

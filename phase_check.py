@@ -29,7 +29,7 @@ class PhaseCheker:
         ret = ''
         new_end = end
         for c_pt in range(start, end):      # 述部の語幹だけを切り出す
-            if doc[c_pt].pos_ == 'ADP' and doc[c_pt].lemma_ != 'を':
+            if doc[c_pt].pos_ == 'ADP' and (doc[c_pt].lemma_ != 'を' or (doc[c_pt].lemma_ == 'を' and len(doc) > c_pt + 1 and doc[c_pt + 1].norm_ == '為る')):
                 new_end = c_pt - 1
                 break
         verb_word = chunker.compaound(start, new_end, *doc)

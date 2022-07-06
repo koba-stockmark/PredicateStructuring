@@ -25,6 +25,7 @@ class PredicateGet:
         if (len(doc) > token.i + 1 and doc[token.i + 1].tag_ == '接尾辞-名詞的-一般') or (len(doc) > token.i + 2 and doc[token.i + 1].pos_ == 'AUX' and doc[token.i + 2].tag_ == '接尾辞-名詞的-一般'):     # 生成名詞はNG
             return {}
         if (token.pos_ == 'VERB' or token.pos_ == 'ADJ' or token.dep_ == 'ROOT' or token.dep_ == 'ROOT' or token.dep_ == 'obl' or token.dep_ == 'acl' or token.dep_ == 'advcl' or token.tag_ == '名詞-普通名詞-副詞可能' or
+                (token.pos_ == 'NOUN' and doc[token.head.i].norm_ == '為る' and doc[token.head.i - 1].lemma_ != 'に') or
                 (len(doc) > token.i + 1 and token.pos_ == 'NOUN' and doc[token.i + 1].pos_ == 'AUX') or
                 (len(doc) > token.i + 1 and token.pos_ == 'NOUN' and doc[token.i + 1].tag_ == '動詞-非自立可能') or
                 (len(doc) > token.i + 2 and token.tag_ == '名詞-普通名詞-サ変可能' and token.dep_ == 'nmod' and token.head.dep_ == 'obj' and doc[token.i + 1].lemma_ == 'や' and self.rentai_check(token.i + 2, *doc)) or
@@ -45,8 +46,12 @@ class PredicateGet:
                 return self.predicate_phrase_get(token.i, *doc)
             elif len(doc) > token.i + 1 and token.pos_ == 'NOUN' and doc[token.i + 1].pos_ == 'AUX':
                 return self.predicate_phrase_get(token.i, *doc)
+            elif token.tag_ == '名詞-普通名詞-サ変可能' and ((len(doc) > token.i + 1 and doc[token.i + 1].pos_ == 'ADP') or (len(doc) > token.i + 2 and doc[token.i + 1].pos_ == 'PUNCT' and doc[token.i + 2].pos_ == 'ADP')):
+                return {}
             elif token.tag_ == '名詞-普通名詞-サ変可能' and (len(doc) <= token.i + 1 or doc[token.i + 1].pos_ != 'ADP') and (not doc[token.i - 1].morph.get("Inflection") or '連体形' not in doc[token.i - 1].morph.get("Inflection")[0]):
                 return self.predicate_phrase_get(token.i, *doc)
+#            elif token.tag_ == '名詞-普通名詞-サ変可能' and doc[token.head.i].norm_ == '為る':
+#                return self.predicate_phrase_get(token.i, *doc)
             ###################
             #
             #   普通名詞 + する　のかたちの最終述部
