@@ -16,7 +16,7 @@ class CaseExtractor:
 
         if doc[pt - 1].norm_ == 'の' and doc[pt].norm_ == '為':
             return 'のため(に)'
-        elif doc[pt - 1].norm_ == 'の' and doc[pt].norm_ == '下':
+        elif doc[pt - 1].norm_ == 'の' and (doc[pt].norm_ == '下' or doc[pt].norm_ == 'もと'):
             return 'のもと(に)'
         elif doc[pt].norm_ == '為':
             return 'に'
@@ -38,6 +38,11 @@ class CaseExtractor:
                         if doc[i].lemma_ == 'と' and doc[i + 1].lemma_ == 'する' and doc[i + 2].lemma_ == 'て':
                             ret = ret + doc[i].lemma_ + 'して'
                             return ret
+                        elif doc[i].lemma_ == 'や':
+                            ii = i + 1
+                            while doc[ii].pos_ != 'ADP' and ii < len(doc):
+                                ii = ii + 1
+                            ret = self.case_get(ii - 1, *doc)
                         elif len(doc) > i + 2 and doc[i].lemma_ == 'に' and doc[i + 1].orth_ == 'おい' and doc[i + 2].orth_ == 'て':
                             ret = 'において'
                         elif len(doc) > i + 2 and doc[i].lemma_ == 'に' and doc[i + 1].orth_ == 'つい' and doc[i + 2].orth_ == 'て':

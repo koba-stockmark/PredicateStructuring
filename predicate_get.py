@@ -46,12 +46,12 @@ class PredicateGet:
                 return self.predicate_phrase_get(token.i, *doc)
             elif len(doc) > token.i + 1 and token.pos_ == 'NOUN' and doc[token.i + 1].pos_ == 'AUX':
                 return self.predicate_phrase_get(token.i, *doc)
+            elif len(doc) > token.i + 2 and token.pos_ == 'NOUN' and doc[token.i + 1].pos_ == 'PUNCT' and doc[token.i + 2].pos_ == 'AUX':
+                return self.predicate_phrase_get(token.i, *doc)
             elif token.tag_ == '名詞-普通名詞-サ変可能' and ((len(doc) > token.i + 1 and doc[token.i + 1].pos_ == 'ADP') or (len(doc) > token.i + 2 and doc[token.i + 1].pos_ == 'PUNCT' and doc[token.i + 2].pos_ == 'ADP')):
                 return {}
             elif token.tag_ == '名詞-普通名詞-サ変可能' and (len(doc) <= token.i + 1 or doc[token.i + 1].pos_ != 'ADP') and (not doc[token.i - 1].morph.get("Inflection") or '連体形' not in doc[token.i - 1].morph.get("Inflection")[0]):
                 return self.predicate_phrase_get(token.i, *doc)
-#            elif token.tag_ == '名詞-普通名詞-サ変可能' and doc[token.head.i].norm_ == '為る':
-#                return self.predicate_phrase_get(token.i, *doc)
             ###################
             #
             #   普通名詞 + する　のかたちの最終述部
