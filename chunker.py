@@ -589,6 +589,9 @@ class ChunkExtractor:
                         break
                     if doc[i].lemma_ == '”' and doc[i - 1].tag_ == '補助記号-読点':
                         break
+#                    if doc[i].lemma_ == '・' and not re.compile(r'^[a-zA-Z]+$').search(doc[i].lemma_[-1]) and not re.compile(r'^[a-zA-Z]+$').search(doc[i].lemma_[0]) and \
+#                            not re.compile(r'^[\u30A1-\u30F4]+$').search(doc[i].lemma_[-1]) and not re.compile(r'^[\u30A1-\u30F4]+$').search(doc[i].lemma_[0]):
+#                        break
                     if doc[i].tag_ == '補助記号-括弧閉':
                         punc_ct = punc_ct + 1
                     elif doc[i].tag_ == '補助記号-括弧開':

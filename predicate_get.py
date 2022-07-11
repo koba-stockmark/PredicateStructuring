@@ -32,6 +32,8 @@ class PredicateGet:
                 (len(doc) > token.i + 1 and token.tag_ == '名詞-普通名詞-サ変可能' and token.dep_ == 'nmod' and (doc[token.i + 1].lemma_ == '、' or doc[token.i + 1].lemma_ == '：'))):
             if token.dep_ == 'fixed':
                 return {}
+            if token.tag_ == '接頭辞':
+                return {}
             if doc[token.i - 1].lemma_ != 'を' and doc[token.i - 1].lemma_ != 'に' and doc[token.i - 1].pos_ != 'ADJ' and doc[token.i].morph.get("Inflection") and '連用形' in doc[token.i].morph.get("Inflection")[0] and doc[token.i + 1].pos_ == 'NOUN':   # 連用名　お届けキャンペーン　
                 return {}
             if token.pos_ == 'VERB' or token.pos_ == 'ADJ' or (token.dep_ == 'nmod' and token.i > 0 and doc[token.i - 1].pos_ == 'ADP') or (token.dep_ == 'ROOT' and token.tag_ == '名詞-普通名詞-サ変可能'):

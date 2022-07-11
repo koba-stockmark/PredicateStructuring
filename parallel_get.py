@@ -31,7 +31,7 @@ class ParallelExtractor:
                 if len(doc) > cpt + 1 and (doc[cpt + 1].pos_ == 'VERB' or doc[cpt + 1].tag_ == '動詞-非自立可能'):
                     continue
                 chek = self.num_chunk(cpt, *doc)
-                if (len(doc) > chek["lemma_end"] + 1 and (doc[chek["lemma_end"] + 1].lemma_ == 'と' or doc[chek["lemma_end"] + 1].lemma_ == 'や' or doc[chek["lemma_end"] + 1].norm_ == '及び'  or doc[chek["lemma_end"] + 1].norm_ == 'など' or
+                if (len(doc) > chek["lemma_end"] + 1 and (doc[chek["lemma_end"] + 1].lemma_ == 'と' or doc[chek["lemma_end"] + 1].lemma_ == 'や' or doc[chek["lemma_end"] + 1].norm_ == '及び' or doc[chek["lemma_end"] + 1].norm_ == 'など' or
                         (len(doc) > chek["lemma_end"] + 2 and doc[chek["lemma_end"] + 1].norm_ == 'を' and doc[chek["lemma_end"] + 2].norm_ == 'はじめ') or
                         doc[chek["lemma_end"] + 1].tag_ == '補助記号-読点')):
                     ret.append((self.num_chunk(cpt, *doc)))
