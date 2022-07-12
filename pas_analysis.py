@@ -217,17 +217,25 @@ class PasAnalysis:
                         continue
                 if ((doc[i].dep_ == "obj" and doc[i].head.dep_ != "obj") or (doc[i].dep_ == 'advcl' and doc[i].tag_ == '名詞-普通名詞-形状詞可能') or
                         (doc[i].dep_ == 'advcl' and len(doc) > i + 1 and doc[i + 1].tag_ == '助詞-格助詞') or
+                        (doc[i].dep_ == 'advcl' and len(doc) > i + 1 and doc[i + 1].tag_ == '助詞-接続助詞') or
+                        (doc[i].dep_ == 'advcl' and len(doc) > i + 1 and doc[i + 1].tag_ == '助動詞') or
                         (len(doc) > i + 1 and doc[i + 1].dep_ == 'case' and doc[i].orth_ != ret_subj["lemma"]) or
                         (len(doc) > i + 2 and doc[i + 1].tag_ == '補助記号-読点' and doc[i + 2].dep_ == 'case' and doc[i].orth_ != ret_subj["lemma"]) or
                         (doc[i].dep_ == 'nsubj' and doc[i].orth_ != ret_subj["lemma"]) or
+                        (doc[i].lemma_ == '際' and doc[i].head.head.i == predicate_start) or
                         (doc[i].dep_ == "obl" and doc[i - 1].lemma_ != 'が' and
                          (len(doc) > i + 1 and (doc[i + 1].pos_ != 'AUX' or doc[i + 1].lemma_ == 'で' or doc[i + 1].tag_ == '助詞-格助詞')) and
                          (doc[i].norm_ != 'そこ' and doc[i].norm_ != 'それ') and
                          (doc[i].tag_ != '名詞-普通名詞-副詞可能' or doc[i].norm_ == '為' or doc[i].norm_ == '下' or doc[i].norm_ == 'もと') and (doc[i].norm_ != '度' or doc[i - 1].pos_ == 'NUM'))):  # この度　はNG
+                    if doc[doc[i].head.i].lemma_ == '際' and doc[i + 1].lemma_ == 'の':   # 〇〇の際　は際から作る
+                        continue
                     if doc[i].head.i < predicate_start or doc[i].head.i > predicate_end:  # 述部に直接かからない
                         if doc[i].head.head.i == token.i or (doc[i].head.morph.get("Inflection") and '連用形' not in doc[i].head.morph.get("Inflection")[0]):  # 連用形接続でもつながらない
                             if (doc[doc[i].head.i + 1].tag_ != '接尾辞-形容詞的' and (doc[doc[i].head.i].tag_ != '名詞-普通名詞-副詞可能' or doc[doc[i].head.i].lemma_ == 'ため' or doc[doc[i].head.i].lemma_ == 'もと' or doc[doc[i].head.i].lemma_ == '前')) or doc[i].head.head.pos_ == 'NOUN':
-                                continue
+                                if doc[i].lemma_ == '際' and doc[i].head.head.i == predicate_start:
+                                    pass
+                                else:
+                                    continue
                             elif doc[doc[i].head.i].dep_ == 'obj':
                                 continue
                         elif doc[i].head.pos_ == 'VERB' and doc[i].head.head.i == verb["lemma_start"]:  # 特別処理　「ツールをより使いやすく、バージョンアップ」
@@ -239,6 +247,8 @@ class PasAnalysis:
                             pass
                         else:
                             continue
+                    if (len(doc) > i + 2 and doc[i + 1].lemma_ == 'た' and doc[i + 2].lemma_ == '際' and doc[i + 2].head.i == i) or (len(doc) > i + 1 and doc[i + 1].lemma_ == '際' and doc[i + 1].head.i == i):
+                        continue
                     find_f = True
                     argument_map += [i]
             #######################################
@@ -291,15 +301,19 @@ class PasAnalysis:
                         #
                         # 項の獲得
                         #
-                        ret_obj = self.num_chunk(i, *doc)
+                        if doc[i].dep_ == 'advcl' and (doc[i].pos_ == 'AUX' or doc[i].pos_ == 'VERB'):
+                            ret_obj = self.verb_chunk(i, *doc)
+                        else:
+                            ret_obj = self.num_chunk(i, *doc)
                         #
                         # 項の並列処理
                         #
-                        para_obj = self.para_get(ret_obj['lemma_start'], ret_obj['lemma_end'], *doc)
-                        if (ret_obj["lemma"] == 'とも' or ret_obj["lemma"] == '共') and doc[ret_obj['lemma_start'] - 1].lemma_ == 'と' and doc[ret_obj['lemma_start'] + 1].lemma_ == 'に':    # 〇〇とともに　は例外
-                            ret_obj = para_obj[0]
-                            del para_obj[0]
-                            case = "とともに"
+                        if doc[ret_obj["lemma_start"]].dep_ != 'advcl':
+                            para_obj = self.para_get(ret_obj['lemma_start'], ret_obj['lemma_end'], *doc)
+                            if (ret_obj["lemma"] == 'とも' or ret_obj["lemma"] == '共') and doc[ret_obj['lemma_start'] - 1].lemma_ == 'と' and doc[ret_obj['lemma_start'] + 1].lemma_ == 'に':    # 〇〇とともに　は例外
+                                ret_obj = para_obj[0]
+                                del para_obj[0]
+                                case = "とともに"
                     elif verb["lemma"] == 'ため':     # ためだけの述部はNGとする
                         continue
                     else:
@@ -309,7 +323,10 @@ class PasAnalysis:
                     #
                     if ret_obj:
                         if not case:
-                            case = self.case_get(ret_obj['lemma_end'], *doc)
+                            if doc[ret_obj["lemma_start"]].dep_ == 'advcl' and doc[ret_obj["lemma_end"]].pos_ != 'NOUN'  and doc[ret_obj["lemma_end"]].pos_ != 'PROPN':
+                                case = self.case_get(ret_obj['lemma_start'], *doc)
+                            else:
+                                case = self.case_get(ret_obj['lemma_end'], *doc)
                     else:
                         if not case:
                             case = self.case_get(i, *doc)

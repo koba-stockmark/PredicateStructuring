@@ -233,7 +233,7 @@ class ChunkExtractor:
                 append_l = token.lemma_
                 end_pt = end_pt + 1
             # 形式名詞の追加
-            elif ((token.lemma_ == 'もの' or token.lemma_ == 'こと' or token.lemma_ == '可能性' or token.lemma_ == 'とき' or token.lemma_ == '場合') and
+            elif ((token.lemma_ == 'もの' or token.lemma_ == 'こと' or token.lemma_ == '可能性' or token.lemma_ == 'とき' or token.lemma_ == '際' or token.lemma_ == '場合') and
                     len(doc) > token.i + 2 and doc[token.i + 1].lemma_ == 'が' and doc[token.i + 2].lemma_ == 'ある'):
                 if find_f:
                     ret = ret + append_o
@@ -298,7 +298,7 @@ class ChunkExtractor:
         #    「〇〇した」＋　もの　＋に　＋　する
         #    「〇〇　＋　と　＋　した」＋　もの　＋に　＋　する
         #
-        if ((doc[pt].lemma_ == 'もの' or doc[pt].lemma_ == 'こと' or doc[pt].lemma_ == 'ため' or doc[pt].lemma_ == 'とき' or doc[pt].lemma_ == '人' or doc[pt].lemma_ == '場合') and
+        if ((doc[pt].lemma_ == 'もの' or doc[pt].lemma_ == 'こと' or doc[pt].lemma_ == 'ため' or doc[pt].lemma_ == 'とき' or doc[pt].lemma_ == '際' or doc[pt].lemma_ == '人' or doc[pt].lemma_ == '場合') and
             len(doc) > pt + 1 and (doc[pt + 1].lemma_ == 'と' or doc[pt + 1].lemma_ == 'に')):
             adv_top = -1
             for i in reversed(range(0, pt)):
@@ -342,7 +342,7 @@ class ChunkExtractor:
         tail = ''
         punc_ct = 0  # カッコのバランス　０：均衡　＋：右カッコが多い　ー：左カッコが多い
         pre_punc_ct = 0
-        if doc[pt].lemma_ == 'こと' or doc[pt].lemma_ == '人' or doc[pt].lemma_ == 'もの' or doc[pt].lemma_ == 'とき' or doc[pt].norm_ == '為' or doc[pt].lemma_ == '方':
+        if doc[pt].lemma_ == 'こと' or doc[pt].lemma_ == '人' or doc[pt].lemma_ == 'もの' or doc[pt].lemma_ == 'とき' or doc[pt].lemma_ == '際' or doc[pt].norm_ == '為' or doc[pt].lemma_ == '方':
             if (doc[pt + 1].tag_ == '補助記号-括弧閉' or doc[pt + 1].lemma_ == '＂') and doc[pt + 1].head.i == doc[pt].i:
                 ret = self.connect_word(ret, doc[pt + 1].orth_)
                 for i in reversed(range(0, pt)):

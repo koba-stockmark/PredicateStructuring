@@ -13,6 +13,19 @@ class CaseExtractor:
         open_f = False
         if pt < 0:
             return ret
+        if (doc[pt].pos_ == 'VERB' or doc[pt].pos_ == 'AUX' or doc[pt].pos_ == 'ADJ') and (len(doc) > pt + 1 and (doc[pt + 1].pos_ == 'AUX' or doc[pt + 1].pos_ == 'SCONJ')):
+            if doc[pt + 1].pos_ == 'AUX' and (doc[pt + 1].orth_ == 'た' or doc[pt + 1].orth_ == 'だ' or doc[pt + 1].orth_ == 'です' or doc[pt + 1].orth_ == 'ます'):
+                sp = pt + 2
+            else:
+                sp = pt + 1
+            cpt = sp
+            for cpt in range(sp, len(doc)):
+                if doc[cpt].pos_ != 'SCONJ' and doc[cpt].pos_ != 'AUX':
+                    break
+                ret = ret + doc[cpt].orth_
+            if doc[cpt - 1].morph.get("Inflection") and '連体形' in doc[cpt - 1].morph.get("Inflection")[0]:
+                return ret + '-連体修飾'
+            return ret + '-副詞的'
 
         if doc[pt - 1].norm_ == 'の' and doc[pt].norm_ == '為':
             return 'のため(に)'

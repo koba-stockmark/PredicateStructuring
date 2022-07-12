@@ -48,7 +48,7 @@ class PredicatePhraseExtractor:
         #
         #    形容詞
         #
-        if doc[pt].tag_ == '形容詞-一般' and (len(doc) < pt + 1 or doc[pt + 1].tag_ != '接尾辞-名詞的-一般'):
+        if doc[pt].tag_ == '形容詞-一般' and (len(doc) <= pt + 1 or doc[pt + 1].tag_ != '接尾辞-名詞的-一般'):
             verb = self.verb_chunk(doc[doc[pt].i].i, *doc)
             verb_w = verb["lemma"]
             modality_w = verb["modality"]
@@ -272,7 +272,7 @@ class PredicatePhraseExtractor:
                 rule_id = 21
             elif len(doc) > doc[pt].i + 1 and (doc[doc[pt].i + 1].tag_ == '動詞-非自立可能'):  # 動詞　＋　補助動詞
                 verb = self.verb_chunk(doc[doc[pt].i].i, *doc)
-                if doc[verb["lemma_end"]].lemma_ == 'ため' or doc[verb["lemma_end"]].lemma_ == 'もの' or doc[verb["lemma_end"]].lemma_ == 'とき' or doc[verb["lemma_end"]].lemma_ == 'こと' or doc[verb["lemma_end"]].lemma_ == '場合':
+                if doc[verb["lemma_end"]].lemma_ == 'ため' or doc[verb["lemma_end"]].lemma_ == 'もの' or doc[verb["lemma_end"]].lemma_ == 'とき' or doc[verb["lemma_end"]].lemma_ == '際' or doc[verb["lemma_end"]].lemma_ == 'こと' or doc[verb["lemma_end"]].lemma_ == '場合':
                     verb_w = verb["lemma"] + '(です)'
                 elif (doc[doc[pt].i].tag_ != '動詞-一般' and doc[doc[pt].i].tag_ != '形容詞-一般' and
                         (doc[verb["lemma_end"] + 1].lemma_ == 'する' or doc[verb["lemma_end"] + 1].lemma_ == 'できる' or doc[verb["lemma_end"]].tag_ == '名詞-普通名詞-サ変可能' or

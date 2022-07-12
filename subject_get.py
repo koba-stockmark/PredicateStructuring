@@ -187,6 +187,17 @@ class SubjectExtractor:
                         ret['rentai_subject'] = True
                         ret['lemma_start'] = ret_subj['lemma_start']
                     return ret
+        # 〜〇〇した祭
+        if len(doc) > verb_end_pt + 2 and doc[verb_end_pt + 1].lemma_ == 'た' and doc[verb_end_pt + 2].lemma_ == '際':
+            ret_subj = self.num_chunk(verb_end_pt + 2, *doc)
+            ret['lemma_end'] = ret_subj['lemma_end']
+            for i in reversed(range(ret_subj['lemma_start'], ret_subj['lemma_end'] + 1)):  # 〇〇と〇〇　は切り離す
+                if doc[i].pos_ == 'ADP' and doc[i].lemma_ == 'と':
+                    break
+                ret['lemma'] = self.connect_word(doc[i].orth_, ret['lemma'])
+                ret['rentai_subject'] = True
+                ret['lemma_start'] = i
+            return ret
         # 〜して〜する〇〇　ただし　〜として〜する〇〇　は例外でだめ　
         if (doc[verb_end_pt - 1].lemma_ != 'と' and len(doc) > verb_end_pt + 2 and doc[verb_end_pt + 1].tag_ == '助詞-接続助詞' and doc[verb_end_pt + 2].pos_ == 'VERB' and doc[doc[verb_end_pt + 2].head.i].pos_ == 'NOUN' and
                 ((self.rentai_check(doc[verb_end_pt + 2].i, *doc) or (doc[verb_end_pt + 2].morph.get("Inflection") and '連体形' in doc[verb_end_pt + 2].morph.get("Inflection")[0])) or
