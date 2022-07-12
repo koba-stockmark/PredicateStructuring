@@ -20,7 +20,7 @@ class CaseExtractor:
                 sp = pt + 1
             cpt = sp
             for cpt in range(sp, len(doc)):
-                if doc[cpt].pos_ != 'SCONJ' and doc[cpt].pos_ != 'AUX':
+                if doc[cpt].pos_ != 'SCONJ' and doc[cpt].pos_ != 'AUX' and doc[cpt].pos_ != 'ADP':
                     break
                 ret = ret + doc[cpt].orth_
             if doc[cpt - 1].morph.get("Inflection") and '連体形' in doc[cpt - 1].morph.get("Inflection")[0]:

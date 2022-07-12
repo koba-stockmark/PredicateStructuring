@@ -323,7 +323,7 @@ class PasAnalysis:
                     #
                     if ret_obj:
                         if not case:
-                            if doc[ret_obj["lemma_start"]].dep_ == 'advcl' and doc[ret_obj["lemma_end"]].pos_ != 'NOUN'  and doc[ret_obj["lemma_end"]].pos_ != 'PROPN':
+                            if doc[ret_obj["lemma_start"]].dep_ == 'advcl' and doc[ret_obj["lemma_end"]].pos_ != 'NOUN'  and doc[ret_obj["lemma_end"]].pos_ != 'PROPN' and doc[ret_obj["lemma_end"]].tag_ != '動詞-非自立可能':
                                 case = self.case_get(ret_obj['lemma_start'], *doc)
                             else:
                                 case = self.case_get(ret_obj['lemma_end'], *doc)

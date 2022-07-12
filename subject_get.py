@@ -116,9 +116,10 @@ class SubjectExtractor:
                     return ret
         # oblで直接接続をチェック
         for token in doc:
-            case = self.case_get(token.i, *doc)
-            if token.dep_ == "obl" and (case == 'では' or case == 'が') and token.head.i == verb_pt and token.i != ng_pt and token.tag_ != '名詞-普通名詞-副詞可能':
-                return self.direct_connect_chek(token.i, *doc)
+            if token.dep_ == "obl" and token.head.i == verb_pt and token.i != ng_pt and token.tag_ != '名詞-普通名詞-副詞可能':
+                case = self.case_get(token.i, *doc)
+                if case == 'では' or case == 'が':
+                    return self.direct_connect_chek(token.i, *doc)
         # oblで間接接続をチェック
         for i in range(0, verb_pt):
             if doc[i].dep_ == "obl" and doc[i + 1].lemma_ == 'で' and doc[i + 2].lemma_ == 'は' and doc[i].tag_ != '名詞-普通名詞-副詞可能':

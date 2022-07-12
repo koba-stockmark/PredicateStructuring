@@ -185,9 +185,16 @@ class ChunkExtractor:
             elif len(doc) > i + 1 and (doc[i + 1].tag_ == '接尾辞-名詞的-副詞可能' or doc[i + 1].tag_ == '名詞-普通名詞-助数詞可能') and doc[i].pos_ == 'NOUN':
                 pre = doc[i].orth_ + pre
                 start_pt = i
-            elif ((len(doc) > i + 1 and doc[i + 1].lemma_ == 'なる' and doc[i].lemma_ == 'と') and
+            elif len(doc) > i + 1 and doc[i].pos_ == 'AUX' and doc[i + 1].pos_ == 'AUX':
+                if doc[i].lemma_ == 'よう':   # ようになる　は別処理
+                    continue
+                pre = doc[i].orth_ + pre
+                start_pt = i
+            elif ((len(doc) > i + 1 and doc[i + 1].lemma_ == 'なる' and (doc[i].lemma_ == 'と' or doc[i].orth_ == 'に')) and
                 (doc[i - 1].tag_ != '補助記号-一般' and doc[i - 1].tag_ != '名詞-普通名詞-副詞可能' and
                  doc[i - 1].tag_ != '名詞-普通名詞-助数詞可能' and doc[i - 1].tag_ != '接尾辞-名詞的-助数詞' and doc[i - 1].tag_ != '名詞-普通名詞-助数詞可能')):  # 〇〇となる
+                if doc[i].orth_ == 'に' and doc[i - 1].pos_ != 'ADJ' and doc[i - 1].pos_ != 'AUX':
+                    break
                 if doc[i - 1].pos_ == 'PUNCT':
                     pre_part = self.num_chunk(i - 2, *doc)
                 else:
@@ -201,6 +208,8 @@ class ChunkExtractor:
                     pre_part = self.num_chunk(start_pt - 2, *doc)
                     start_pt = pre_part["lemma_start"]
                 pre = self.compaound(start_pt, i - 1, *doc) + doc[i].orth_ + pre
+                if doc[i - 1].pos_ == 'AUX':
+                    continue
                 break
             else:
                 break
