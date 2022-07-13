@@ -1,9 +1,13 @@
+from chunker import ChunkExtractor
 class CaseExtractor:
 
     def __init__(self):
         """
         関数`__init__`はクラスをインスタンス化した時に実行されます。
         """
+        chunker = ChunkExtractor()
+        self.num_chunk = chunker.num_chunk
+
 
     """
     表層格の獲得    
@@ -56,10 +60,23 @@ class CaseExtractor:
                             ret = ret + doc[i].lemma_ + 'して'
                             return ret
                         elif doc[i].lemma_ == 'や':
-                            ii = i + 1
-                            while doc[ii].pos_ != 'ADP' and ii < len(doc) - 1:
-                                ii = ii + 1
-                            ret = self.case_get(ii - 1, *doc)
+                            if doc[i + 1].pos_ == 'PUNCT':
+                                re_nun = self.num_chunk(i + 2, *doc)
+                            else:
+                                re_nun = self.num_chunk(i + 1, *doc)
+                            ret = self.case_get(re_nun["lemma_end"], *doc)
+                            if ret == 'との':
+                                ret = self.case_get(re_nun["lemma_end"] + 3, *doc)
+                            elif doc[i + 1].pos_ == 'ADJ':
+                                ret = ''
+                                for np in reversed(range(0, doc[i - 1].head.i)):
+                                    if doc[np].pos_ != 'ADP':
+                                        break
+                                    ret = doc[np].orth_ + ret
+#                            ii = i + 1
+#                            while doc[ii].pos_ != 'ADP' and ii < len(doc) - 1:
+#                                ii = ii + 1
+#                            ret = self.case_get(ii - 1, *doc)
                         elif len(doc) > i + 2 and doc[i].lemma_ == 'に' and doc[i + 1].orth_ == 'おい' and doc[i + 2].orth_ == 'て':
                             ret = 'において'
                         elif len(doc) > i + 2 and doc[i].lemma_ == 'に' and doc[i + 1].orth_ == 'つい' and doc[i + 2].orth_ == 'て':

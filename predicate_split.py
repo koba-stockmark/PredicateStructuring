@@ -24,7 +24,7 @@ class VerbSpliter:
     """
    項を分割しない格
     """
-    not_devide_case_dic = ["により", "などに"]
+    not_devide_case_dic = ["により", "などに", "へ", "から"]
 
 
     """

@@ -219,6 +219,7 @@ class PasAnalysis:
                         (doc[i].dep_ == 'advcl' and len(doc) > i + 1 and doc[i + 1].tag_ == '助詞-格助詞') or
                         (doc[i].dep_ == 'advcl' and len(doc) > i + 1 and doc[i + 1].tag_ == '助詞-接続助詞') or
                         (doc[i].dep_ == 'advcl' and len(doc) > i + 1 and doc[i + 1].tag_ == '助動詞') or
+                        (doc[i].dep_ == 'advcl' and len(doc) > i + 1 and doc[i + 1].tag_ == '動詞-非自立可能') or
                         (len(doc) > i + 1 and doc[i + 1].dep_ == 'case' and doc[i].orth_ != ret_subj["lemma"]) or
                         (len(doc) > i + 2 and doc[i + 1].tag_ == '補助記号-読点' and doc[i + 2].dep_ == 'case' and doc[i].orth_ != ret_subj["lemma"]) or
                         (doc[i].dep_ == 'nsubj' and doc[i].orth_ != ret_subj["lemma"]) or
@@ -362,9 +363,17 @@ class PasAnalysis:
             #################################
             if subject_w and ret_subj["case"] == 'が' and ("rentai_subject" not in ret_subj or not ret_subj["rentai_subject"]) and not argument_map and \
                     (self.shuusi_check(verb["lemma_end"], *doc) or self.rentai_check(verb["lemma_end"], *doc)) and\
-                    doc[doc[verb["lemma_end"]].head.i].pos_ == 'NOUN' and doc[doc[verb["lemma_end"]].head.i].lemma_ != 'こと' and doc[verb["lemma_end"]].pos_ != "ADJ":
-                ret_obj = self.num_chunk(doc[verb["lemma_end"]].head.i, *doc)
-                #
+                    doc[doc[verb["lemma_end"]].head.i].lemma_ != 'こと' and doc[verb["lemma_end"]].pos_ != "ADJ":
+#                    doc[doc[verb["lemma_end"]].head.i].pos_ == 'NOUN' and doc[doc[verb["lemma_end"]].head.i].lemma_ != 'こと' and doc[verb["lemma_end"]].pos_ != "ADJ":
+                if doc[doc[verb["lemma_end"]].head.i].pos_ == 'NOUN':
+                    ret_obj = self.num_chunk(doc[verb["lemma_end"]].head.i, *doc)
+                else:
+                    for cpt in range(verb["lemma_end"] + 1, len(doc)):
+                        if doc[cpt].head.i == doc[verb["lemma_end"]].head.i and doc[cpt].head.dep_ != 'ROOT':
+                            ret_obj = self.num_chunk(cpt, *doc)
+                            break
+
+    #
                 # 項の並列処理
                 #
                 para_obj = self.para_get(ret_obj['lemma_start'], ret_obj['lemma_end'], *doc)
