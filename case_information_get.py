@@ -13,6 +13,7 @@ class CaseExtractor:
         open_f = False
         if pt < 0:
             return ret
+        # 動詞系　格と修飾関係
         if (doc[pt].pos_ == 'VERB' or doc[pt].pos_ == 'AUX' or doc[pt].pos_ == 'ADJ') and (len(doc) > pt + 1 and (doc[pt + 1].pos_ == 'AUX' or doc[pt + 1].pos_ == 'SCONJ')):
             if doc[pt + 1].pos_ == 'AUX' and (doc[pt + 1].orth_ == 'た' or doc[pt + 1].orth_ == 'だ' or doc[pt + 1].orth_ == 'です' or doc[pt + 1].orth_ == 'ます'):
                 sp = pt + 2
@@ -20,6 +21,8 @@ class CaseExtractor:
                 sp = pt + 1
             cpt = sp
             for cpt in range(sp, len(doc)):
+                if (len(doc) > cpt + 1 and doc[cpt].lemma_ == 'て' and doc[cpt + 1].lemma_ == 'いる') or (doc[cpt - 1].lemma_ == 'て' and doc[cpt].lemma_ == 'いる'):     # 〇〇ている＋「格助詞」　は特別　ex.　できなくなっていると発表した
+                    continue
                 if doc[cpt].pos_ != 'SCONJ' and doc[cpt].pos_ != 'AUX' and doc[cpt].pos_ != 'ADP':
                     break
                 ret = ret + doc[cpt].orth_
@@ -27,6 +30,7 @@ class CaseExtractor:
                 return ret + '-連体修飾'
             return ret + '-副詞的'
 
+        # 名詞系　格関係
         if doc[pt - 1].norm_ == 'の' and doc[pt].norm_ == '為':
             return 'のため(に)'
         elif doc[pt - 1].norm_ == 'の' and (doc[pt].norm_ == '下' or doc[pt].norm_ == 'もと'):
@@ -53,7 +57,7 @@ class CaseExtractor:
                             return ret
                         elif doc[i].lemma_ == 'や':
                             ii = i + 1
-                            while doc[ii].pos_ != 'ADP' and ii < len(doc):
+                            while doc[ii].pos_ != 'ADP' and ii < len(doc) - 1:
                                 ii = ii + 1
                             ret = self.case_get(ii - 1, *doc)
                         elif len(doc) > i + 2 and doc[i].lemma_ == 'に' and doc[i + 1].orth_ == 'おい' and doc[i + 2].orth_ == 'て':

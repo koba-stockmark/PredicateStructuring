@@ -190,10 +190,13 @@ class ChunkExtractor:
                     continue
                 pre = doc[i].orth_ + pre
                 start_pt = i
+#            elif doc[i].pos_ == 'ADV':
+#                pre = "(" + doc[i].orth_ + ")" + pre
+#                start_pt = i
             elif ((len(doc) > i + 1 and doc[i + 1].lemma_ == 'なる' and (doc[i].lemma_ == 'と' or doc[i].orth_ == 'に')) and
                 (doc[i - 1].tag_ != '補助記号-一般' and doc[i - 1].tag_ != '名詞-普通名詞-副詞可能' and
                  doc[i - 1].tag_ != '名詞-普通名詞-助数詞可能' and doc[i - 1].tag_ != '接尾辞-名詞的-助数詞' and doc[i - 1].tag_ != '名詞-普通名詞-助数詞可能')):  # 〇〇となる
-                if doc[i].orth_ == 'に' and doc[i - 1].pos_ != 'ADJ' and doc[i - 1].pos_ != 'AUX':
+                if doc[i].orth_ == 'に' and doc[i - 1].pos_ != 'ADJ' and doc[i - 1].pos_ != 'AUX':   # 補助用言以外の　〇〇になる　は「なる」と分ける　ex.東京になる
                     break
                 if doc[i - 1].pos_ == 'PUNCT':
                     pre_part = self.num_chunk(i - 2, *doc)
