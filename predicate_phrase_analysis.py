@@ -371,7 +371,7 @@ class PredicatePhraseExtractor:
             ###############################
             #    普通名詞　〇〇　＋　を　＋　〇〇日
             ###############################
-            elif doc[pt].tag_ == '接尾辞-名詞的-助数詞' or doc[pt].tag_ == '名詞-普通名詞-助数詞可能' or doc[pt].tag_ == '名詞-普通名詞-副詞可能':
+            elif (doc[pt].tag_ == '接尾辞-名詞的-助数詞' or doc[pt].tag_ == '名詞-普通名詞-助数詞可能' or doc[pt].tag_ == '名詞-普通名詞-副詞可能') and (len(doc) <= doc[pt].i + 1 or doc[doc[pt].i + 1].lemma_ != '」'):
                 verb_w = ''
                 rule_id = 33
             ###############################
@@ -442,7 +442,7 @@ class PredicatePhraseExtractor:
                                                           (len(doc) > verb["lemma_end"] + 1 and (doc[doc[pt].i + 1].pos_ == 'VERB' and doc[verb["lemma_end"] + 1].lemma_ == 'する')) or
                                                           (doc[doc[pt].i + 1].pos_ == 'VERB' and doc[doc[pt].i + 1].tag_ == '名詞-普通名詞-サ変可能' and doc[doc[pt].i + 1].head.i == doc[doc[pt].i].head.i))):  # 〇〇化する   〇〇いたす
                             verb_w = verb_w + 'する'
-                        elif doc[pt].tag_ == '形状詞-一般':
+                        elif doc[pt].tag_ == '形状詞-一般' or doc[pt].pos_ == 'ADV':
                             if len(doc) > pt + 1 and doc[pt + 1].pos_ == 'NOUN':
                                 return {'lemma': '', 'lemma_start': -1, 'lemma_end': -1, 'modality': '', 'rule_id': -1}
                             verb_w = verb_w + '(だ)'

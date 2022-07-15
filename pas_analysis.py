@@ -170,9 +170,11 @@ class PasAnalysis:
                 subject_w = ret_subj['lemma']
 
             if ((ret_subj["lemma_start"] <= verb["lemma_start"] and ret_subj["lemma_end"] >= verb["lemma_end"]) or
-                (verb["lemma_start"] >= ret_subj["lemma_start"] >= verb["lemma_end"]) or
-                (verb["lemma_start"] >= ret_subj["lemma_end"] >= verb["lemma_end"])):
-                continue
+                (verb["lemma_start"] <= ret_subj["lemma_start"] <= verb["lemma_end"]) or
+                (verb["lemma_start"] <= ret_subj["lemma_end"] <= verb["lemma_end"])):
+                subject_w = ''
+                ret_subj = {'lemma': '', 'lemma_start': -1, 'lemma_end': -1}
+#                continue
 
             # 主語の表層格の取得
             subj_case = self.case_get(ret_subj['lemma_end'], *doc)
@@ -210,6 +212,13 @@ class PasAnalysis:
             for i in range(0, verb["lemma_start"]):
                 if doc[i].pos_ == 'ADP' or doc[i].pos_ == 'PART' or doc[i].pos_ == 'PUNCT':
                     continue
+                if para_subj:
+                    subject_is_same = False
+                    for para in para_subj:
+                        if para["lemma_start"] <= i <= para["lemma_end"]:  # 主語は対象外
+                            subject_is_same = True
+                    if subject_is_same:
+                        continue
                 if ret_subj["lemma"] and ret_subj["lemma_start"] <= i <= ret_subj["lemma_end"]:  # 主語は対象外
                     if doc[doc[i].head.i].norm_ == '出来る': # 〇〇が出来る　は例外
                         pass
@@ -220,6 +229,7 @@ class PasAnalysis:
                         (doc[i].dep_ == 'advcl' and len(doc) > i + 1 and doc[i + 1].tag_ == '助詞-接続助詞') or
                         (doc[i].dep_ == 'advcl' and len(doc) > i + 1 and doc[i + 1].tag_ == '助動詞') or
                         (doc[i].dep_ == 'advcl' and len(doc) > i + 1 and doc[i + 1].tag_ == '動詞-非自立可能') or
+                        (doc[i].dep_ == 'advmod' and doc[i].pos_ == 'ADV') or
                         (len(doc) > i + 1 and doc[i + 1].dep_ == 'case' and doc[i].orth_ != ret_subj["lemma"]) or
                         (len(doc) > i + 2 and doc[i + 1].tag_ == '補助記号-読点' and doc[i + 2].dep_ == 'case' and doc[i].orth_ != ret_subj["lemma"]) or
                         (doc[i].dep_ == 'nsubj' and doc[i].orth_ != ret_subj["lemma"]) or
@@ -227,11 +237,20 @@ class PasAnalysis:
                         (doc[i].dep_ == "obl" and doc[i - 1].lemma_ != 'が' and
                          (len(doc) > i + 1 and (doc[i + 1].pos_ != 'AUX' or doc[i + 1].lemma_ == 'で' or doc[i + 1].tag_ == '助詞-格助詞')) and
                          (doc[i].norm_ != 'そこ' and doc[i].norm_ != 'それ') and
-                         (doc[i].tag_ != '名詞-普通名詞-副詞可能' or doc[i].norm_ == '為' or doc[i].norm_ == '下' or doc[i].norm_ == 'もと') and (doc[i].norm_ != '度' or doc[i - 1].pos_ == 'NUM'))):  # この度　はNG
+                         (doc[i].tag_ != '名詞-普通名詞-副詞可能' or doc[i].norm_ == '為' or doc[i].norm_ == '下' or doc[i].norm_ == 'もと' or doc[i].norm_ == '間') and (doc[i].norm_ != '度' or doc[i - 1].pos_ == 'NUM'))):  # この度　はNG
                     if doc[doc[i].head.i].lemma_ == '際' and doc[i + 1].lemma_ == 'の':   # 〇〇の際　は際から作る
                         continue
+                    if len(doc) > i + 1 and doc[i + 1].lemma_ == '「':   #  〇〇「〇〇　カッコの外から中にかかる場合は　NG
+                        kakko_f = True
+                        for cpt in range(i + 2, len(doc)):
+                            if doc[cpt].lemma_ == '」':
+                                kakko_f = False
+                            if doc[i].head.i == cpt:
+                                break
+                        if kakko_f:
+                            continue
                     if doc[i].head.i < predicate_start or doc[i].head.i > predicate_end:  # 述部に直接かからない
-                        if doc[i].head.head.i == token.i or (doc[i].head.morph.get("Inflection") and '連用形' not in doc[i].head.morph.get("Inflection")[0]):  # 連用形接続でもつながらない
+                        if doc[i].head.head.i == token.i and (doc[i].head.morph.get("Inflection") and '連用形' not in doc[i].head.morph.get("Inflection")[0]):  # 連用形接続でもつながらない
                             if (doc[doc[i].head.i + 1].tag_ != '接尾辞-形容詞的' and (doc[doc[i].head.i].tag_ != '名詞-普通名詞-副詞可能' or doc[doc[i].head.i].lemma_ == 'ため' or doc[doc[i].head.i].lemma_ == 'もと' or doc[doc[i].head.i].lemma_ == '前')) or doc[i].head.head.pos_ == 'NOUN':
                                 if doc[i].lemma_ == '際' and doc[i].head.head.i == predicate_start:
                                     pass
@@ -240,15 +259,26 @@ class PasAnalysis:
                             elif doc[doc[i].head.i].dep_ == 'obj':
                                 continue
                         elif doc[i].head.pos_ == 'VERB' and doc[i].head.head.i == verb["lemma_start"]:  # 特別処理　「ツールをより使いやすく、バージョンアップ」
-                            if len(doc) > doc[i].head.i + 1 and doc[doc[i].head.i + 1].pos_ == 'AUX' and doc[i].head.head.pos_ == 'NOUN' and len(doc) > doc[i].head.head.i + 1 and doc[doc[i].head.head.i + 1].lemma_ == 'する':
-                                pass
-                            else:
-                                continue
+                            continue
+                        elif doc[i].head.lemma_ == '共同' and doc[doc[i].head.i -1].lemma_ == 'と' and predicate_start <= doc[i].head.head.i <= predicate_end: # 〇〇と共同で　はかかり関係が特殊なので襟外処理
+                            pass
                         elif len(doc) > i + 1 and doc[i + 1].dep_ == 'case' and doc[i + 1].lemma_ == 'から' and doc[i].dep_ != 'nsubj' and self.predicate_connect_check(verb["lemma_start"] ,i ,  *doc):
                             pass
                         else:
                             continue
                     if (len(doc) > i + 2 and doc[i + 1].lemma_ == 'た' and doc[i + 2].lemma_ == '際' and doc[i + 2].head.i == i) or (len(doc) > i + 1 and doc[i + 1].lemma_ == '際' and doc[i + 1].head.i == i):
+                        continue
+                    ng_f = False
+                    kakko = 0
+                    for chp in range(i, verb["lemma_start"]):
+                        if doc[chp].lemma_ == '「':
+                            kakko = kakko + 1
+                        if doc[chp].lemma_ == '」':
+                            kakko = kakko - 1
+                        if doc[chp].lemma_ == '。' and kakko == 0:
+                            ng_f = True
+                            break
+                    if ng_f:
                         continue
                     find_f = True
                     argument_map += [i]

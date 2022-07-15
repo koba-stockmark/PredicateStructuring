@@ -157,6 +157,9 @@ class ChunkExtractor:
             elif len(doc) > i + 1 and doc[i - 1].pos_ == 'NOUN' and doc[i].orth_ == 'が' and doc[i + 1].norm_ == '出来る':  # 名詞　＋　が　＋　できる
                 pre = doc[i].orth_ + pre
                 start_pt = i
+            elif len(doc) > i + 1 and doc[i].pos_ == 'VERB' and doc[i + 1].tag_ == '名詞-普通名詞-助数詞可能':  # 名詞　＋　方　（です）
+                pre = doc[i].orth_ + pre
+                start_pt = i
             elif len(doc) > i + 3 and doc[i].orth_ == 'と' and doc[i + 1].pos_ == 'NOUN' and doc[i + 2].orth_ == 'が' and doc[i + 3].norm_ == '出来る':  # 名詞と名詞　＋　が　＋　できる
                 pre = doc[i].orth_ + pre
                 start_pt = i
@@ -389,7 +392,7 @@ class ChunkExtractor:
                     elif doc[i].orth_ == 'の' or ((doc[i].orth_ == 'に' or doc[i].orth_ == 'と') and doc[i + 1].lemma_ == 'する'):
                         ret = self.connect_word(doc[i].orth_, ret)
                         start_pt = i
-                    elif doc[i].orth_ == 'て' and doc[i + 1].tag_ == '動詞-非自立可能':     # 〜していること
+                    elif (doc[i].orth_ == 'て' or doc[i].orth_ == 'で') and (doc[i + 1].orth_ == 'いる' or doc[i + 1].orth_ == 'い' or doc[i + 1].orth_ == 'いく' or doc[i + 1].orth_ == 'いただく'):     # 〜していること
                         ret = self.connect_word(doc[i].orth_, ret)
                         start_pt = i
                     elif len(doc) > i + 1 and doc[i + 1].tag_ == '助詞-接続助詞' and (doc[i].pos_ == 'VERB' or doc[i].pos_ == 'AUX'):  # 〜ていくこと
@@ -444,6 +447,14 @@ class ChunkExtractor:
                 if doc[i].head.i == pt:
                     ret = ret + doc[i].orth_
                     end_pt = end_pt + 1
+        # 副詞
+        elif doc[pt].pos_ == 'ADV':
+            for i in reversed(range(0, pt)):
+                if i <= doc[i].head.i <= pt or (doc[i].lemma_ == 'の' and i <= doc[i - 1].head.i <= pt):
+                    ret = doc[i].orth_ + ret
+                    start_pt = start_pt - 1
+                else:
+                    break
         # 一般の名詞
         else:
             if (doc[pt].lemma_ == 'もと' or doc[pt].norm_ == '為') and doc[pt - 1].lemma_ == 'の' and (len(doc) < pt + 1 or doc[pt + 1].tag_ != '補助記号-括弧閉'):
@@ -541,6 +552,7 @@ class ChunkExtractor:
                 if((doc[i].head.i == pt or doc[i].head.head.i == doc[pt].head.i) and
                         doc[i].pos_ != 'VERB' and doc[i].pos_ != 'AUX' and doc[i].pos_ != 'DET' and doc[i].pos_ != 'CCONJ' and doc[i].tag_ != '補助記号-読点' and
                         doc[i].pos_ != 'ADP' and doc[i].pos_ != 'SCONJ' and doc[i].tag_ != '助詞-副助詞' and
+#                        doc[i].pos_ != 'ADV' and
                         (doc[i].tag_ != '名詞-普通名詞-助数詞可能' or doc[i].lemma_ != '日') and
                         (doc[i].tag_ != '形容詞-非自立可能' or doc[i].lemma_ != 'ない') and
                         (doc[i].tag_ != '補助記号-括弧閉' or doc[i - 1].tag_ != '補助記号-読点') and
@@ -557,6 +569,7 @@ class ChunkExtractor:
                 #  動詞 +  助詞　＋　の　/　〇〇  前が動詞の場合は「〜の」の連体修飾では繋げない
                 #
                 elif (doc[i].pos_ != 'DET' and doc[i].pos_ != 'VERB'  and doc[i].pos_ != 'AUX' and doc[i].pos_ != 'SCONJ' and
+#                      doc[i].pos_ != 'ADV' and
                       doc[i].pos_ != 'PART' and doc[i].pos_ != 'PRON' and doc[i].tag_ != '補助記号-読点' and doc[i].tag_ != '補助記号-句点' and
                       (doc[i].pos_ != 'ADP' or doc[i].orth_ == 'の' or doc[i].orth_ == 'や' or doc[i].orth_ == 'と' or doc[i].orth_ == 'か' or
                        (doc[i].pos_ == 'ADP' and doc[i + 1].orth_ == 'の'))):
@@ -580,6 +593,8 @@ class ChunkExtractor:
                     if doc[i].orth_ == 'の' and doc[i - 1].tag_ == '助詞-副助詞' and (doc[i - 2].pos_ == 'AUX' or doc[i - 2].pos_ == 'VERB'):
                         break
                     if doc[i].orth_ == 'の' and doc[i - 1].lemma_ == 'ため':
+                        break
+                    if doc[i].orth_ == 'の' and doc[i - 1].lemma_ == 'とき':
                         break
                     if doc[i].orth_ == 'の' and doc[i - 1].lemma_ == 'もと':
                         break

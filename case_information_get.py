@@ -17,6 +17,9 @@ class CaseExtractor:
         open_f = False
         if pt < 0:
             return ret
+        # 副詞系
+        if ((doc[pt].dep_ == 'advmod' and doc[pt].pos_ == 'ADV') or doc[pt].tag_ == '名詞-普通名詞-助数詞可能') and doc[pt + 1].pos_ != 'ADP':
+            return "副詞的"
         # 動詞系　格と修飾関係
         if (doc[pt].pos_ == 'VERB' or doc[pt].pos_ == 'AUX' or doc[pt].pos_ == 'ADJ') and (len(doc) > pt + 1 and (doc[pt + 1].pos_ == 'AUX' or doc[pt + 1].pos_ == 'SCONJ')):
             if doc[pt + 1].pos_ == 'AUX' and (doc[pt + 1].orth_ == 'た' or doc[pt + 1].orth_ == 'だ' or doc[pt + 1].orth_ == 'です' or doc[pt + 1].orth_ == 'ます'):

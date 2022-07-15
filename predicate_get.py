@@ -24,7 +24,7 @@ class PredicateGet:
         token = doc[pt]
         if (len(doc) > token.i + 1 and doc[token.i + 1].tag_ == '接尾辞-名詞的-一般') or (len(doc) > token.i + 2 and doc[token.i + 1].pos_ == 'AUX' and doc[token.i + 2].tag_ == '接尾辞-名詞的-一般'):     # 生成名詞はNG
             return {}
-        if (token.pos_ == 'VERB' or token.pos_ == 'ADJ' or token.dep_ == 'ROOT' or token.dep_ == 'ROOT' or token.dep_ == 'obl' or token.dep_ == 'acl' or token.dep_ == 'advcl' or token.tag_ == '名詞-普通名詞-副詞可能' or
+        if (token.pos_ == 'VERB' or token.pos_ == 'ADJ' or token.pos_ == 'ADV' or token.dep_ == 'ROOT' or token.dep_ == 'ROOT' or token.dep_ == 'obl' or token.dep_ == 'acl' or token.dep_ == 'advcl' or token.tag_ == '名詞-普通名詞-副詞可能' or
                 (token.pos_ == 'NOUN' and doc[token.head.i].norm_ == '為る' and doc[token.head.i - 1].lemma_ != 'に') or
                 (len(doc) > token.i + 1 and token.pos_ == 'NOUN' and doc[token.i + 1].pos_ == 'AUX') or
                 (len(doc) > token.i + 1 and token.pos_ == 'NOUN' and doc[token.i + 1].tag_ == '動詞-非自立可能') or
@@ -32,6 +32,8 @@ class PredicateGet:
                 (len(doc) > token.i + 1 and token.tag_ == '名詞-普通名詞-サ変可能' and token.dep_ == 'nmod' and (doc[token.i + 1].lemma_ == '、' or doc[token.i + 1].lemma_ == '：'))):
             if token.dep_ == 'fixed':
                 return {}
+#            if token.dep_ == 'compound':
+#                return {}
             if token.tag_ == '接頭辞':
                 return {}
             if doc[token.i - 1].lemma_ != 'を' and doc[token.i - 1].lemma_ != 'に' and doc[token.i - 1].pos_ != 'ADJ' and doc[token.i].morph.get("Inflection") and '連用形' in doc[token.i].morph.get("Inflection")[0] and doc[token.i + 1].pos_ == 'NOUN':   # 連用名　お届けキャンペーン　
@@ -53,6 +55,8 @@ class PredicateGet:
             elif token.tag_ == '名詞-普通名詞-サ変可能' and ((len(doc) > token.i + 1 and doc[token.i + 1].pos_ == 'ADP') or (len(doc) > token.i + 2 and doc[token.i + 1].pos_ == 'PUNCT' and doc[token.i + 2].pos_ == 'ADP')):
                 return {}
             elif token.tag_ == '名詞-普通名詞-サ変可能' and (len(doc) <= token.i + 1 or doc[token.i + 1].pos_ != 'ADP') and (not doc[token.i - 1].morph.get("Inflection") or '連体形' not in doc[token.i - 1].morph.get("Inflection")[0]):
+                return self.predicate_phrase_get(token.i, *doc)
+            elif token.pos_ == 'ADV' and (len(doc) <= token.i + 1 or doc[token.i + 1].lemma_ == '、') and (doc[token.i - 1].lemma_ == 'は'):
                 return self.predicate_phrase_get(token.i, *doc)
             ###################
             #
