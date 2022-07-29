@@ -38,6 +38,17 @@ class ChunkExtractor:
                 find = True
         return find
 
+    """
+    名詞＋動詞　の連用形の判別
+    """
+    def renyou_check(self, pt , *doc):
+        find = False
+        for cpt in range(pt + 1, doc[pt].head.i):
+            if doc[cpt].pos_ != 'AUX' and doc[cpt].pos_ != 'VERB' and doc[cpt].pos_ != 'SCONJ' and doc[cpt].lemma_ != '＂'  and doc[cpt].tag_ != '補助記号-括弧閉':
+                break
+            if doc[cpt].morph.get("Inflection") and '連用形' in doc[cpt].morph.get("Inflection")[0]:
+                find = True
+        return find
 
     def head_connect_check(self, h_pt, c_pt, *doc):
         if h_pt == c_pt:
@@ -128,9 +139,12 @@ class ChunkExtractor:
         pre = ''        # 前方文字
         # 前方を結合
         for i in reversed(range(0, pt)):
-            if ((pt == doc[i].head.i or pt == doc[i].head.head.i or i < doc[i].head.i <= pt) and doc[i].pos_ != 'PRON' and doc[i].pos_ != 'PUNCT' and doc[i].tag_ != '接頭辞' and (doc[i].pos_ != 'AUX' or doc[i].orth_ == 'する' or doc[i].orth_ == 'な') and
+            if ((pt == doc[i].head.i or pt == doc[i].head.head.i or i < doc[i].head.i <= pt) and
+                    doc[i].pos_ != 'PRON' and doc[i].pos_ != 'PUNCT' and doc[i].tag_ != '接頭辞' and
+                    (doc[i].pos_ != 'AUX' or doc[i].orth_ == 'する' or doc[i].orth_ == 'な') and
+                    (doc[pt].pos_ != 'NOUN' or doc[pt].tag_ == '名詞-普通名詞-副詞可能' or doc[i].pos_ != 'VERB') and
                     (not doc[i].morph.get("Inflection") or '連体形' not in doc[i].morph.get("Inflection")[0]) and
-                  (doc[i].pos_ != 'ADP' or (doc[i].tag_ == '助詞-副助詞' and doc[i].lemma_ != 'まで' and doc[i].lemma_ != 'だけ')) and doc[i].pos_ != 'ADV' and doc[i].pos_ != 'ADJ' and doc[i].pos_ != 'PART' and doc[i].pos_ != 'SCONJ' and
+                  (doc[i].pos_ != 'ADP' or (doc[i].tag_ == '助詞-副助詞' and doc[i].lemma_ != 'まで' and doc[i].lemma_ != 'だけ' and doc[i].lemma_ != 'か')) and doc[i].pos_ != 'ADV' and doc[i].pos_ != 'ADJ' and doc[i].pos_ != 'PART' and doc[i].pos_ != 'SCONJ' and
                     doc[i].norm_ != 'から' and
                     doc[i].tag_ != '補助記号-一般' and doc[i].tag_ != '名詞-普通名詞-副詞可能' and doc[i].tag_ != '名詞-普通名詞-助数詞可能' and doc[i].tag_ != '接尾辞-名詞的-助数詞' and doc[i].tag_ != '名詞-普通名詞-助数詞可能'):
                 pre = doc[i].orth_ + pre
@@ -227,7 +241,7 @@ class ChunkExtractor:
         tail_ct = 0     # 末尾単語数
         ret = ''        # チャンク結果
         for token in doc[pt + 1:]:
-            if token.head.i != pt and doc[pt].head.i != token.i and doc[pt].head.i != token.head.i:
+            if token.head.i != pt and doc[pt].head.i != token.i and doc[pt].head.i != token.head.i and (token.head.i < pt or token.head.i > token.i):
                 break
             if token.tag_ == '接尾辞-名詞的-一般':
                 break
@@ -248,7 +262,7 @@ class ChunkExtractor:
                 append_l = token.lemma_
                 end_pt = end_pt + 1
             # 形式名詞の追加
-            elif ((token.lemma_ == 'もの' or token.lemma_ == 'こと' or token.lemma_ == '可能性' or token.lemma_ == 'とき' or token.lemma_ == '際' or token.lemma_ == '場合') and
+            elif ((token.lemma_ == 'もの' or token.lemma_ == 'こと'  or token.lemma_ == 'ため' or token.lemma_ == '可能性' or token.lemma_ == 'とき' or token.lemma_ == '際' or token.lemma_ == '場合') and
                     len(doc) > token.i + 2 and doc[token.i + 1].lemma_ == 'が' and doc[token.i + 2].lemma_ == 'ある'):
                 if find_f:
                     ret = ret + append_o
@@ -258,6 +272,24 @@ class ChunkExtractor:
                 end_pt = token.i + 2
                 tail_o = ''
                 tail_ct = 0
+            elif ((token.lemma_ == 'もの' or token.lemma_ == 'こと'  or token.lemma_ == 'ため' or token.lemma_ == 'とき' or token.lemma_ == '際' or token.lemma_ == '場合') and
+                  (doc[token.i - 1].lemma_ == 'いる' and doc[token.i - 2].lemma_ == 'て')):
+                if find_f:
+                    ret = ret + append_o
+                find_f = True
+                append_o = tail_o + token.orth_
+                append_l = tail_o + token.orth_
+                end_pt = token.i
+                tail_o = ''
+                tail_ct = 0
+            # 用言で修飾した体言止
+            elif token.tag_ == '名詞-普通名詞-副詞可能' and token.dep_ == 'ROOT':
+                if find_f:
+                    ret = ret + append_o
+                find_f = True
+                append_o = tail_o + token.orth_
+                append_l = tail_o + token.lemma_
+                end_pt = token.i
             # VERB（名詞-普通名詞-サ変可能）　＋　名詞　　　複合名詞による複合動詞
             elif tail_ct == 0 and doc[token.i - 1].pos_ == 'VERB' and doc[token.i - 1].tag_ == '名詞-普通名詞-サ変可能' and doc[token.i].pos_ == 'NOUN' and len(doc) > token.i + 1 and doc[token.i + 1].pos_ == 'AUX':
                 if find_f:
@@ -552,7 +584,7 @@ class ChunkExtractor:
                 if((doc[i].head.i == pt or doc[i].head.head.i == doc[pt].head.i) and
                         doc[i].pos_ != 'VERB' and doc[i].pos_ != 'AUX' and doc[i].pos_ != 'DET' and doc[i].pos_ != 'CCONJ' and doc[i].tag_ != '補助記号-読点' and
                         doc[i].pos_ != 'ADP' and doc[i].pos_ != 'SCONJ' and doc[i].tag_ != '助詞-副助詞' and
-#                        doc[i].pos_ != 'ADV' and
+                        (doc[i].pos_ != 'ADV' or start_pt <= doc[i].head.i <= end_pt) and
                         (doc[i].tag_ != '名詞-普通名詞-助数詞可能' or doc[i].lemma_ != '日') and
                         (doc[i].tag_ != '形容詞-非自立可能' or doc[i].lemma_ != 'ない') and
                         (doc[i].tag_ != '補助記号-括弧閉' or doc[i - 1].tag_ != '補助記号-読点') and
@@ -569,9 +601,9 @@ class ChunkExtractor:
                 #  動詞 +  助詞　＋　の　/　〇〇  前が動詞の場合は「〜の」の連体修飾では繋げない
                 #
                 elif (doc[i].pos_ != 'DET' and doc[i].pos_ != 'VERB'  and doc[i].pos_ != 'AUX' and doc[i].pos_ != 'SCONJ' and
-#                      doc[i].pos_ != 'ADV' and
+                      (doc[i].pos_ != 'ADV' or start_pt <= doc[i].head.i <= end_pt) and
                       doc[i].pos_ != 'PART' and doc[i].pos_ != 'PRON' and doc[i].tag_ != '補助記号-読点' and doc[i].tag_ != '補助記号-句点' and
-                      (doc[i].pos_ != 'ADP' or doc[i].orth_ == 'の' or doc[i].orth_ == 'や' or doc[i].orth_ == 'と' or doc[i].orth_ == 'か' or
+                      (doc[i].pos_ != 'ADP' or doc[i].orth_ == 'の' or doc[i].orth_ == 'や' or doc[i].orth_ == 'と' or doc[i].orth_ == 'か' or doc[i].orth_ == 'を' or
                        (doc[i].pos_ == 'ADP' and doc[i + 1].orth_ == 'の'))):
                     if doc[i].orth_ == 'の' and (doc[i - 1].pos_ == 'ADP' or doc[i - 1].pos_ == 'SCONJ') and (doc[i - 2].pos_ == 'VERB' or doc[i - 2].pos_ == 'AUX' or doc[i - 2].pos_ == 'SCONJ'):
                         if doc[i - 3].orth_ == 'に' and doc[i - 2].orth_ == 'つい' and doc[i - 1].orth_ == 'て' and doc[i].orth_ == 'の':  # 〇〇についての〇〇

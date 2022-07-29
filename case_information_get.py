@@ -18,7 +18,7 @@ class CaseExtractor:
         if pt < 0:
             return ret
         # 副詞系
-        if ((doc[pt].dep_ == 'advmod' and doc[pt].pos_ == 'ADV') or doc[pt].tag_ == '名詞-普通名詞-助数詞可能') and doc[pt + 1].pos_ != 'ADP':
+        if ((doc[pt].dep_ == 'advmod' and doc[pt].pos_ == 'ADV') or doc[pt].tag_ == '名詞-普通名詞-助数詞可能' or doc[pt].tag_ == '助詞-副助詞') and doc[pt + 1].pos_ != 'ADP':
             return "副詞的"
         # 動詞系　格と修飾関係
         if (doc[pt].pos_ == 'VERB' or doc[pt].pos_ == 'AUX' or doc[pt].pos_ == 'ADJ') and (len(doc) > pt + 1 and (doc[pt + 1].pos_ == 'AUX' or doc[pt + 1].pos_ == 'SCONJ')):
@@ -98,7 +98,7 @@ class CaseExtractor:
                             ret = 'のため(に)'
                         elif len(doc) > i + 1 and doc[i].lemma_ == 'の' and doc[i + 1].norm_ == '下':
                             ret = 'のもと(に)'
-                        elif len(doc) > i + 3 and doc[i].lemma_ == 'の' and doc[i + 1].pos_ == 'NOUN' and doc[i + 2].lemma_ == 'を' and doc[i + 3].norm_ == '為る':
+                        elif len(doc) > i + 3 and doc[i - 1].pos_ != 'ADJ' and doc[i].lemma_ == 'の' and doc[i + 1].pos_ == 'NOUN' and doc[i + 2].lemma_ == 'を' and doc[i + 3].norm_ == '為る':
                             ret = 'を'
                         else:
                             ret = ret + doc[i].orth_

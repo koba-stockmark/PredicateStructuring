@@ -30,7 +30,7 @@ class VerbSpliter:
     """
     補助動詞かどうかの判別
     """
-    def sub_verb_chek(self, check_w):
+    def sub_verb_chek(self, check_w, verb, *doc):
         s_v_dic = SubVerbDic()
         check_word = check_w
         if check_word[-2:] == 'する' and check_word != 'する':
@@ -41,6 +41,8 @@ class VerbSpliter:
             check_word = check_word[:-3]
         if check_word[-4:] == '(です)' and check_word != '(です)':
             check_word = check_word[:-4]
+        if check_word[-2:] == 'こと' and check_word != 'こと':
+            check_word = doc[verb["lemma_start"]].lemma_
         if check_word in s_v_dic.sub_verb_dic:
             return True
         return False
@@ -177,6 +179,11 @@ class VerbSpliter:
                             return {'verb': self.compaound(start, end - 5, *doc) + 'する', 'sub_verb': 'できるようになる', 'verb_start': start, 'verb_end': end - 5, 'sub_verb_start': end - 4, 'sub_verb_end': end}
                         else:
                             return {'verb': self.compaound(start, end - 4, *doc) + 'する', 'sub_verb': 'できるようになる', 'verb_start': start, 'verb_end': end - 4, 'sub_verb_start': end - 4, 'sub_verb_end': end}
+                    elif doc[end - 3].norm_ == '出来る' and doc[end - 2].orth_ == 'よう' and doc[end - 1].orth_ == 'に' and doc[end].norm_ == '為る':
+                        if doc[end - 4].pos_ == 'ADP':
+                            return {'verb': self.compaound(start, end - 5, *doc) + 'する', 'sub_verb': 'できるようにする', 'verb_start': start, 'verb_end': end - 5, 'sub_verb_start': end - 4, 'sub_verb_end': end}
+                        else:
+                            return {'verb': self.compaound(start, end - 4, *doc) + 'する', 'sub_verb': 'できるようにする', 'verb_start': start, 'verb_end': end - 4, 'sub_verb_start': end - 4, 'sub_verb_end': end}
                     else:
                         return {'verb': '', 'sub_verb': self.compaound(i, end, *doc) + 'する', 'verb_start': -1, 'verb_end': -1, 'sub_verb_start': i, 'sub_verb_end': end}
                 if doc[end].tag_ == '名詞-普通名詞-サ変可能':

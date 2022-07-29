@@ -36,6 +36,8 @@ class MainVerbChek:
         #
         elif doc[predic_head].pos_ == "VERB" and doc[doc[predic_head].i].head.i == doc[doc[predic_head].i].head.head.i and doc[doc[predic_head].i].head.pos_ == "VERB":  # 最後の動詞を修飾する動詞？
             rule_id = 102
+        elif doc[predic_head].pos_ == "VERB" and doc[doc[predic_head].i].head.pos_ == "VERB" and doc[doc[doc[predic_head].i].head.i + 1].lemma_ == "と" and doc[doc[predic_head].i].head.head.dep_ == "ROOT":  # 〇〇し、〇〇すると〇〇した
+            rule_id = 115
         #
         #  最終術部が名詞から形成される場合
         #
@@ -59,4 +61,14 @@ class MainVerbChek:
             rule_id = 113
         elif len(doc) > doc[predic_head].i + 1 and doc[predic_head].pos_ == 'NOUN' and doc[doc[predic_head].head.i].dep_ == 'ROOT' and (doc[doc[predic_head].i + 1].pos_ == 'AUX' or doc[doc[predic_head].i + 1].pos_ == 'PUNCT'):  # 〇〇します。 がROOTになっていないときの例外処理
             rule_id = 114
+        elif doc[predic_head].pos_ == 'VERB' and doc[doc[predic_head].head.i].lemma_ == '方向' and doc[doc[predic_head].head.i + 1].lemma_ == 'で' and doc[doc[doc[predic_head].head.i].head.i].dep_ == 'ROOT':  # 〇〇する方向で[動詞]。
+            rule_id = 116
+        elif doc[predic_head].pos_ == 'VERB' and doc[doc[predic_head].head.i].lemma_ == '方針' and doc[doc[predic_head].head.i + 1].lemma_ == 'を' and doc[doc[doc[predic_head].head.i].head.i].dep_ == 'ROOT':  # 〇〇する方向で[動詞]。
+            rule_id = 117
+        elif len(doc) > predic_head + 2 and doc[predic_head].pos_ == 'VERB' and doc[predic_head + 1].pos_ == 'AUX' and (doc[predic_head + 1].lemma_ == 'た' or doc[predic_head + 1].lemma_ == 'だ') and doc[predic_head + 2].lemma_ == 'が':  # 〇〇したが、
+            rule_id = 118
+        elif doc[predic_head].pos_ == 'ADJ' and doc[predic_head].dep_ == 'ROOT':  # 形容詞
+            rule_id = 119
+        elif len(doc) > doc[predic_head].head.i + 2 and doc[predic_head].pos_ == 'VERB' and doc[doc[predic_head].head.i].pos_ == 'VERB' and doc[doc[predic_head].head.i + 1].pos_ == 'AUX' and (doc[doc[predic_head].head.i + 2].lemma_ == 'た' or doc[doc[predic_head].head.i + 2].lemma_ == 'だ'):  # 〇〇すると〇〇したと[動詞]。
+            rule_id = 120
         return rule_id

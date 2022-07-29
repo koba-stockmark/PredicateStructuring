@@ -27,7 +27,6 @@ class PredicatePhraseExtractor:
         self.para_get = p_g.para_get
         v_s = VerbSpliter()
         self.verb_devide = v_s.verb_devide
-        self.sub_verb_chek = v_s.sub_verb_chek
         self.object_devide = v_s.object_devide
         p_c = PhaseCheker()
         self.phase_chek = p_c.phase_chek
@@ -272,16 +271,29 @@ class PredicatePhraseExtractor:
                 rule_id = 21
             elif len(doc) > doc[pt].i + 1 and (doc[doc[pt].i + 1].tag_ == '動詞-非自立可能'):  # 動詞　＋　補助動詞
                 verb = self.verb_chunk(doc[doc[pt].i].i, *doc)
-                if doc[verb["lemma_end"]].lemma_ == 'ため' or doc[verb["lemma_end"]].lemma_ == 'もの' or doc[verb["lemma_end"]].lemma_ == 'とき' or doc[verb["lemma_end"]].lemma_ == '際' or doc[verb["lemma_end"]].lemma_ == 'こと' or doc[verb["lemma_end"]].lemma_ == '場合':
-                    verb_w = verb["lemma"] + '(です)'
-                elif (doc[doc[pt].i].tag_ != '動詞-一般' and doc[doc[pt].i].tag_ != '形容詞-一般' and
-                        (doc[verb["lemma_end"] + 1].lemma_ == 'する' or doc[verb["lemma_end"] + 1].lemma_ == 'できる' or doc[verb["lemma_end"]].tag_ == '名詞-普通名詞-サ変可能' or
-                         doc[verb["lemma_end"]].tag_ == '名詞-普通名詞-サ変形状詞可能' or doc[verb["lemma_end"]].tag_ == '名詞-普通名詞-一般')):
-                    verb_w = verb["lemma"] + 'する'
+                if len(doc) > doc[pt].i + 3 and doc[doc[pt].i + 2].tag_ == '形状詞-助動詞語幹' and doc[doc[pt].i + 3].orth_ == 'に' and doc[doc[pt].i + 4].pos_ == 'VERB':  # 動詞　＋　補助動詞 +  ように + 動詞
+                    verb2 = self.verb_chunk(doc[doc[pt].i].i + 4, *doc)
+                    if verb2["lemma_start"] <= verb["lemma_start"]:
+                        verb["lemma_start"] = verb2["lemma_start"]
+                        verb_w = verb2["lemma"]
+                        verb_w = self.compaound(verb["lemma_start"], verb2["lemma_end"], *doc)
+                    else:
+                        verb_w = verb["lemma"] + doc[doc[pt].i + 2].orth_ + "に" + verb2["lemma"]
+                        verb_w = self.compaound(verb["lemma_start"], verb2["lemma_end"], *doc)
+                    verb["lemma_end"] = verb2["lemma_end"]
+                    modality_w = verb2["modality"]
+                    rule_id = 42
                 else:
-                    verb_w = verb["lemma"]
-                modality_w = verb["modality"]
-                rule_id = 22
+                    if doc[verb["lemma_end"]].lemma_ == 'ため' or doc[verb["lemma_end"]].lemma_ == 'もの' or doc[verb["lemma_end"]].lemma_ == 'とき' or doc[verb["lemma_end"]].lemma_ == '際' or doc[verb["lemma_end"]].lemma_ == 'こと' or doc[verb["lemma_end"]].lemma_ == '場合':
+                        verb_w = verb["lemma"] + '(です)'
+                    elif (doc[doc[pt].i].tag_ != '動詞-一般' and doc[doc[pt].i].tag_ != '形容詞-一般' and
+                            (doc[verb["lemma_end"] + 1].lemma_ == 'する' or doc[verb["lemma_end"] + 1].lemma_ == 'できる' or doc[verb["lemma_end"]].tag_ == '名詞-普通名詞-サ変可能' or
+                             doc[verb["lemma_end"]].tag_ == '名詞-普通名詞-サ変形状詞可能' or doc[verb["lemma_end"]].tag_ == '名詞-普通名詞-一般')):
+                        verb_w = verb["lemma"] + 'する'
+                    else:
+                        verb_w = verb["lemma"]
+                    modality_w = verb["modality"]
+                    rule_id = 22
             ###############################
             #    形式名詞
             ###############################

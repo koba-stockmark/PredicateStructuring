@@ -110,7 +110,8 @@ class PasAnalysis:
                 for chek_p in append_predict:
                     if chek_p["id"] > del_id:
                         append_predict[chek_p["id"]]["id"] = append_predict[chek_p["id"]]["id"] - 1
-                del append_predict[chek["id"]]
+#                del append_predict[chek["id"]]
+                del append_predict[append_predict.index(chek)]
         return ret
 
 
@@ -135,7 +136,9 @@ class PasAnalysis:
             subject_w = ''
             dummy_subj = {}
             sub_verb_w = ''
+            save_verb_w = ''
             sub_verb = {}
+            save_verb = {}
             para_subj = [{'lemma': '', 'lemma_start': -1, 'lemma_end': -1}]
             #
             #  述部の検索
@@ -165,16 +168,56 @@ class PasAnalysis:
             #
             #  主語の検索
             #
-            ret_subj = self.subject_get(token.i, verb["lemma_end"], *doc)
-            if not token.dep_ == "nsubj" or doc[ret_subj['lemma_end'] + 1].lemma_ != 'も':  # 〇〇も　の例外処理でsubjを目的語にしている場合は自分自身をsubjにしない（省略されていると考える）
-                subject_w = ret_subj['lemma']
-
-            if ((ret_subj["lemma_start"] <= verb["lemma_start"] and ret_subj["lemma_end"] >= verb["lemma_end"]) or
-                (verb["lemma_start"] <= ret_subj["lemma_start"] <= verb["lemma_end"]) or
-                (verb["lemma_start"] <= ret_subj["lemma_end"] <= verb["lemma_end"])):
-                subject_w = ''
-                ret_subj = {'lemma': '', 'lemma_start': -1, 'lemma_end': -1}
-#                continue
+#            ret_subj = self.subject_get(token.i, verb["lemma_end"], *doc)
+            ret_subj = {'lemma': '', 'lemma_start': -1, 'lemma_end': -1}
+            ret_subj_all = self.subject_get(verb["lemma_start"], verb["lemma_end"], *doc)
+            case_wa = False
+            case_ga = False
+            for check_subj in reversed(ret_subj_all):
+                if "special_connection" in check_subj:
+                    ret_subj = check_subj
+                    subject_w = ret_subj['lemma']
+                    break
+                if doc[check_subj['lemma_end']].pos_ == 'PRON':
+                    ret_subj = check_subj
+                    subject_w = ret_subj['lemma']
+                    break
+                if doc[check_subj['lemma_end']].tag_ == '接尾辞-名詞的-助数詞' and len(ret_subj_all) > 1:
+                    continue
+                if doc[verb["lemma_end"]].lemma_ != 'こと' and doc[doc[verb["lemma_end"]].head.i].lemma_ != 'こと' and doc[verb["lemma_end"]].pos_ != 'NOUN':
+                    if doc[check_subj['lemma_end'] + 1].lemma_ == 'は':
+                        if case_ga:
+                            ret_subj = check_subj
+                            subject_w = ret_subj['lemma']
+                            break
+                        ret_subj_wa = check_subj
+                        case_wa = True
+                    if doc[check_subj['lemma_end'] + 1].lemma_ == 'が' or doc[check_subj['lemma_end'] + 1].lemma_ == 'も':
+                        if case_wa:
+                            ret_subj = ret_subj_wa
+                            subject_w = ret_subj['lemma']
+                            break
+                        case_ga = True
+                else:
+                    if doc[check_subj['lemma_end'] + 1].lemma_ == 'が':
+                        ret_subj = check_subj
+                        subject_w = ret_subj['lemma']
+                        break
+                if ((check_subj["lemma_start"] <= verb["lemma_start"] and check_subj["lemma_end"] >= verb["lemma_end"]) or
+                    (verb["lemma_start"] <= check_subj["lemma_start"] <= verb["lemma_end"]) or
+                    (verb["lemma_start"] <= check_subj["lemma_end"] <= verb["lemma_end"])):
+                    continue
+                if append_predict:
+                    ng_f = False
+                    for check_p in append_predict:
+                        if (check_p["lemma_start"] <= check_subj["lemma_start"] <= check_p["lemma_end"]) or (check_p["lemma_start"] <= check_subj["lemma_end"] <= check_p["lemma_end"]):
+                            ng_f = True
+                            break
+                    if ng_f:
+                        continue
+                if not token.dep_ == "nsubj" or doc[check_subj['lemma_end'] + 1].lemma_ != 'も':  # 〇〇も　の例外処理でsubjを目的語にしている場合は自分自身をsubjにしない（省略されていると考える）
+                    ret_subj = check_subj
+                    subject_w = ret_subj['lemma']
 
             # 主語の表層格の取得
             subj_case = self.case_get(ret_subj['lemma_end'], *doc)
@@ -447,12 +490,16 @@ class PasAnalysis:
                 #   主述部と補助術部の判断 (どの項によって主述部が生成されるか最後までわからないので遅くなるが重複処理を行う)
                 ##########################################################################################################################################
                 sub_verb_is_original = True
-                if self.sub_verb_chek(verb_w) and verb:
+                if self.sub_verb_chek(verb_w, verb, *doc) and verb:
                     sub_verb_is_original = False
                     sub_verb_w = verb_w
                     sub_verb["lemma"] = verb["lemma"]
                     sub_verb["lemma_start"] = verb["lemma_start"]
                     sub_verb["lemma_end"] = verb["lemma_end"]
+                    save_verb["lemma"] = verb["lemma"]
+                    save_verb["lemma_start"] = verb["lemma_start"]
+                    save_verb["lemma_end"] = verb["lemma_end"]
+                    save_verb_w = verb_w
                     verb_w = ''
                     verb["lemma"] = ''
                     verb["lemma_start"] = -1
@@ -516,11 +563,17 @@ class PasAnalysis:
                 #    目的語からの主述部がない場合は補助術部を主述部へもどす
                 ##########################################################################################################################################
                 if not verb_w and sub_verb_w:  # 目的語からの主述部がない場合は補助術部を主述部へもどす
-                    verb_w = sub_verb_w
+                    if "lemma" in save_verb:
+                        verb_w = save_verb_w
+                        verb["lemma"] = save_verb["lemma"]
+                        verb["lemma_start"] = save_verb["lemma_start"]
+                        verb["lemma_end"] = save_verb['lemma_end']
+                    else:
+                        verb_w = sub_verb_w
+                        verb["lemma"] = sub_verb["lemma"]
+                        verb["lemma_start"] = sub_verb["lemma_start"]
+                        verb["lemma_end"] = sub_verb['lemma_end']
                     sub_verb_w = ''
-                    verb["lemma"] = sub_verb["lemma"]
-                    verb["lemma_start"] = sub_verb["lemma_start"]
-                    verb["lemma_end"] = sub_verb['lemma_end']
                     sub_verb["lemma"] = ''
                     sub_verb["lemma_start"] = -1
                     sub_verb['lemma_end'] = -1
