@@ -12,7 +12,7 @@ out_file2 = open('government_result.tsv', 'w')
 #"""
 for doc in solution2:
   for sep_doc in doc.splitlines():
-    keyword_list = model.government_action_extract(sep_doc) # キーワードの候補の抽出
+    keyword_list = model.government_action_extract(sep_doc, 1) # キーワードの候補の抽出
     ret = sep_doc + '\t' + keyword_list + '\n'
     print(ret)
     out_file2.write(ret)

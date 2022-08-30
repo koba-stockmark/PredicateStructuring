@@ -82,8 +82,10 @@ class VerbSpliter:
         for i in reversed(range(start, end + 1)):
             if doc[i].pos_ == 'PUNCT' and i != end:
                 break
-            if doc[i].lemma_ == 'の' and doc[i].pos_ == 'ADP' and doc[i - 1].tag_ != '形状詞-一般' and len(doc) > i + 1 and doc[i + 1].pos_ != 'ADJ' and len(doc) > end + 1 and doc[end + 1].lemma_ != 'で':      # の　で分割。　への　は例外
+            if doc[i].lemma_ == 'の' and doc[i].pos_ == 'ADP' and doc[i - 1].tag_ != '形状詞-一般' and doc[i - 1].lemma_ != 'で' and len(doc) > i + 1 and doc[i + 1].pos_ != 'ADJ' and len(doc) > end + 1 and doc[end + 1].lemma_ != 'で':      # の　で分割。　への　は例外
                 if i == start:
+                    break
+                if "省" == doc[i - 1].lemma_[-1:] or "庁" == doc[i - 1].lemma_[-1:] or "政府" == doc[i - 1].lemma_[-2:]:
                     break
                 if doc[end].tag_ == '名詞-普通名詞-サ変可能' and i + 4 >= end:    # 述部の複合語を4語まで許す
                     if doc[end - 1].pos_ == 'NOUN' and doc[end - 1].tag_ != '名詞-普通名詞-サ変可能' and doc[end - 1].lemma_ not in compound_word and not self.all_katakana(doc[end - 1].lemma_, doc[end].lemma_):
@@ -166,6 +168,8 @@ class VerbSpliter:
                     if doc[end].lemma_ == 'ため' or doc[end].lemma_ == 'もの' or doc[end].lemma_ == 'とき' or doc[end].lemma_ == '際' or doc[end].lemma_ == 'こと' or doc[end].lemma_ == '場合' or doc[end].lemma_ == '人' or doc[end].lemma_ == 'とき':
                         return {'verb': '', 'sub_verb': self.compaound(i, end, *doc) + 'だ', 'verb_start': -1, 'verb_end': -1, 'sub_verb_start': i, 'sub_verb_end': end}
                     elif doc[end].tag_ == '名詞-普通名詞-サ変可能':
+                        if doc[i - 1].tag_ == '名詞-普通名詞-一般':
+                            return {'verb': self.compaound(start, end, *doc), 'sub_verb': '', 'verb_start': start, 'verb_end': end, 'sub_verb_start': -1, 'sub_verb_end': -1}
                         return {'verb': '', 'sub_verb': self.compaound(i, end, *doc) + 'する', 'verb_start': -1, 'verb_end': -1, 'sub_verb_start': i, 'sub_verb_end': end}
                     elif doc[end].lemma_ == 'だ' or doc[end].lemma_ == 'です':
                         return {'verb': '', 'sub_verb': self.compaound(i, end, *doc) , 'verb_start': -1,'verb_end': -1, 'sub_verb_start': i, 'sub_verb_end': end}
@@ -184,6 +188,8 @@ class VerbSpliter:
                             return {'verb': self.compaound(start, end - 5, *doc) + 'する', 'sub_verb': 'できるようにする', 'verb_start': start, 'verb_end': end - 5, 'sub_verb_start': end - 4, 'sub_verb_end': end}
                         else:
                             return {'verb': self.compaound(start, end - 4, *doc) + 'する', 'sub_verb': 'できるようにする', 'verb_start': start, 'verb_end': end - 4, 'sub_verb_start': end - 4, 'sub_verb_end': end}
+                    elif doc[end].norm_ == '成る':
+                        return {'verb': '', 'sub_verb': self.compaound(i, end, *doc), 'verb_start': -1, 'verb_end': -1, 'sub_verb_start': i, 'sub_verb_end': end}
                     else:
                         return {'verb': '', 'sub_verb': self.compaound(i, end, *doc) + 'する', 'verb_start': -1, 'verb_end': -1, 'sub_verb_start': i, 'sub_verb_end': end}
                 if doc[end].tag_ == '名詞-普通名詞-サ変可能':

@@ -475,6 +475,7 @@ class PasAnalysis:
             #  メイン術部の分割処理   すべての項に対してチェックして最終的な述部を判断する
             ##########################################################################################
             verb_from_object = False
+            split_f = False
             for re_arg in argument:
                 if predicate_id != re_arg["predicate_id"]:
                     continue
@@ -611,8 +612,19 @@ class PasAnalysis:
                         predicate_id = predicate_id - 1
                         pre_predicate_id = pre_predicate_id - 1
                         predicate["id"] = predicate["id"] - 1
-                    self.predicate_merge(append_predict, predicate, argument)
-
+                    if split_f:
+                        predicate["id"] = predicate["id"] + 1
+                        for change_arg in argument:
+                            if change_arg["predicate_id"] == predicate_id:
+                                argument.append(copy.deepcopy(change_arg))
+                                argument[-1]["predicate_id"] = argument[-1]["predicate_id"] + 1
+                        re_arg["predicate_id"] = re_arg["predicate_id"]
+                        self.predicate_merge(append_predict, predicate, argument)
+                        predicate_id = predicate_id + 1
+                        pre_predicate_id = pre_predicate_id + 1
+                    else:
+                        self.predicate_merge(append_predict, predicate, argument)
+                        split_f = True
             ##########################################################################################################################################
             #    目的語からの主述部がない場合は補助術部を主述部へもどす
             ##########################################################################################################################################

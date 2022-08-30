@@ -33,7 +33,7 @@ class SubjectExtractor:
             ret_subj['lemma_start'] = append_subj['lemma_start']
         ret['lemma_end'] = ret_subj['lemma_end']
         for i in reversed(range(ret_subj['lemma_start'], ret_subj['lemma_end'] + 1)):  # 〇〇と〇〇　は切り離す
-            if doc[i].pos_ == 'CCONJ' or (doc[i].pos_ == 'ADP' and doc[i].lemma_ == 'と'):
+            if doc[i].pos_ == 'CCONJ' or (doc[i].pos_ == 'ADP' and doc[i].lemma_ == 'と' and doc[i + 1].lemma_ != 'の'):
                 break
             ret['lemma'] = self.connect_word(doc[i].orth_, ret['lemma'])
             ret['lemma_start'] = i

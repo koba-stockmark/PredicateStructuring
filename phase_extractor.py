@@ -34,8 +34,30 @@ class PhaseExtractor:
     政府活動の取得
     """
 
-    def government_action_extract(self, text):
-        return self.pas_get(text, 1)
+    def government_action_extract(self, text, mode):
+        pre_ret = ""
+        if mode == 2:
+            a_text = ""
+            for c_text in text.split("。"):
+                if c_text.endswith("いう") or c_text.endswith("号"):
+                    if a_text:
+                        a_text = a_text + c_text + "。"
+                    else:
+                        a_text = c_text + "。"
+                    continue
+                else:
+                    if a_text:
+                        a_text = a_text + c_text + "。"
+                    else:
+                        a_text = c_text + "。"
+                ret = self.pas_get(a_text, mode)
+                if ret:
+                    if "その他" not in ret:
+                        return ret
+                    pre_ret = ret
+            return pre_ret
+        else:
+            return self.pas_get(text, mode)
 
     """
     主述部と補助術部に別れた述語項構造の取得
@@ -45,7 +67,7 @@ class PhaseExtractor:
 
     def pas_get(self, text, mode):
 
-        debug = True  # デバッグ用フラグ
+        debug = False  # デバッグ用フラグ
         ret = ''
         ##########################################################################################################################################
         # 形態素解析
@@ -76,11 +98,11 @@ class PhaseExtractor:
                 return ret
             # デバッグ表示用解析データ
             return single_phase
-        if mode == 1:
+        if mode == 1 or mode == 2:
             ##########################################################################################################################################
             #    政府活動のチェックチェック
             ##########################################################################################################################################
-            government_action = self.government_action_get_and_set(predicate, argument, *doc)
+            government_action = self.government_action_get_and_set(predicate, argument, mode, *doc)
             # デバッグ表示用解析データ
             if debug:
                 ret = ret + self.data_dump_and_save2(text, argument, predicate)

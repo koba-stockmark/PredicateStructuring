@@ -1,4 +1,5 @@
 from chunker import ChunkExtractor
+from case_information_get import CaseExtractor
 
 class MainVerbChek:
 
@@ -8,6 +9,8 @@ class MainVerbChek:
         """
         chunker = ChunkExtractor()
         self.verb_chunk = chunker.verb_chunk
+        case_get = CaseExtractor()
+        self.case_get = case_get.case_get
 
 
     def main_verb_chek(self, pt, *doc):
@@ -25,6 +28,7 @@ class MainVerbChek:
             for i in range(comp_verb['lemma_start'], comp_verb['lemma_end']):
                 if predic_head < doc[i].head.i:
                     predic_head = doc[i].head.i
+        case = self.case_get(predic_head, *doc)
         #
         # 述部が最終述部の場合
         #
@@ -34,7 +38,8 @@ class MainVerbChek:
         #
         # 最終述部でない場合 (最終術部が補助術部かを判断して補助術部の場合は最終術部でなくても主述部として扱う)
         #
-        elif doc[predic_head].pos_ == "VERB" and doc[doc[predic_head].i].head.i == doc[doc[predic_head].i].head.head.i and doc[doc[predic_head].i].head.pos_ == "VERB":  # 最後の動詞を修飾する動詞？
+#        elif doc[predic_head].pos_ == "VERB" and doc[doc[predic_head].i].head.i == doc[doc[predic_head].i].head.head.i and doc[doc[predic_head].i].head.pos_ == "VERB":  # 最後の動詞を修飾する動詞？
+        elif (doc[predic_head].pos_ == "VERB" and "には" not in case) and doc[doc[predic_head].i].head.i == doc[doc[predic_head].i].head.head.i and doc[doc[predic_head].i].head.pos_ == "VERB":  # 最後の動詞を修飾する動詞？
             rule_id = 102
         elif doc[predic_head].pos_ == "VERB" and doc[doc[predic_head].i].head.pos_ == "VERB" and doc[doc[doc[predic_head].i].head.i + 1].lemma_ == "と" and doc[doc[predic_head].i].head.head.dep_ == "ROOT":  # 〇〇し、〇〇すると〇〇した
             rule_id = 115
@@ -69,6 +74,6 @@ class MainVerbChek:
             rule_id = 118
         elif doc[predic_head].pos_ == 'ADJ' and doc[predic_head].dep_ == 'ROOT':  # 形容詞
             rule_id = 119
-        elif len(doc) > doc[predic_head].head.i + 2 and doc[predic_head].pos_ == 'VERB' and doc[doc[predic_head].head.i].pos_ == 'VERB' and doc[doc[predic_head].head.i + 1].pos_ == 'AUX' and (doc[doc[predic_head].head.i + 2].lemma_ == 'た' or doc[doc[predic_head].head.i + 2].lemma_ == 'だ'):  # 〇〇すると〇〇したと[動詞]。
+        elif len(doc) > doc[predic_head].head.i + 2 and doc[predic_head].pos_ == 'VERB' and doc[doc[predic_head].head.i].pos_ == 'VERB' and doc[doc[predic_head].head.i + 1].pos_ == 'AUX' and doc[doc[predic_head].head.i + 1].lemma_ != 'ない' and (doc[doc[predic_head].head.i + 2].lemma_ == 'た' or doc[doc[predic_head].head.i + 2].lemma_ == 'だ'):  # 〇〇すると〇〇したと[動詞]。
             rule_id = 120
         return rule_id

@@ -15,6 +15,7 @@ class CaseExtractor:
     def case_get(self, pt, *doc):
         ret = ''
         open_f = False
+        fixed_type = 0
         if pt < 0:
             return ret
         # 副詞系
@@ -61,7 +62,7 @@ class CaseExtractor:
                     if (doc[i].dep_ == "case" or doc[i].tag_ == '助詞-格助詞') and doc[i].lemma_ != '～':
                         if doc[i].lemma_ == 'と' and doc[i + 1].lemma_ == 'する' and doc[i + 2].lemma_ == 'て':
                             ret = ret + doc[i].lemma_ + 'して'
-                            return ret
+                            return ret + '-副詞的'
                         elif doc[i].lemma_ == 'や':
                             if doc[i + 1].pos_ == 'PUNCT':
                                 re_nun = self.num_chunk(i + 2, *doc)
@@ -76,40 +77,27 @@ class CaseExtractor:
                                     if doc[np].pos_ != 'ADP':
                                         break
                                     ret = doc[np].orth_ + ret
-#                            ii = i + 1
-#                            while doc[ii].pos_ != 'ADP' and ii < len(doc) - 1:
-#                                ii = ii + 1
-#                            ret = self.case_get(ii - 1, *doc)
-                        elif len(doc) > i + 2 and doc[i].lemma_ == 'に' and doc[i + 1].orth_ == 'おい' and doc[i + 2].orth_ == 'て':
-                            ret = 'において'
-                        elif len(doc) > i + 2 and doc[i].lemma_ == 'に' and doc[i + 1].orth_ == 'つい' and doc[i + 2].orth_ == 'て':
-                            ret = 'について'
-                        elif len(doc) > i + 2 and doc[i].lemma_ == 'に' and doc[i + 1].orth_ == '関し' and doc[i + 2].orth_ == 'て':
-                            ret = 'に関して'
-                        elif len(doc) > i + 2 and doc[i].lemma_ == 'に' and doc[i + 1].orth_ == '対し' and doc[i + 2].orth_ == 'て':
-                            ret = 'に対して'
-                        elif len(doc) > i + 2 and doc[i].lemma_ == 'に' and doc[i + 1].orth_ == 'よっ' and doc[i + 2].orth_ == 'て':
-                            ret = 'によって'
-                        elif len(doc) > i + 2 and doc[i].lemma_ == 'に' and doc[i + 1].orth_ == 'よる' and doc[i + 2].orth_ == 'と':
-                            ret = 'によると'
-                        elif len(doc) > i + 1 and doc[i].lemma_ == 'に' and doc[i + 1].orth_ == 'より':
-                            ret = 'により'
-                        elif len(doc) > i + 1 and doc[i].lemma_ == 'の' and doc[i + 1].norm_ == '為':
-                            ret = 'のため(に)'
-                        elif len(doc) > i + 1 and doc[i].lemma_ == 'の' and doc[i + 1].norm_ == '下':
-                            ret = 'のもと(に)'
                         elif len(doc) > i + 3 and doc[i - 1].pos_ != 'ADJ' and doc[i].lemma_ == 'の' and doc[i + 1].pos_ == 'NOUN' and doc[i + 2].lemma_ == 'を' and doc[i + 3].norm_ == '為る':
                             ret = 'を'
                         else:
                             ret = ret + doc[i].orth_
+                    elif doc[i].dep_ == "fixed":
+                        fixed_type = 1
+                        if doc[i].morph.get("Inflection") and '連体形' in doc[i].morph.get("Inflection")[0]:
+                            fixed_type = 2
+                        ret = ret + doc[i].orth_
                     else:
+                        if fixed_type == 1:
+                            return ret + '-副詞的'
+                        elif fixed_type == 2:
+                            return ret + '-連体修飾'
                         return ret
             elif (token.dep_ == "case" or token.tag_ == '助詞-格助詞') and token.tag_ != '名詞-普通名詞-一般' and token.head.head.i == pt and token.head.pos_ == 'NOUN' and token.lemma_ != 'の':  # 括弧書きを挟んだ係り受けの場合　ex.SaaSソリューション「Ecomedia」を開発する
                 for i in range(token.i, len(doc)):
                     if doc[i].dep_ == "case" or doc[i].tag_ == '助詞-格助詞':
                         if doc[i].lemma_ == 'と' and doc[i + 1].lemma_ == 'する' and doc[i + 2].lemma_ == 'て':
                             ret = ret + doc[i].lemma_ + 'して'
-                            return ret
+                            return ret + '-副詞的'
                         elif doc[i].lemma_ == 'や':
                             ret = doc[doc[i].head.head.i - 1].lemma_
                         elif doc[i].lemma_ == 'に' and doc[i + 1].orth_ == 'より':
@@ -117,6 +105,10 @@ class CaseExtractor:
                         else:
                             ret = ret + doc[i].lemma_
                     else:
+                        if fixed_type == 1:
+                            return ret + '-副詞的'
+                        elif fixed_type == 2:
+                            return ret + '-連体修飾'
                         return ret
             elif token.dep_ == "case" and token.head.head.i == doc[pt].head.i:    # 括弧書きを挟んだ係り受けの場合　ex.新事業としてフローズンミール定期配送サービス「nonpi A.R.U.」を開始すると発表した。
                 if doc[pt].norm_ == '日' or doc[pt].norm_ == '月' or doc[pt].norm_ == '年' or doc[pt].norm_ == '期間':
@@ -125,6 +117,10 @@ class CaseExtractor:
                     if doc[i].dep_ == "case":
                         ret = ret + doc[i].lemma_
                     else:
+                        if fixed_type == 1:
+                            return ret + '-副詞的'
+                        elif fixed_type == 2:
+                            return ret + '-連体修飾'
                         return ret
             elif len(doc) > token. i + 1 and token.orth_ == 'だ' and doc[token.i + 1].orth_ == 'が':
                 ret = 'だが'
@@ -142,7 +138,7 @@ class CaseExtractor:
                         if doc[i].dep_ == "case" or doc[i].tag_ == '助詞-格助詞':
                             if doc[i].lemma_ == 'と' and doc[i + 1].lemma_ == 'する' and doc[i + 2].lemma_ == 'て':
                                 ret = ret + doc[i].lemma_ + 'して'
-                                return ret
+                                return ret + '-副詞的'
                             elif doc[i].lemma_ == 'や':
                                 ret = doc[doc[i].head.head.i - 1].lemma_
                             elif doc[i].lemma_ == 'に' and doc[i + 1].orth_ == 'より':
@@ -150,13 +146,17 @@ class CaseExtractor:
                             else:
                                 ret = ret + doc[i].lemma_
                         else:
+                            if fixed_type == 1:
+                                return ret + '-副詞的'
+                            elif fixed_type == 2:
+                                return ret + '-連体修飾'
                             return ret
                 elif (token.dep_ == "case" or token.tag_ == '助詞-格助詞') and token.tag_ != '名詞-普通名詞-一般' and token.head.head.i == pt and token.head.pos_ == 'NOUN':    # 括弧書きを挟んだ係り受けの場合　ex.SaaSソリューション「Ecomedia」を開発する
                     for i in range(token.i, len(doc)):
                         if doc[i].dep_ == "case" or doc[i].tag_ == '助詞-格助詞':
                             if doc[i].lemma_ == 'と' and doc[i + 1].lemma_ == 'する' and doc[i + 2].lemma_ == 'て':
                                 ret = ret + doc[i].lemma_ + 'して'
-                                return ret
+                                return ret + '-副詞的'
                             elif doc[i].lemma_ == 'や':
                                 ret = doc[doc[i].head.head.i - 1].lemma_
                             elif doc[i].lemma_ == 'に' and doc[i + 1].orth_ == 'より':
@@ -164,6 +164,10 @@ class CaseExtractor:
                             else:
                                 ret = ret + doc[i].lemma_
                         else:
+                            if fixed_type == 1:
+                                return ret + '-副詞的'
+                            elif fixed_type == 2:
+                                return ret + '-連体修飾'
                             return ret
         if not ret: # 直後に格助詞がない場合
             if len(doc) > doc[pt].i + 1 and doc[doc[pt].i + 1].lemma_ == '・' and doc[doc[pt].head.i].pos_ == 'VERB':
@@ -172,5 +176,9 @@ class CaseExtractor:
                         ret = doc[i].lemma_ + ret
                     else:
                         break
+        if fixed_type == 1:
+            return ret + '-副詞的'
+        elif fixed_type == 2:
+            return ret + '-連体修飾'
         return ret
 

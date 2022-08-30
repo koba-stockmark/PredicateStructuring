@@ -439,6 +439,9 @@ class ChunkExtractor:
                     elif len(doc) > i + 1 and doc[i + 1].lemma_ == 'の' and doc[i].pos_ == 'ADP' and doc[i].lemma_ == 'へ':  # 〜への〜
                         ret = self.connect_word(doc[i].orth_, ret)
                         start_pt = i
+                    elif len(doc) > i + 1 and doc[i + 1].lemma_ == 'の' and doc[i].pos_ == 'ADP' and doc[i].lemma_ == 'で':  # 〜での〜
+                        ret = self.connect_word(doc[i].orth_, ret)
+                        start_pt = i
                     elif len(doc) > i + 1 and doc[i + 1].norm_ == '言う' and doc[i].pos_ == 'ADP' and doc[i].lemma_ == 'と':  # 〜という
                         ret = self.connect_word(doc[i].orth_, ret)
                         start_pt = i
@@ -630,8 +633,8 @@ class ChunkExtractor:
                         break
                     if doc[i].orth_ == 'の' and doc[i - 1].lemma_ == 'もと':
                         break
-                    if doc[i].orth_ == 'の' and doc[i - 1].lemma_ == 'で':
-                        break
+#                    if doc[i].orth_ == 'の' and doc[i - 1].lemma_ == 'で':
+#                        break
                     if doc[i].orth_ == 'の' and doc[i - 1].lemma_ == 'など':
                         break
                     if doc[i].orth_ == 'の' and doc[i - 1].lemma_ == '、' and  doc[i - 2].lemma_ != '」':
@@ -691,7 +694,7 @@ class ChunkExtractor:
                 elif len(doc) > i + 3 and doc[i].orth_ == 'に' and doc[i + 1].orth_ == 'つい' and doc[i + 2].orth_ == 'て' and doc[i + 3].orth_ == 'の':  # 〇〇についての〇〇
                     start_pt = i
                     ret = self.connect_word(doc[i].orth_, ret)
-                elif len(doc) > i + 1 and doc[i + 1].tag_ == '接尾辞-名詞的-サ変可能':
+                elif len(doc) > i + 1 and "接尾辞-名詞的" in doc[i + 1].tag_:
                     start_pt = i
                     ret = self.connect_word(doc[i].orth_, ret)
                 elif doc[i].dep_ == 'compound' and doc[i].pos_ != 'ADP':
@@ -701,6 +704,9 @@ class ChunkExtractor:
                     start_pt = i
                     ret = self.connect_word(doc[i].orth_, ret)
                 elif doc[i].lemma_ == 'など' and len(doc) > i + 1 and doc[i + 1].norm_ == 'と' and doc[i + 2].norm_ == 'の':     # 〜などとの
+                    start_pt = i
+                    ret = self.connect_word(doc[i].orth_, ret)
+                elif (doc[i].dep_ == 'fixed' and doc[i].lemma_ == '対する') or (len(doc) > i + 1 and doc[i].lemma_ == 'に' and doc[i + 1].dep_ == 'fixed' and doc[i + 1].lemma_ == '対する'):
                     start_pt = i
                     ret = self.connect_word(doc[i].orth_, ret)
                 else:
