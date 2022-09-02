@@ -464,6 +464,9 @@ class PredicatePhraseExtractor:
                             verb_w = verb_w + '(です)'
                         elif ((doc[pt].pos_ == 'NOUN' and doc[pt].tag_ != '動詞-一般') or doc[pt].pos_ == 'PROPN') and doc[pt].dep_ == 'nmod':
                             verb_w = verb_w + '(する)'
+                        elif doc[verb["lemma_end"]].lemma_ == "ところ" and len(doc) > verb["lemma_end"] + 1 and doc[verb["lemma_end"] + 1].lemma_ == 'です':
+                            verb_w = verb_w + 'です'
+                            verb["lemma_end"] = verb["lemma_end"] + 1
                         rule_id = 39
                     elif len(doc) == doc[pt].i + 1:
                         rule_id = 40

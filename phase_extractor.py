@@ -52,9 +52,10 @@ class PhaseExtractor:
                         a_text = c_text + "。"
                 ret = self.pas_get(a_text, mode)
                 if ret:
-                    if "その他" not in ret:
-                        return ret
-                    pre_ret = ret
+                    return ret
+#                    if "その他" not in ret:
+#                        return ret
+#                    pre_ret = ret
             return pre_ret
         else:
             return self.pas_get(text, mode)
@@ -63,6 +64,7 @@ class PhaseExtractor:
     主述部と補助術部に別れた述語項構造の取得
     mode = 0 : フェーズチェク
     mode = 1 : 政府活動チェク
+    mode = 2 : 政府HPチェク
     """
 
     def pas_get(self, text, mode):

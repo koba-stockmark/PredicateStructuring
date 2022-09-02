@@ -185,21 +185,21 @@ class PasAnalysis:
                 if doc[check_subj['lemma_end']].tag_ == '接尾辞-名詞的-助数詞' and len(ret_subj_all) > 1:
                     continue
                 if doc[verb["lemma_end"]].lemma_ != 'こと' and doc[doc[verb["lemma_end"]].head.i].lemma_ != 'こと' and doc[verb["lemma_end"]].pos_ != 'NOUN':
-                    if doc[check_subj['lemma_end'] + 1].lemma_ == 'は':
+                    if len(doc) > check_subj['lemma_end'] + 1 and doc[check_subj['lemma_end'] + 1].lemma_ == 'は':
                         if case_ga:
                             ret_subj = check_subj
                             subject_w = ret_subj['lemma']
                             break
                         ret_subj_wa = check_subj
                         case_wa = True
-                    if doc[check_subj['lemma_end'] + 1].lemma_ == 'が' or doc[check_subj['lemma_end'] + 1].lemma_ == 'も':
+                    if len(doc) > check_subj['lemma_end'] + 1 and (doc[check_subj['lemma_end'] + 1].lemma_ == 'が' or doc[check_subj['lemma_end'] + 1].lemma_ == 'も'):
                         if case_wa:
                             ret_subj = ret_subj_wa
                             subject_w = ret_subj['lemma']
                             break
                         case_ga = True
                 else:
-                    if doc[check_subj['lemma_end'] + 1].lemma_ == 'が':
+                    if len(doc) > check_subj['lemma_end'] + 1 and doc[check_subj['lemma_end'] + 1].lemma_ == 'が':
                         ret_subj = check_subj
                         subject_w = ret_subj['lemma']
                         break
@@ -397,7 +397,7 @@ class PasAnalysis:
                     #
                     if ret_obj:
                         if not case:
-                            if doc[ret_obj["lemma_start"]].dep_ == 'advcl' and doc[ret_obj["lemma_end"]].pos_ != 'NOUN'  and doc[ret_obj["lemma_end"]].pos_ != 'PROPN' and doc[ret_obj["lemma_end"]].tag_ != '動詞-非自立可能':
+                            if doc[ret_obj["lemma_start"]].dep_ == 'advcl' and doc[ret_obj["lemma_end"]].dep_ != 'advcl' and doc[ret_obj["lemma_end"]].pos_ != 'NOUN'  and doc[ret_obj["lemma_end"]].pos_ != 'PROPN' and doc[ret_obj["lemma_end"]].tag_ != '動詞-非自立可能':
                                 case = self.case_get(ret_obj['lemma_start'], *doc)
                             else:
                                 case = self.case_get(ret_obj['lemma_end'], *doc)

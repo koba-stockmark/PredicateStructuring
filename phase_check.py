@@ -32,27 +32,46 @@ class PhaseCheker:
         ret = ''
         new_end = end
         for c_pt in range(start, end):      # 述部の語幹だけを切り出す
-            if doc[c_pt].pos_ == 'ADP' and (doc[c_pt].lemma_ != 'を' or (doc[c_pt].lemma_ == 'を' and len(doc) > c_pt + 1 and doc[c_pt + 1].norm_ == '為る')):
+            if doc[c_pt].pos_ == 'ADP' and ((doc[c_pt].lemma_ != 'を' and doc[c_pt].lemma_ != 'の' and doc[c_pt].lemma_ != 'が') or (doc[c_pt].lemma_ == 'を' and len(doc) > c_pt + 1 and doc[c_pt + 1].norm_ == '為る')):
                 new_end = c_pt - 1
                 break
         verb_word = chunker.compaound(start, new_end, *doc)
+        obj_word = chunker.compaound(obj_start, obj_end, *doc)
         # 補助表現以外のメイン術部
         if verb_word not in s_v_dic.sub_verb_dic or verb_word in s_v_dic.special_sub_verb_dic:
+            # O-V　ルール
+            for rule in p_rule.phrase_rule:
+                if "rule" in rule:
+                    verb_ok = False
+                    for check_verb in rule["rule"]["verb"]:
+                        if check_verb in verb_word:
+                            verb_ok = True
+                            break
+                    if verb_ok:
+                        for check_obj in rule["rule"]["obj"]:
+                            if check_obj in obj_word:
+                                if ret:
+                                    ret = ret + ',' + rule["label"]
+                                else:
+                                    ret = ret + rule["label"]
+                                break
             # フルマッチ
             for rule in p_rule.phrase_rule:
-                if self.rule_check(verb_word, rule["words"]):
-                    if ret:
-                        ret = ret + ',' + rule["label"]
-                    else:
-                        ret = ret + rule["label"]
-            # フルマッチでない場合は後方マッチ
-            if not ret:
-                for rule in p_rule.phrase_rule:
-                    if self.rule_check2(verb_word, rule["words"]):
+                if "words" in rule:
+                    if self.rule_check(verb_word, rule["words"]):
                         if ret:
                             ret = ret + ',' + rule["label"]
                         else:
                             ret = ret + rule["label"]
+            # フルマッチでない場合は後方マッチ
+            if not ret:
+                for rule in p_rule.phrase_rule:
+                    if "words" in rule:
+                        if self.rule_check2(verb_word, rule["words"]):
+                            if ret:
+                                ret = ret + ',' + rule["label"]
+                            else:
+                                ret = ret + rule["label"]
         # 目的語からフェーズをチェック
         if verb_word in s_v_dic.sub_verb_dic and verb_word not in s_v_dic.special_sub_verb_dic and obj_start >= 0:
             ret2 = self.phase_chek(obj_start, obj_end, -1, -1, '', p_rule,  *doc)
@@ -71,11 +90,12 @@ class PhaseCheker:
         # 補助表現がメイン術部のとき
         if not pre_phase and not ret and verb_word in s_v_dic.sub_verb_dic:
             for rule in p_rule.phrase_rule:
-                if verb_word in rule["words"]:
-                    if ret:
-                        ret = ret + ',' + rule["label"]
-                    else:
-                        ret = ret + rule["label"]
+                if "words" in rule:
+                    if verb_word in rule["words"]:
+                        if ret:
+                            ret = ret + ',' + rule["label"]
+                        else:
+                            ret = ret + rule["label"]
         return ret.rstrip(',')
 
     #
@@ -119,9 +139,18 @@ class PhaseCheker:
         chunker = ChunkExtractor()
         s_v_dic = SubVerbDic()
 
+        if p_rule == PhaseRule:
+            return False
         start = predicate["lemma_start"]
         end = predicate["lemma_end"]
         new_end = end
+        # かかり先がフェーズ判定語の場合はNG
+        for rule in p_rule.phrase_rule:
+            if "words" in rule:
+                if self.rule_check(doc[doc[end].head.i].lemma_, rule["words"]):
+                    if chunker.rentai_check(doc[end].i, *doc):
+                        return False
+
         for c_pt in range(start, end):      # 述部の語幹だけを切り出す
             if doc[c_pt].pos_ == 'ADP' and (doc[c_pt].lemma_ != 'を' or (doc[c_pt].lemma_ == 'を' and len(doc) > c_pt + 1 and doc[c_pt + 1].norm_ == '為る')):
                 new_end = c_pt - 1
@@ -131,12 +160,14 @@ class PhaseCheker:
         if verb_word not in s_v_dic.sub_verb_dic or verb_word in s_v_dic.special_sub_verb_dic:
             # フルマッチ
             for rule in p_rule.sub_phrase_rule:
-                if self.rule_check(verb_word, rule["words"]):
-                    return True
+                if "words" in rule:
+                    if self.rule_check(verb_word, rule["words"]):
+                        return True
             # フルマッチでない場合は後方マッチ
             for rule in p_rule.sub_phrase_rule:
-                if self.rule_check2(verb_word, rule["words"]):
-                    return True
+                if "words" in rule:
+                    if self.rule_check2(verb_word, rule["words"]):
+                        return True
         return False
 
     ##########################################################################################################################################
@@ -151,7 +182,9 @@ class PhaseCheker:
         single = ''
         phase = ""
         for chek_predicate in predicate:
+            no_argument = True
             ok_f = False
+            # 補助述部でもチェック対象にしてよいかチェック
             if not chek_predicate["main"] and p_rule != rule:
                 ok_f = self.sub_predicate_check(chek_predicate, p_rule, *doc)
             if chek_predicate["main"] or ok_f:
@@ -162,6 +195,7 @@ class PhaseCheker:
                     phase = ''
                     if chek_predicate["id"] != re_arg["predicate_id"]:
                         continue
+                    no_argument = False
                     if not re_arg["case"]:
                         continue
                     if re_arg["subject"] and doc[re_arg["lemma_end"]].lemma_ != 'こと' and re_arg["case"] != 'が' and re_arg["case"] != 'も':  # 他の項がある主語からフェーズ生成はない
@@ -261,6 +295,19 @@ class PhaseCheker:
                                         single = single + "," + check_phase
                                     else:
                                         single = check_phase
+            if (chek_predicate["main"] or ok_f) and no_argument and not single:
+                # 項のない述部のチェック
+                phase = self.phase_chek(chek_predicate["lemma_start"], chek_predicate["lemma_end"], -1, -1, "", p_rule, *doc)
+                if phase:
+                    if p_rule == PhaseRule:
+                        single = self.single_phase_get(phase)
+                    else:
+                        for check_phase in phase.split(","):
+                            if check_phase not in single:
+                                if single:
+                                    single = single + "," + check_phase
+                                else:
+                                    single = check_phase
         return single
 
     ##########################################################################################################################################
