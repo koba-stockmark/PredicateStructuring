@@ -30,35 +30,7 @@ class PhaseExtractor:
     def single_phase_extract(self, text):
         return self.pas_get(text, 0)
 
-    """
-    政府活動の取得
-    """
 
-    def government_action_extract(self, text, mode):
-        pre_ret = ""
-        if mode == 2:
-            a_text = ""
-            for c_text in text.split("。"):
-                if c_text.endswith("いう") or c_text.endswith("号"):
-                    if a_text:
-                        a_text = a_text + c_text + "。"
-                    else:
-                        a_text = c_text + "。"
-                    continue
-                else:
-                    if a_text:
-                        a_text = a_text + c_text + "。"
-                    else:
-                        a_text = c_text + "。"
-                ret = self.pas_get(a_text, mode)
-                if ret:
-                    return ret
-#                    if "その他" not in ret:
-#                        return ret
-#                    pre_ret = ret
-            return pre_ret
-        else:
-            return self.pas_get(text, mode)
 
     """
     主述部と補助術部に別れた述語項構造の取得
@@ -69,7 +41,7 @@ class PhaseExtractor:
 
     def pas_get(self, text, mode):
 
-        debug = False  # デバッグ用フラグ
+        debug = True  # デバッグ用フラグ
         ret = ''
         ##########################################################################################################################################
         # 形態素解析

@@ -356,10 +356,19 @@ class PhaseCheker:
                "海南省", "貴州省", "雲南省", "四川省", "陝西省", "青海省", "甘粛省", "台湾省"
                ]
 
+    #########################################################
+    #  政府活動を法令関係か否かでチェック
+    #########################################################
+
     def government_action_get_and_set(self, predicate, argument, mode, *doc):
         ret_phase = self.government_rule_chek_and_set(predicate, argument, mode, *doc)
-        print("%s\n" % ret_phase)
+#        print("%s\n" % ret_phase)
         return self.single_government_action_get(ret_phase, mode)
+
+    #########################################################
+    #  政府活動をマルチラベルでチェック
+    #########################################################
+
     def government_rule_chek_and_set(self, predicate, argument, mode, *doc):
         g_a_dic = GovernmentActionRule()
         # 政府発行刊行物？
