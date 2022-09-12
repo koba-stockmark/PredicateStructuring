@@ -25,7 +25,7 @@ class GovernmentNewsAnalysis:
         d_s = DataDumpSave()
         self.text_treace = d_s.text_treace
         p_e = PhaseExtractor()
-        self.pas_get = p_e.pas_get
+        self.phase_get = p_e.phase_get
 
     seifu_busho = ["省", "庁", "部", "課", "局", "グループ", "室", "官房"]
 
@@ -35,7 +35,7 @@ class GovernmentNewsAnalysis:
     ##########################################################################################################################################
 
     def government_phase_extract(self, text):
-        return self.pas_get(text, 1)
+        return self.phase_get(text, 1)
 
     ##########################################################################################################################################
     # 政府発行ニュースからの政府活動の取得
@@ -59,7 +59,7 @@ class GovernmentNewsAnalysis:
                     a_text = a_text + c_text + "。"
                 else:
                     a_text = c_text + "。"
-            ret = self.pas_get(a_text, 2)
+            ret = self.phase_get(a_text, 2)
             if ret:
                 return ret
         #                    if "その他" not in ret:

@@ -16,20 +16,20 @@ out_file3 = open('result_head_1line.tsv', 'w')
 #"""
 for doc in solution:
   for sep_doc in doc.splitlines():
-    keyword_list = model.pas_get(sep_doc, 0) # キーワードの候補の抽出
+    keyword_list = model.phase_get(sep_doc, 0) # キーワードの候補の抽出
     out_file.write(keyword_list)
 out_file.close()
 #####
 """
 for doc in head:
   for sep_doc in doc.splitlines():
-    keyword_list = model.pas_get(sep_doc, 2) # キーワードの候補の抽出
+    keyword_list = model.phase_get(sep_doc, 2) # キーワードの候補の抽出
     out_file3.write(keyword_list)
 out_file3.close()
 #####
 for doc in articles2:
   for sep_doc in doc.splitlines():
-    keyword_list = model.pas_get(sep_doc, 0) # キーワードの候補の抽出
+    keyword_list = model.phase_get(sep_doc, 0) # キーワードの候補の抽出
     out_file2.write(keyword_list)
   out_file2.write("----\t----\t----\t----\t----\t----\t----\t----\t----\t----\n")
 out_file2.close()

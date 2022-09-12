@@ -28,7 +28,7 @@ class PhaseExtractor:
     """
 
     def single_phase_extract(self, text):
-        return self.pas_get(text, 0)
+        return self.phase_get(text, 0)
 
 
 
@@ -39,7 +39,7 @@ class PhaseExtractor:
     mode = 2 : 政府HPチェク
     """
 
-    def pas_get(self, text, mode):
+    def phase_get(self, text, mode):
 
         debug = True  # デバッグ用フラグ
         ret = ''
