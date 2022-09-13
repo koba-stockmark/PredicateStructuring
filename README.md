@@ -42,6 +42,7 @@ SpaCy
 
 ## 評価データ
 + solution_sentnece.txt (5000文)
++ government_news.txt (政府活動文　1066文)
 
 ## ルール・辞書
 + phase_rule_dic.py
@@ -76,7 +77,9 @@ SpaCy
 
   class GovernmentNewsAnalysis:
                    
-  def government_phase_extract(self, text):
+  def government_phase_extract(self, text):  (主語が政府活動家を判断する)
+
+  def government_action_extract(self, text): (主語は政府活動と仮定する)
 
 
 テキスト入力に対してフェーズ情報を返す。
