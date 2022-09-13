@@ -51,8 +51,18 @@ SpaCy
   + フェーズ処理の対象になる格の定義 (phase_analyze_case)
   + 時制に関する補助用言 (kako, genzai, mirai)
   + マルチラベルをシングルラベルに変換するルール (single_rule)
-  + 政府活動判別ルール(government_action_dic.py)
+
+
++ 政府活動判別ルール(government_action_dic.py)
+  + カテゴリルール(kentou_dic,o_v_kentou_dic,o_v_kentou2_dic,sekou_dic,kaisei_dic,haishi_dic,kunji_dic,yousei_dic,ninka_dic,keiyaku_dic,sosyou_dic,kannkoku_dic,date_dic,decision_dic,action_dic,naiyous_dic,sakusei_dic,haikei_dic,shoken_dic,souritsu_dic,renkei_dic,system_dic,shien_dic,boshyu_dic,yuushi_dic,kounyuu_dic,baikyaku_dic,koukai_dic,kaidan_dic,haken_dic,event_dic,others_dic)
   
+  + 主述部でカテゴリと認めるルール（phrase_rule）
+  + 補助述部でも政府活動と認めるカテゴリのルール（sub_phrase_rule）
+  + 政府情報発信述語ルール（press_dic）
+  + シングルラベルルール（single_rule）
+  + 進行状態ルール（stat_rule）
+  
+    
 + sub_verb_dic.py
 :補助用言辞書
 + special_verb_dic.py
