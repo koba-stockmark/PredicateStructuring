@@ -219,27 +219,29 @@ class SubjectExtractor:
                   (self.shuusi_check(doc[verb_end_pt].i, *doc) or (doc[verb_end_pt].morph.get("Inflection") and '終止' in doc[verb_end_pt].morph.get("Inflection")[0])))):
             if (doc[doc[verb_end_pt].head.i].pos_ == 'NOUN' or doc[doc[verb_end_pt].head.i].pos_ == 'PROPN' or doc[doc[verb_end_pt].head.i].pos_ == 'NUM') and doc[doc[verb_end_pt].head.i].lemma_ != '予定':
                 if doc[verb_end_pt + 1].lemma_ != 'さまざま' and doc[verb_end_pt + 1].lemma_ != '能力' and (doc[verb_end_pt + 1].lemma_ != 'する' or doc[verb_end_pt + 2].lemma_ != '能力'):
-                    if doc[verb_end_pt].head.i > verb_end_pt:
-                        ret_subj = self.num_chunk(doc[verb_end_pt].head.i, *doc)
-                    else:
-                        ret_subj = self.num_chunk(verb_end_pt + 1, *doc)
-                    ret['lemma_end'] = ret_subj['lemma_end']
-                    if ret_subj['lemma_start'] == verb_end_pt and doc[verb_end_pt].pos_ == 'ADJ':    # 形容詞が前についているときは削る
-                        ret_subj['lemma_start'] = verb_end_pt + 1
-                    if '「' not in ret_subj["lemma"] and '”' not in ret_subj["lemma"]:
-                        for i in reversed(range(ret_subj['lemma_start'], ret_subj['lemma_end'] + 1)):  # 〇〇と〇〇　は切り離す
-                            if doc[i].pos_ == 'ADP' and doc[i].lemma_ == 'と':
-                                break
-                            ret['lemma'] = self.connect_word(doc[i].orth_, ret['lemma'])
+#                    if doc[verb_end_pt].head.head.tag_ != "動詞-非自立可能":
+                    if doc[verb_end_pt].pos_ != "ADJ" and doc[verb_end_pt].head.tag_ != "名詞-普通名詞-副詞可能": # 形容詞の連体形、修飾先が形式名詞の場合はNG
+                        if doc[verb_end_pt].head.i > verb_end_pt:
+                            ret_subj = self.num_chunk(doc[verb_end_pt].head.i, *doc)
+                        else:
+                            ret_subj = self.num_chunk(verb_end_pt + 1, *doc)
+                        ret['lemma_end'] = ret_subj['lemma_end']
+                        if ret_subj['lemma_start'] == verb_end_pt and doc[verb_end_pt].pos_ == 'ADJ':    # 形容詞が前についているときは削る
+                            ret_subj['lemma_start'] = verb_end_pt + 1
+                        if '「' not in ret_subj["lemma"] and '”' not in ret_subj["lemma"]:
+                            for i in reversed(range(ret_subj['lemma_start'], ret_subj['lemma_end'] + 1)):  # 〇〇と〇〇　は切り離す
+                                if doc[i].pos_ == 'ADP' and doc[i].lemma_ == 'と':
+                                    break
+                                ret['lemma'] = self.connect_word(doc[i].orth_, ret['lemma'])
+                                ret['rentai_subject'] = True
+                                ret['lemma_start'] = i
+                        else:
+                            ret['lemma'] = ret_subj['lemma']
                             ret['rentai_subject'] = True
-                            ret['lemma_start'] = i
-                    else:
-                        ret['lemma'] = ret_subj['lemma']
-                        ret['rentai_subject'] = True
-                        ret['lemma_start'] = ret_subj['lemma_start']
-#                    return ret
-                    candidate.append(ret)
-                    return candidate
+                            ret['lemma_start'] = ret_subj['lemma_start']
+    #                    return ret
+                        candidate.append(ret)
+                        return candidate
         # 〜〇〇した祭
         if len(doc) > verb_end_pt + 2 and doc[verb_end_pt + 1].lemma_ == 'た' and doc[verb_end_pt + 2].lemma_ == '際':
             ret_subj = self.num_chunk(verb_end_pt + 2, *doc)

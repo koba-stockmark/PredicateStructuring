@@ -10,8 +10,8 @@ solution = open('solution_sentence.txt')
 error = open('error.txt')
 head = open('../DataClean/head_1line.txt')
 out_file = open('result.tsv', 'w')
-out_file2 = open('result_nikkei.tsv', 'w')
-out_file3 = open('result_head_1line.tsv', 'w')
+#out_file2 = open('result_nikkei.tsv', 'w')
+#out_file3 = open('result_head_1line.tsv', 'w')
 
 #"""
 for doc in solution:

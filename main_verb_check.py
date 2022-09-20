@@ -64,7 +64,10 @@ class MainVerbChek:
             rule_id = 112
         elif len(doc) > doc[predic_head].i + 1 and doc[predic_head].pos_ == 'NOUN' and doc[doc[predic_head].i + 1].lemma_ == 'いたす':  # 〇〇いたします。
             rule_id = 113
-        elif len(doc) > doc[predic_head].i + 1 and doc[predic_head].pos_ == 'NOUN' and doc[doc[predic_head].head.i].dep_ == 'ROOT' and (doc[doc[predic_head].i + 1].pos_ == 'AUX' or doc[doc[predic_head].i + 1].pos_ == 'PUNCT'):  # 〇〇します。 がROOTになっていないときの例外処理
+#        elif len(doc) > doc[predic_head].i + 1 and doc[predic_head].pos_ == 'NOUN' and doc[doc[predic_head].head.i].dep_ == 'ROOT' and (doc[doc[predic_head].i + 1].pos_ == 'AUX' or doc[doc[predic_head].i + 1].pos_ == 'PUNCT'):  # 〇〇します。 がROOTになっていないときの例外処理
+        elif (len(doc) > doc[predic_head].i + 1 and doc[predic_head].pos_ == 'NOUN' and doc[doc[predic_head].head.i].dep_ == 'ROOT' and
+              ((doc[doc[predic_head].i + 1].pos_ == 'AUX' and (not doc[predic_head + 1].morph.get("Inflection") or (doc[predic_head + 1].morph.get("Inflection") and '仮定形' not in doc[predic_head + 1].morph.get("Inflection")[0]))) or
+               doc[doc[predic_head].i + 1].pos_ == 'PUNCT')):  # 〇〇します。 がROOTになっていないときの例外処理
             rule_id = 114
         elif doc[predic_head].pos_ == 'VERB' and doc[doc[predic_head].head.i].lemma_ == '方向' and doc[doc[predic_head].head.i + 1].lemma_ == 'で' and doc[doc[doc[predic_head].head.i].head.i].dep_ == 'ROOT':  # 〇〇する方向で[動詞]。
             rule_id = 116

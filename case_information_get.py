@@ -31,7 +31,7 @@ class CaseExtractor:
             for cpt in range(sp, len(doc)):
                 if (len(doc) > cpt + 1 and doc[cpt].lemma_ == 'て' and doc[cpt + 1].lemma_ == 'いる') or (doc[cpt - 1].lemma_ == 'て' and doc[cpt].lemma_ == 'いる'):     # 〇〇ている＋「格助詞」　は特別　ex.　できなくなっていると発表した
                     continue
-                if doc[cpt].pos_ != 'SCONJ' and doc[cpt].pos_ != 'AUX' and doc[cpt].pos_ != 'ADP':
+                if doc[cpt].pos_ != 'SCONJ' and doc[cpt].pos_ != 'AUX' and doc[cpt].pos_ != 'ADP' and doc[cpt].pos_ != 'PART':
                     break
                 ret = ret + doc[cpt].orth_
             if doc[cpt - 1].morph.get("Inflection") and '連体形' in doc[cpt - 1].morph.get("Inflection")[0]:
@@ -127,6 +127,12 @@ class CaseExtractor:
                 break
             elif token.tag_ == '助動詞' and (token.orth_ == 'に' or token.orth_ == 'で'):
                 ret = ret + token.orth_ + '-副詞的'
+            elif token.tag_ == '助動詞' and token.dep_ == "cop":   # 〜なら
+                ret = ret + token.orth_
+            elif token.tag_ == '助動詞' and token.lemma_ == "た":  # 〜た
+                ret = ret + token.orth_
+            elif token.pos_ == 'SCONJ':  # 〜ば
+                ret = ret + token.orth_
             elif token.head.i > pt:
                 break
         if open_f and not ret:  # カッコのバランスが悪い場合は、カッコ内も対象にする
