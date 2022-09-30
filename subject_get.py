@@ -46,7 +46,7 @@ class SubjectExtractor:
         ret = {'lemma': '', 'lemma_start': -1, 'lemma_end': -1}
         chek = doc[pt].head.i
         while chek != doc[chek].head.i:  # 主語の候補がが見つかったら述部につながるかパスをたどる
-            if chek == verb_pt:
+            if ng_pt <= chek <= verb_pt:
                 break
             else:
                 if doc[chek].dep_ == 'nsubj':  # 他の主語が見つかったらそちらを優先
@@ -97,7 +97,7 @@ class SubjectExtractor:
                 if doc[chek].tag_ == '名詞-普通名詞-副詞可能':
                     ret["special_connection"] = True
                 chek = doc[chek].head.i
-        if doc[pt].i != ng_pt and (chek == verb_pt or (chek == doc[verb_pt].head.i and doc[verb_pt].pos_ != "ADJ") or
+        if doc[pt].i != ng_pt and (ng_pt <= chek <= verb_pt or (chek == doc[verb_pt].head.i and doc[verb_pt].pos_ != "ADJ") or
                                    (chek == doc[verb_pt].head.head.i and doc[verb_pt].pos_ != "ADJ" and ((doc[verb_pt].head.pos_ != 'NUM' and doc[verb_pt].head.pos_ != 'NOUN') or (doc[verb_pt].head.dep_ == 'advcl' and doc[verb_pt].head.head.pos_ == 'VERB') or doc[verb_pt].head.lemma_ == 'こと'))):
             ret_subj = self.num_chunk(doc[pt].i, *doc)
             if pt > 0 and '名詞-固有名詞-地名' in doc[pt].tag_ and doc[doc[pt].i - 1].pos_ == 'NOUN':  # NPO法人ラ・レーチェ・リーグ日本は　など地名がわかれる場合の処理
@@ -129,7 +129,8 @@ class SubjectExtractor:
         candidate = []
         # subjで直接接続をチェック
         for token in doc:
-            if token.dep_ == "nsubj" and (token.head.i == verb_end_pt and token.i != ng_pt and token.tag_ != '名詞-普通名詞-副詞可能'):
+#            if token.dep_ == "nsubj" and (token.head.i == verb_end_pt and token.i != ng_pt and token.tag_ != '名詞-普通名詞-副詞可能'):
+            if token.dep_ == "nsubj" and (verb_pt <= token.head.i <= verb_end_pt and token.i != ng_pt and token.tag_ != '名詞-普通名詞-副詞可能'):
                 if doc[token.head.i].norm_ == '出来る':
                     continue
 #                return self.direct_connect_chek(token.i, *doc)

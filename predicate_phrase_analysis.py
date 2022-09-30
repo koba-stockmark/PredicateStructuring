@@ -234,6 +234,12 @@ class PredicatePhraseExtractor:
                     verb["lemma_end"] = doc[pt].i
                     modality_w = verb["modality"]
                     rule_id = 18
+                elif doc[pt - 1].pos_ == "ADJ":  # 安く＋なる
+                    verb = self.verb_chunk(pt - 1, *doc)
+                    verb_w = doc[pt - 1].orth_ + doc[pt].lemma_
+                    verb["lemma_end"] = doc[pt].i
+                    modality_w = verb["modality"]
+                    rule_id = 18
                 else:
                     verb = self.verb_chunk(doc[pt].i, *doc)
                     verb_w = verb["lemma"]
@@ -370,8 +376,16 @@ class PredicatePhraseExtractor:
             ###############################
             elif len(doc) > doc[pt].i + 1 and doc[pt].tag_ == '名詞-普通名詞-一般' and (doc[doc[pt].i + 1].pos_ == 'ADP' or doc[doc[pt].i + 1].pos_ == 'SCONJ'):
                 verb_w = ''
+                verb = self.num_chunk(doc[pt].i, *doc)
+                verb_w = verb["lemma"]
+                modality_w = ""
+                verb_w = ''
                 rule_id = 30
             elif len(doc) > doc[pt].i + 2 and doc[pt].tag_ == '名詞-普通名詞-一般' and doc[doc[pt].i + 1].pos_ == 'PUNCT' and doc[doc[pt].i + 2].pos_ == 'ADP':
+                verb_w = ''
+                verb = self.num_chunk(doc[pt].i, *doc)
+                verb_w = verb["lemma"]
+                modality_w = ""
                 verb_w = ''
                 rule_id = 31
             ###############################
@@ -379,18 +393,28 @@ class PredicatePhraseExtractor:
             ###############################
             elif doc[pt].tag_ == '接尾辞-名詞的-副詞可能' or doc[pt].tag_ == '名詞-普通名詞-形状詞可能':
                 verb_w = ''
+                verb = self.num_chunk(doc[pt].i, *doc)
+                verb_w = verb["lemma"]
+                modality_w = ""
+                verb_w = ''
                 rule_id = 32
             ###############################
             #    普通名詞　〇〇　＋　を　＋　〇〇日
             ###############################
             elif (doc[pt].tag_ == '接尾辞-名詞的-助数詞' or doc[pt].tag_ == '名詞-普通名詞-助数詞可能' or doc[pt].tag_ == '名詞-普通名詞-副詞可能') and (len(doc) <= doc[pt].i + 1 or doc[doc[pt].i + 1].lemma_ != '」'):
                 verb_w = ''
+                verb = self.num_chunk(doc[pt].i, *doc)
+                verb_w = verb["lemma"]
+                modality_w = ""
                 rule_id = 33
             ###############################
             #    普通名詞　〇〇　＋　を　＋　〇〇日
             ###############################
             elif len(doc) > doc[pt].i + 1 and doc[pt].tag_ == '名詞-数詞' and doc[doc[pt].i + 1].pos_ == 'PUNCT':
                 verb_w = ''
+                verb = self.num_chunk(doc[pt].i, *doc)
+                verb_w = verb["lemma"]
+                modality_w = ""
                 rule_id = 34
             ###############################
             #    〜を　形容詞　＋　できる

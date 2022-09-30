@@ -384,7 +384,7 @@ class PasAnalysis:
                         #
                         if doc[ret_obj["lemma_start"]].dep_ != 'advcl':
                             para_obj = self.para_get(ret_obj['lemma_start'], ret_obj['lemma_end'], *doc)
-                            if (ret_obj["lemma"] == 'とも' or ret_obj["lemma"] == '共') and doc[ret_obj['lemma_start'] - 1].lemma_ == 'と' and doc[ret_obj['lemma_start'] + 1].lemma_ == 'に':    # 〇〇とともに　は例外
+                            if para_obj and (ret_obj["lemma"] == 'とも' or ret_obj["lemma"] == '共') and doc[ret_obj['lemma_start'] - 1].lemma_ == 'と' and doc[ret_obj['lemma_start'] + 1].lemma_ == 'に':    # 〇〇とともに　は例外
                                 ret_obj = para_obj[0]
                                 del para_obj[0]
                                 case = "とともに"

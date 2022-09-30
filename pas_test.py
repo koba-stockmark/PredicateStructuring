@@ -26,9 +26,11 @@ def pas_get(debug, text):
 # test
 articles = json.load(open('nikkei.json'))
 articles2 = json.load(open('nikkei_5000.json'))
+articles3 = json.load(open('gyoukai.json'))
+articles4 = json.load(open('datsutanso.json'))
 solution = open('solution_sentence.txt')
 error = open('error.txt')
-head = open('../DataClean/head_1line.txt')
+#head = open('../DataClean/head_1line.txt')
 
 #out_file = open('result.tsv', 'w')
 out_file = open('result_nikkei.tsv', 'w')

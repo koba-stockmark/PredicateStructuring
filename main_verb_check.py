@@ -79,4 +79,6 @@ class MainVerbChek:
             rule_id = 119
         elif len(doc) > doc[predic_head].head.i + 2 and doc[predic_head].pos_ == 'VERB' and doc[doc[predic_head].head.i].pos_ == 'VERB' and doc[doc[predic_head].head.i + 1].pos_ == 'AUX' and doc[doc[predic_head].head.i + 1].lemma_ != 'ない' and (doc[doc[predic_head].head.i + 2].lemma_ == 'た' or doc[doc[predic_head].head.i + 2].lemma_ == 'だ'):  # 〇〇すると〇〇したと[動詞]。
             rule_id = 120
+        elif doc[predic_head].pos_ == 'VERB' and doc[predic_head + 1].lemma_ == 'する' and doc[doc[predic_head].head.i].lemma_ == 'する':  # 〇〇し〇〇する。
+            rule_id = 121
         return rule_id
