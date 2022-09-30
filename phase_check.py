@@ -37,25 +37,27 @@ class PhaseCheker:
                 break
         verb_word = chunker.compaound(start, new_end, *doc)
         obj_word = chunker.compaound(obj_start, obj_end, *doc)
-        # 補助表現以外のメイン術部
-        if verb_word not in s_v_dic.sub_verb_dic or verb_word in s_v_dic.special_sub_verb_dic:
-            # O-V　ルール
+        # O-V　ルール
+        if obj_start >= 0:
             for rule in p_rule.phrase_rule:
                 if "rule" in rule:
                     verb_ok = False
                     for check_verb in rule["rule"]["verb"]:
-                        if check_verb in verb_word:
+                        if check_verb and check_verb in verb_word:
                             verb_ok = True
                             break
                     if verb_ok:
                         for check_obj in rule["rule"]["obj"]:
-                            if check_obj in obj_word:
+                            if check_obj and check_obj in obj_word:
                                 if ret:
                                     ret = ret + ',' + rule["label"]
                                 else:
                                     ret = ret + rule["label"]
                                 break
-            # フルマッチ
+
+        # 補助表現以外のメイン術部
+        if verb_word not in s_v_dic.sub_verb_dic or verb_word in s_v_dic.special_sub_verb_dic:
+        # フルマッチ
             for rule in p_rule.phrase_rule:
                 if "words" in rule:
                     if self.rule_check(verb_word, rule["words"]):
@@ -333,8 +335,8 @@ class PhaseCheker:
         else:
             head.append("<政府活動>")
             head.append("<日本>")
-        if "<募集>" in phase:
-            return head[0] + "," + head[1] + "," + "<その他>"
+#        if "<募集>" in phase:
+#            return head[0] + "," + head[1] + "," + "<その他>"
         for check in rule.single_rule:
             for check_label in check["labels"]:
                 if check_label in phase:
@@ -350,7 +352,7 @@ class PhaseCheker:
     #    mode = 1 主語の政府判定あり
     #    mode = 2 主語の政府判定なし
     ##########################################################################################################################################
-    government_rule = ["省", "庁", "政府", "内閣"]
+    government_rule = ["省", "庁", "政府", "内閣", "東京都", "北海道", "大阪府", "京都府", "県", "市", "都庁", "道庁", "府庁"]
     ng_word = ["帰省", "省エネ", "省エネルギー", "省力化", "官公庁", "政府系",
                "黒竜江省", "吉林省", "遼寧省", "河北省", "河南省", "山東省", "山西省", "湖南省", "湖北省", "江蘇省", "安徽省", "浙江省", "福建省", "江西省", "広東省",
                "海南省", "貴州省", "雲南省", "四川省", "陝西省", "青海省", "甘粛省", "台湾省"
@@ -362,7 +364,8 @@ class PhaseCheker:
 
     def government_action_get_and_set(self, predicate, argument, mode, *doc):
         ret_phase = self.government_rule_chek_and_set(predicate, argument, mode, *doc)
-#        print("%s\n" % ret_phase)
+        print("%s\n" % ret_phase)
+#        return ret_phase
         return self.single_government_action_get(ret_phase, mode)
 
     #########################################################
@@ -371,6 +374,7 @@ class PhaseCheker:
 
     def government_rule_chek_and_set(self, predicate, argument, mode, *doc):
         g_a_dic = GovernmentActionRule()
+        c_h = ChunkExtractor()
         # 政府発行刊行物？
         if mode == 2:
             ret = self.rule_chek_and_set(predicate, argument, GovernmentActionRule, *doc)
@@ -384,6 +388,7 @@ class PhaseCheker:
         is_government = False
         is_government_press = False
         is_government_action = False
+        action_is_haikei = False
         for arg in argument:
             if arg["subject"] or arg["case"] == "で" or arg["case"] == "と" or arg["case"] == "の" or arg["case"] == "から" or arg["case"] == "に" or arg["case"] == "は":
                 if "連体" in arg["case"]:
@@ -433,6 +438,19 @@ class PhaseCheker:
                                     is_government_action = True
                                 if check_lemma in g_a_dic.press_dic:
                                     is_government_press = True
+                                # 政府が〇〇したこと
+                                if (doc[predicate[arg["predicate_id"]]["lemma_end"] + 1].lemma_ == "こと" or (doc[predicate[arg["predicate_id"]]["lemma_end"] + 1].lemma_ == "た" and doc[predicate[arg["predicate_id"]]["lemma_end"] + 2].lemma_ == "こと")):
+                                    action_is_haikei = True
+                                # 政府が発行した〇〇
+                                if ((doc[predicate[arg["predicate_id"]]["lemma_end"]].morph.get("Inflection") and '連体形' in doc[predicate[arg["predicate_id"]]["lemma_end"]].morph.get("Inflection")[0]) or
+                                    c_h.rentai_check(predicate[arg["predicate_id"]]["lemma_end"], *doc)):
+                                    action_is_haikei = True
+                                # 政府が〇〇できず
+                                if doc[predicate[arg["predicate_id"]]["lemma_end"] + 1].norm_ == "出来る" and doc[predicate[arg["predicate_id"]]["lemma_end"] + 2].norm_ == "ず":
+                                    action_is_haikei = True
+                                # 政府目標に向ける　（例外処理）
+                                if doc[predicate[arg["predicate_id"]]["lemma_end"]].norm_ == "向ける" and "政府目標" in arg["lemma"]:
+                                    action_is_haikei = True
                             break
                         """
                             not_syuusyoku_f = True
@@ -521,9 +539,9 @@ class PhaseCheker:
                 elif arg["predicate_id"] in government_predicate and "phase" in arg:
                     sub_gover_ret = arg["phase"]
 
-            if gover_ret:
+            if gover_ret and not action_is_haikei:
                 return "<政府活動>,<" + country + ">," + gover_ret
-            elif is_government_press:
+            elif is_government_press and not action_is_haikei:
                 if sub_gover_ret:
                     return "<政府活動>,<" + country + ">," + sub_gover_ret
                 else:
