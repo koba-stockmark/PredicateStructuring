@@ -15,7 +15,8 @@ out_file = open('government_add.tsv', 'w')
 #"""
 for doc in solution:
   for sep_doc in doc.splitlines():
-    keyword_list = model.government_action_extract(sep_doc) # キーワードの候補の抽出
+#    keyword_list = model.government_action_extract(sep_doc) # 政府HP
+    keyword_list = model.government_phase_extract(sep_doc) # ニュース記事
     ret = sep_doc + '\t' + keyword_list + '\n'
     print(ret)
     out_file.write(ret)

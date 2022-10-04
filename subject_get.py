@@ -53,6 +53,8 @@ class SubjectExtractor:
                     break
                 if doc[doc[chek].i + 1].tag_ == '形状詞-助動詞語幹' and doc[doc[chek].i + 1].head.i == doc[doc[chek].i].i:
                     break
+                if doc[chek].tag_ == '名詞-普通名詞-助数詞可能':
+                    break
                 if doc[chek].lemma_ == 'もの' and doc[chek].dep_ == "advcl":
                     break
                 if (doc[chek].orth_[-2:] == "える" or doc[chek].orth_[-2:] == "れる") and doc[chek].dep_ == "acl":
@@ -145,6 +147,8 @@ class SubjectExtractor:
                 if doc[doc[i].head.i].norm_ == '出来る':
                     continue
                 if doc[doc[i].head.i].norm_ == '為':
+                    continue
+                if doc[verb_end_pt + 1].lemma_ == "こと":
                     continue
                 ret = self.relational_connect_check(i, ng_pt, verb_end_pt, *doc)
                 if ret['lemma']:
