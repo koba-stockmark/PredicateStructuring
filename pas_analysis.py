@@ -84,7 +84,7 @@ class PasAnalysis:
     短い述部の併合
     """
     def short_predicate_delete(self, append_predict, predicate, argument):
-        ret = False
+        ret = 0
         del_id = 0
         for chek in reversed(append_predict):
             if chek["lemma_start"] >= predicate["lemma_start"] and chek["lemma_end"] <= predicate["lemma_end"]:
@@ -106,7 +106,7 @@ class PasAnalysis:
                             if argument[c_arg]["lemma"] == arg["lemma"]:
                                 del argument[c_arg]
                 del_id = chek["id"]
-                ret = True
+                ret = ret + 1
                 for chek_p in append_predict:
                     if chek_p["id"] > del_id:
                         append_predict[chek_p["id"]]["id"] = append_predict[chek_p["id"]]["id"] - 1
@@ -608,10 +608,11 @@ class PasAnalysis:
                         predicate["sub_lemma_end"] = -1
                         predicate["sub_orth"] = ''
                     pre_predicate_id = predicate_id
-                    if self.short_predicate_delete(append_predict, predicate, argument):  # 新しい述部より短い過去の述部を削除
-                        predicate_id = predicate_id - 1
-                        pre_predicate_id = pre_predicate_id - 1
-                        predicate["id"] = predicate["id"] - 1
+                    del_ct = self.short_predicate_delete(append_predict, predicate, argument)
+                    if del_ct > 0:  # 新しい述部より短い過去の述部を削除
+                        predicate_id = predicate_id - del_ct
+                        pre_predicate_id = pre_predicate_id - del_ct
+                        predicate["id"] = predicate["id"] - del_ct
                     if split_f:
                         predicate["id"] = predicate["id"] + 1
                         for change_arg in argument:
@@ -660,10 +661,11 @@ class PasAnalysis:
                     predicate["sub_lemma_end"] = -1
                     predicate["sub_orth"] = ''
                 pre_predicate_id = predicate_id
-                if self.short_predicate_delete(append_predict, predicate, argument):  # 新しい述部より短い過去の述部を削除
-                    predicate_id = predicate_id - 1
-                    predicate["id"] = predicate["id"] - 1
-                    pre_predicate_id = pre_predicate_id - 1
+                del_ct = self.short_predicate_delete(append_predict, predicate, argument)
+                if del_ct > 0:  # 新しい述部より短い過去の述部を削除
+                    predicate_id = predicate_id - del_ct
+                    predicate["id"] = predicate["id"] - del_ct
+                    pre_predicate_id = pre_predicate_id - del_ct
                 self.predicate_merge(append_predict, predicate, argument)
         ##########################################################################################################################################
         #    メイン述部の判断

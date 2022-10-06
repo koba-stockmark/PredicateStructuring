@@ -415,12 +415,18 @@ class PhaseCheker:
                 if predicate[arg["predicate_id"]]["main"]:
                     predicate_is_main = True
                 for i in range(arg["lemma_start"], arg["lemma_end"] + 1):
-                    if doc[i].tag_ == "名詞-固有名詞-地名-国":
+                    if doc[i].tag_ == "名詞-固有名詞-地名-国" and doc[i + 1].lemma_ != "企業":
                         if predicate_is_main:
                             subject_ari = True
                             country = doc[i].lemma_
                         else:
                             other_country = doc[i].lemma_
+                    elif doc[i].lemma_ == "香港" and i != arg["lemma_end"] and len(doc) > i + 1 and doc[i + 1].pos_ != "ADP":
+                        if predicate_is_main:
+                            subject_ari = True
+                            country = "香港"
+                        else:
+                            other_country = "香港"
                     elif doc[i].lemma_ == "米" and i != arg["lemma_end"] and len(doc) > i + 1 and doc[i + 1].pos_ != "ADP":
                         if predicate_is_main:
                             subject_ari = True

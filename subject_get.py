@@ -148,7 +148,7 @@ class SubjectExtractor:
                     continue
                 if doc[doc[i].head.i].norm_ == '為':
                     continue
-                if doc[verb_end_pt + 1].lemma_ == "こと":
+                if len(doc) > verb_end_pt + 1 and doc[verb_end_pt + 1].lemma_ == "こと":
                     continue
                 ret = self.relational_connect_check(i, ng_pt, verb_end_pt, *doc)
                 if ret['lemma']:
