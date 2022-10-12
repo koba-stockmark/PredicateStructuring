@@ -402,8 +402,12 @@ class PhaseCheker:
     #########################################################
     #  どこの国の政府かをチェック
     #########################################################
-    def country_check(self, argument, predicate, *doc):
 
+    country_dic = {"米": "米国", "英": "英国", "中": "中国", "韓": "韓国", "独": "ドイツ", "仏": "フランス", "伊": "イタリア",
+                   "加": "カナダ", "印": "インド", "豪": "オーストラリア", "蘭": "オランダ", "朝": "北朝鮮", "西": "スペイン",
+                   "台": "台湾", "比": "フィリピン", "露": "ロシア", "香港": "香港"}
+
+    def country_check(self, argument, predicate, *doc):
         country = "日本"
         other_country = ''
         sub_country = ''
@@ -421,42 +425,14 @@ class PhaseCheker:
                             country = doc[i].lemma_
                         else:
                             other_country = doc[i].lemma_
-                    elif doc[i].lemma_ == "香港" and i != arg["lemma_end"] and len(doc) > i + 1 and doc[i + 1].pos_ != "ADP":
-                        if predicate_is_main:
-                            subject_ari = True
-                            country = "香港"
-                        else:
-                            other_country = "香港"
-                    elif doc[i].lemma_ == "米" and i != arg["lemma_end"] and len(doc) > i + 1 and doc[i + 1].pos_ != "ADP":
-                        if predicate_is_main:
-                            subject_ari = True
-                            country = "米国"
-                        else:
-                            other_country = "米国"
-                    elif doc[i].lemma_ == "英" and i != arg["lemma_end"] and len(doc) > i + 1 and doc[i + 1].pos_ != "ADP":
-                        if predicate_is_main:
-                            subject_ari = True
-                            country = "英国"
-                        else:
-                            other_country = "英国"
-                    elif doc[i].lemma_ == "韓" and i != arg["lemma_end"] and len(doc) > i + 1 and doc[i + 1].pos_ != "ADP":
-                        if predicate_is_main:
-                            subject_ari = True
-                            country = "韓国"
-                        else:
-                            other_country = "韓国"
-                    elif doc[i].lemma_ == "中" and i != arg["lemma_end"] and len(doc) > i + 1 and doc[i + 1].pos_ != "ADP":
-                        if predicate_is_main:
-                            subject_ari = True
-                            country = "中国"
-                        else:
-                            other_country = "中国"
-                    elif "州" in doc[i].lemma_ and "九州" not in doc[i].lemma_ and i != arg["lemma_end"] and len(doc) > i + 1 and doc[i + 1].pos_ != "ADP":
-                        if predicate_is_main:
-                            subject_ari = True
-                            country = "米国"
-                        else:
-                            other_country = "米国"
+                    else:
+                        if i != arg["lemma_end"] and len(doc) > i + 1 and doc[i + 1].pos_ != "ADP":
+                            if doc[i].lemma_ in self.country_dic:
+                                if predicate_is_main:
+                                    subject_ari = True
+                                    country = self.country_dic[doc[i].lemma_]
+                                else:
+                                    other_country = self.country_dic[doc[i].lemma_]
             if arg["case"] == "で" and predicate[arg["predicate_id"]]["main"]:
                 for i in range(arg["lemma_start"], arg["lemma_end"] + 1):
                     if doc[i].tag_ == "名詞-固有名詞-地名-国":
@@ -469,14 +445,36 @@ class PhaseCheker:
             country = sub_country
         return country
 
+
+    #########################################################
+    #  主語が「政府の〇〇」でも政府組織として判断してよいかのチェック
+    #########################################################
+    ok_no_word = ["研究所", "審議会", "委員会", "部会", "会議", "検討会", "分科会", "機関", "チーム", "機構", "公社", "連盟",
+                  "省", "庁", "政府", "内閣", "党", "局", "東京都", "北海道", "大阪府", "京都府", "県",
+                  "長官", "幹部", "参与", "長", "次官", "関係者", "司令塔", "職員", "ら",
+                  "報告", "調査", "実験", "戦略"]
+    def is_ok_government_subject_chek(self, in_word, case):
+        word = in_word
+        if "の" in word:
+            if case == 'に':     # 「政府の〇〇に」はNG
+                return False
+            if word.endswith("」") or word.endswith("）") or word.endswith("』") or word.endswith("”"):
+                word = word[:-1]
+            for check in self.ok_no_word:
+                if word.endswith(check):
+                    return True
+            return False
+        else:
+            return True
+
     #########################################################
     #  政府活動か否かをチェック
     #########################################################
-    government_rule = ["省", "庁", "政府", "内閣", "東京都", "北海道", "大阪府", "京都府", "県", "都庁", "道庁", "府庁", "県庁", "委員会", "審議会"]
-    ng_word = ["帰省", "省エネ", "省エネルギー", "省力化", "政府系", "政府目標", "都市",
+    government_rule = ["省", "庁", "政府", "内閣", "党", "東京都", "北海道", "大阪府", "京都府", "県", "委員会", "審議会"]
+    ng_word = ["帰省", "省エネ", "省エネルギー", "省力", "省略", "政府系", "政府目標", "都市", "非政府", "官庁",
                "黒竜江省", "吉林省", "遼寧省", "河北省", "河南省", "山東省", "山西省", "湖南省", "湖北省", "江蘇省", "安徽省", "浙江省", "福建省", "江西省", "広東省",
                "海南省", "貴州省", "雲南省", "四川省", "陝西省", "青海省", "甘粛省", "台湾省",
-               "沖", "沿岸", "山間", "東部", "南部", "北部", "西部"
+               "沖", "沿岸", "山間", "東部", "南部", "北部", "西部", "東京電力", "都庁", "道庁", "府庁", "県庁"
                ]
 
     def government_subject_check(self, argument, predicate, *doc):
@@ -489,6 +487,7 @@ class PhaseCheker:
         c_h = ChunkExtractor()
 
         for arg in argument:
+            is_ok_government_meishi = False
             if arg["subject"] or arg["case"] == "で" or arg["case"] == "と" or arg["case"] == "の" or arg["case"] == "から" or arg["case"] == "に" or arg["case"] == "は" or arg["case"] == "として-副詞的" or arg["case"] == "において-副詞的":
 #            if arg["subject"] or arg["case"] == "で" or arg["case"] == "と" or arg["case"] == "の" or arg["case"] == "から" or arg["case"] == "は" or arg["case"] == "として-副詞的":
                 if "連体" in arg["case"]:
@@ -497,19 +496,33 @@ class PhaseCheker:
                     continue
                 # 主語が政府関係か？
                 for check in self.government_rule:
-                    #                    if check in arg["lemma"] or is_government_press:
                     if check in arg["lemma"]:
                         ngw_f = False
                         for ng_w in self.ng_word:
                             if ng_w in arg["lemma"]:
                                 ngw_f = True
                                 break
+                        # 人名かチェック
+                        for ac_pt in range(arg["lemma_start"], arg["lemma_end"]):
+                            if "人名" in doc[ac_pt].tag_:
+                                for check2 in self.government_rule:
+                                    if check2 in doc[ac_pt].orth_:
+                                        ngw_f = True
+                                        break
+                                if ngw_f:
+                                    break
+                        is_ok_government_meishi = False
+                        if not ngw_f:
+                            is_ok_government_meishi = self.is_ok_government_subject_chek(arg["lemma"], arg["case"])
                         if not ngw_f:
                             self.subject_is_government = True
+                            check_sub_w = predicate[arg["predicate_id"]]["sub_lemma"]
+                            check_w = predicate[arg["predicate_id"]]["lemma"]
+                            check_lemma = ""
                             if arg["predicate_id"] not in self.government_predicate:
+                                if "not_direct_subject" not in arg:
+                                    self.action_is_haikei = False
                                 self.government_predicate.append(arg["predicate_id"])
-                                check_w = predicate[arg["predicate_id"]]["lemma"]
-                                check_lemma = ""
                                 for char in check_w:
                                     if char == '(':
                                         break
@@ -538,6 +551,8 @@ class PhaseCheker:
                                     self.is_government_action = True
                                 if check_lemma in g_a_dic.press_dic:
                                     self.is_government_press = True
+                                if check_sub_w and check_sub_w in g_a_dic.press_dic:
+                                    self.is_government_press = True
                                 ############################################
                                 #  企業活動の背景か否かのチェック
                                 ############################################
@@ -545,33 +560,64 @@ class PhaseCheker:
                                 if ((doc[predicate[arg["predicate_id"]]["lemma_end"]].morph.get("Inflection") and '連体形' in doc[predicate[arg["predicate_id"]]["lemma_end"]].morph.get("Inflection")[0]) or c_h.rentai_check(predicate[arg["predicate_id"]]["lemma_end"], *doc)):
                                     self.action_is_haikei = True
                                     # 〇〇が形容動詞
-                                    if len(doc) > doc[predicate[arg["predicate_id"]]["lemma_end"]].head.i + 1 and doc[doc[predicate[arg["predicate_id"]]["lemma_end"]].head.i + 1].pos_ == "AUX":
+                                    if len(doc) > doc[predicate[arg["predicate_id"]]["lemma_end"]].head.i + 1 and doc[doc[predicate[arg["predicate_id"]]["lemma_end"]].head.i].pos_ == "NOUN" and doc[doc[predicate[arg["predicate_id"]]["lemma_end"]].head.i + 1].pos_ == "AUX":
                                         self.action_is_haikei = False
                                     # 〇〇が形容動詞
-                                    if len(doc) > predicate[arg["predicate_id"]]["lemma_end"] + 2 and doc[predicate[arg["predicate_id"]]["lemma_end"] + 2].pos_ == "AUX":
+                                    if len(doc) > predicate[arg["predicate_id"]]["lemma_end"] + 2 and doc[doc[predicate[arg["predicate_id"]]["lemma_end"] + 1].head.i].pos_ == "NOUN" and doc[predicate[arg["predicate_id"]]["lemma_end"] + 2].pos_ == "AUX":
                                         self.action_is_haikei = False
+                                    # 〇〇が「こと」で「こと」のかかり先が情報発信動詞
+                                    if doc[predicate[arg["predicate_id"]]["lemma_end"]].head.lemma_ == "こと":
+                                        if doc[doc[predicate[arg["predicate_id"]]["lemma_end"]].head.i + 1].orth_ != "で":
+                                            check_verb = c_h.verb_chunk(doc[predicate[arg["predicate_id"]]["lemma_end"]].head.head.i, *doc)
+                                            if self.rule_check(check_verb["lemma"], g_a_dic.press_dic):
+                                                self.action_is_haikei = False
                                     # 〇〇のかかり先が副詞
                                     if doc[predicate[arg["predicate_id"]]["lemma_end"]].head.pos_ == "ADV":
                                         self.action_is_haikei = False
+                                    # 〇〇のかかり先が体言止
+                                    if doc[predicate[arg["predicate_id"]]["lemma_end"]].head.dep_ == "ROOT":
+                                        check_verb = c_h.verb_chunk(doc[predicate[arg["predicate_id"]]["lemma_end"]].head.i, *doc)
+                                        if self.rule_check(check_verb["lemma"], g_a_dic.shoken_dic):
+                                            self.action_is_haikei = False
                                     # 〇〇のかかり先が政府活動述部
                                     if len(doc) > predicate[arg["predicate_id"]]["lemma_end"] + 2:
-                                        for rule in g_a_dic.sub_phrase_rule:
-                                            if "words" in rule:
-                                                if self.rule_check(doc[predicate[arg["predicate_id"]]["lemma_end"] + 1].head.lemma_, rule["words"]):
-                                                    self.action_is_haikei = False
-                                                    break
-                                                if self.rule_check(doc[predicate[arg["predicate_id"]]["lemma_end"] + 2].head.lemma_, rule["words"]):
-                                                    self.action_is_haikei = False
-                                                    break
+                                        if self.rule_check(doc[predicate[arg["predicate_id"]]["lemma_end"]].head.lemma_, g_a_dic.action_dic):
+                                            self.action_is_haikei = False
+                                        if doc[predicate[arg["predicate_id"]]["lemma_end"]].head.lemma_ != "こと":
+                                            for rule in g_a_dic.sub_phrase_rule:
+                                                if "words" in rule:
+                                                    if doc[doc[predicate[arg["predicate_id"]]["lemma_end"] + 1].head.i - 1].lemma_ != "の":
+                                                        if self.rule_check(doc[predicate[arg["predicate_id"]]["lemma_end"] + 1].head.lemma_, rule["words"]):
+                                                            self.action_is_haikei = False
+                                                            break
+                                                    if doc[doc[predicate[arg["predicate_id"]]["lemma_end"] + 2].head.i - 1].lemma_ != "の":
+                                                        if self.rule_check(doc[predicate[arg["predicate_id"]]["lemma_end"] + 2].head.lemma_, rule["words"]):
+                                                            self.action_is_haikei = False
+                                                            break
+                                        if doc[predicate[arg["predicate_id"]]["lemma_end"]].head.head.lemma_ == "もと":   # 〜をもとに
+                                            self.action_is_haikei = True
                                 # 政府が〇〇したこと
-                                if len(doc) > predicate[arg["predicate_id"]]["lemma_end"] + 2 and (doc[predicate[arg["predicate_id"]]["lemma_end"] + 1].lemma_ == "こと" or (doc[predicate[arg["predicate_id"]]["lemma_end"] + 1].lemma_ == "た" and doc[predicate[arg["predicate_id"]]["lemma_end"] + 2].lemma_ == "こと")):
+                                elif len(doc) > predicate[arg["predicate_id"]]["lemma_end"] + 2 and (doc[predicate[arg["predicate_id"]]["lemma_end"] + 1].lemma_ == "こと" or (doc[predicate[arg["predicate_id"]]["lemma_end"] + 1].lemma_ == "た" and doc[predicate[arg["predicate_id"]]["lemma_end"] + 2].lemma_ == "こと")):
                                     self.action_is_haikei = True
                                 # 政府が〇〇できず
-                                if len(doc) > predicate[arg["predicate_id"]]["lemma_end"] + 2 and doc[predicate[arg["predicate_id"]]["lemma_end"] + 1].norm_ == "出来る" and doc[predicate[arg["predicate_id"]]["lemma_end"] + 2].norm_ == "ず":
+                                elif len(doc) > predicate[arg["predicate_id"]]["lemma_end"] + 2 and doc[predicate[arg["predicate_id"]]["lemma_end"] + 1].norm_ == "出来る" and doc[predicate[arg["predicate_id"]]["lemma_end"] + 2].norm_ == "ず":
+                                    self.action_is_haikei = True
+                                # 政府が〇〇、　連用中止
+                                elif (((doc[predicate[arg["predicate_id"]]["lemma_end"]].morph.get("Inflection") and '連用形' in doc[predicate[arg["predicate_id"]]["lemma_end"]].morph.get("Inflection")[0]) or
+                                       c_h.renyou_check(predicate[arg["predicate_id"]]["lemma_end"], *doc)) and
+                                      len(doc) > doc[predicate[arg["predicate_id"]]["lemma_end"]].head.i + 1 and doc[doc[predicate[arg["predicate_id"]]["lemma_end"]].i + 1].lemma_ == "、"):
                                     self.action_is_haikei = True
                                 # 政府目標に向ける　（例外処理）
-                                if doc[predicate[arg["predicate_id"]]["lemma_end"]].norm_ == "向ける" and "政府目標" in arg["lemma"]:
+                                elif doc[predicate[arg["predicate_id"]]["lemma_end"]].norm_ == "向ける" and "政府目標" in arg["lemma"]:
                                     self.action_is_haikei = True
+                            if not is_ok_government_meishi:
+                                self.action_is_haikei = True
+#                            elif self.action_is_haikei and len(predicate) - 1 == arg["predicate_id"]:     # 最終述部が政府主語の場合は背景ではない
+                            elif self.action_is_haikei and len(predicate) - 1 == arg["predicate_id"] and check_lemma in g_a_dic.press_dic:  # 最終述部が政府主語の場合は背景ではない
+                                self.action_is_haikei = False
+                            # 政府が〇〇に乗り出す　補助述部で判断するケース
+                            elif check_sub_w and check_sub_w in g_a_dic.press_dic:
+                                self.action_is_haikei = False
                             break
                 if not self.subject_is_government:
                     if arg["lemma"] == "会議の様子":
@@ -655,7 +701,8 @@ class PhaseCheker:
                 return "<政府活動>,<" + country + ">," + gover_ret
             elif self.is_government_press and not self.action_is_haikei:
                 return "<政府活動>,<" + country + ">," + ret
-            elif self.is_government_action or self.action_is_haikei:
+#            elif self.is_government_action or self.action_is_haikei:
+            elif self.is_government_action or (self.is_government_press and self.action_is_haikei):
                 return "<企業活動背景>,<" + country + ">," + ret
             return ""
         elif self.is_government_action:
