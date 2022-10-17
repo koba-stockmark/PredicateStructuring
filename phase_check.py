@@ -29,6 +29,8 @@ class PhaseCheker:
         return False
 
     def phase_chek(self, start, end, obj_start, obj_end, pre_phase, p_rule, *doc):
+        ng_postfix = ["省", "庁", "局"]
+
         if start == -1 or end == -1:
             return ""
         chunker = ChunkExtractor()
@@ -41,6 +43,8 @@ class PhaseCheker:
                 new_end = c_pt - 1
                 break
         verb_word = chunker.compaound(start, new_end, *doc)
+        if doc[new_end + 1].lemma_ in ng_postfix:
+            return ""
         obj_word = chunker.compaound(obj_start, obj_end, *doc)
         # O-V　ルール
         if obj_start >= 0:
@@ -405,7 +409,9 @@ class PhaseCheker:
 
     country_dic = {"米": "米国", "英": "英国", "中": "中国", "韓": "韓国", "独": "ドイツ", "仏": "フランス", "伊": "イタリア",
                    "加": "カナダ", "印": "インド", "豪": "オーストラリア", "蘭": "オランダ", "朝": "北朝鮮", "西": "スペイン",
-                   "台": "台湾", "比": "フィリピン", "露": "ロシア", "香港": "香港"}
+                   "台": "台湾", "比": "フィリピン", "露": "ロシア", "香港": "香港",
+                   "州": "米国"}
+    ng_country_dic = {"九州", "本州"}
 
     def country_check(self, argument, predicate, *doc):
         country = "日本"
@@ -427,12 +433,21 @@ class PhaseCheker:
                             other_country = doc[i].lemma_
                     else:
                         if i != arg["lemma_end"] and len(doc) > i + 1 and doc[i + 1].pos_ != "ADP":
-                            if doc[i].lemma_ in self.country_dic:
+                            if doc[i].lemma_ in self.country_dic and doc[i].lemma_ not in self.ng_country_dic:
                                 if predicate_is_main:
                                     subject_ari = True
                                     country = self.country_dic[doc[i].lemma_]
                                 else:
                                     other_country = self.country_dic[doc[i].lemma_]
+                            else:
+                                if doc[i].tag_ == "名詞-固有名詞-地名-一般" and doc[i + 1].lemma_ != "企業" and doc[i].lemma_ not in self.ng_country_dic:
+                                    if "州" in doc[i].lemma_:
+                                        if predicate_is_main:
+                                            subject_ari = True
+                                            country = "米国"
+                                        else:
+                                            other_country = "米国"
+
             if arg["case"] == "で" and predicate[arg["predicate_id"]]["main"]:
                 for i in range(arg["lemma_start"], arg["lemma_end"] + 1):
                     if doc[i].tag_ == "名詞-固有名詞-地名-国":
@@ -605,7 +620,7 @@ class PhaseCheker:
                                 # 政府が〇〇、　連用中止
                                 elif (((doc[predicate[arg["predicate_id"]]["lemma_end"]].morph.get("Inflection") and '連用形' in doc[predicate[arg["predicate_id"]]["lemma_end"]].morph.get("Inflection")[0]) or
                                        c_h.renyou_check(predicate[arg["predicate_id"]]["lemma_end"], *doc)) and
-                                      len(doc) > doc[predicate[arg["predicate_id"]]["lemma_end"]].head.i + 1 and doc[doc[predicate[arg["predicate_id"]]["lemma_end"]].i + 1].lemma_ == "、"):
+                                      len(doc) > doc[predicate[arg["predicate_id"]]["lemma_end"]].head.i + 1 and (doc[doc[predicate[arg["predicate_id"]]["lemma_end"]].i + 1].lemma_ == "、" or doc[doc[predicate[arg["predicate_id"]]["lemma_end"]].i + 1].lemma_ == "「")):
                                     self.action_is_haikei = True
                                 # 政府目標に向ける　（例外処理）
                                 elif doc[predicate[arg["predicate_id"]]["lemma_end"]].norm_ == "向ける" and "政府目標" in arg["lemma"]:
@@ -692,8 +707,8 @@ class PhaseCheker:
                                     gover_ret = check_phase
 
             # 検討と方針の両方がある場合は方針を優先。「方針の検討」を行うと解釈
-            if "検討" in gover_ret and "方針" in gover_ret:
-                gover_ret = gover_ret.replace("<検討>", '')
+#            if "検討" in gover_ret and "方針" in gover_ret:
+#                gover_ret = gover_ret.replace("<検討>", '')
             if houshin_f and "方針" not in gover_ret:     # 項の存在しない<方針>がある場合は補完する
                 gover_ret = gover_ret + ",<方針>"
 
