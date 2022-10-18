@@ -29,7 +29,8 @@ class KanyoukuExtractor:
                     chek_w3 = "は"
                 for i in range(c_pt, chek_pt + 1):
                     if ((doc[i].norm_ == chek_w or doc[i].norm_ == chek_w2 or doc[i].norm_ == chek_w3) and
-                            (i == pt or doc[i].head.i == pt or doc[i].head.head.i == pt or doc[i].head.i in pass_data or doc[i].i - 1 in pass_data)):
+                            (i == pt or doc[i].head.i == pt or doc[i].head.head.i == pt) and
+                            (not pass_data or doc[i].head.i in pass_data or doc[i].i - 1 in pass_data)):
                         pass_data.append(i)
                         c_pt = i + 1
                         find_f = True
