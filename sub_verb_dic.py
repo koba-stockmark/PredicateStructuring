@@ -16,3 +16,8 @@ class SubVerbDic:
     主述部の場合はフェーズと判断していよい補助用言
     """
     special_sub_verb_dic = ['目指す', '目的とする', '目標とする']
+
+    """
+    情報発信を表す補助用言
+    """
+    information_verb_dic = ['発表', '公表']
