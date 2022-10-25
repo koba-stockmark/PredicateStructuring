@@ -723,6 +723,9 @@ class ChunkExtractor:
                 elif (doc[i].dep_ == 'fixed' and doc[i].lemma_ == '対する') or (len(doc) > i + 1 and doc[i].lemma_ == 'に' and doc[i + 1].dep_ == 'fixed' and doc[i + 1].lemma_ == '対する'):
                     start_pt = i
                     ret = self.connect_word(doc[i].orth_, ret)
+                elif doc[i].lemma_ == 'する' and len(doc) > i + 1 and doc[i + 1].pos_ == 'NOUN' and doc[i - 1].pos_ == 'ADV':  # 〇〇する〇〇
+                    start_pt = i
+                    ret = self.connect_word(doc[i].orth_, ret)
                 else:
                      break
         if punc_ct != 0 and pre_punc_ct != 0:
