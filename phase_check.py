@@ -189,6 +189,8 @@ class PhaseCheker:
 
         # 補助用言以外のメイン術部
         if verb_word not in s_v_dic.sub_verb_dic or verb_word in s_v_dic.special_sub_verb_dic or verb_word in s_v_dic.information_verb_dic:
+            if verb_word in s_v_dic.information_verb_dic:
+                return True
             # フルマッチ
             for rule in p_rule.sub_phrase_rule:
                 if "words" in rule:
@@ -494,6 +496,7 @@ class PhaseCheker:
                "沖", "沿岸", "山間", "東部", "南部", "北部", "西部", "東京電力", "都庁", "道庁", "府庁", "県庁",
                "ファンド", "政府系企業"
                ]
+    ng_kakarisaki = ["必要", "重要性", "義務", "責務", "責任"]
 
     def government_subject_check(self, argument, predicate, *doc):
         self.government_predicate = []
@@ -520,6 +523,19 @@ class PhaseCheker:
                             if ng_w in arg["lemma"]:
                                 ngw_f = True
                                 break
+                        # 並列で政府以外の主語がないか
+                        if doc[arg["lemma_end"] + 1].lemma_ != "と" and doc[arg["lemma_end"] + 1].lemma_ != "、":
+                            for c_arg in argument:
+                                if not c_arg["lemma"].endswith("企業") and c_arg["lemma"] != arg["lemma"] and c_arg["predicate_id"] == arg["predicate_id"] and c_arg["subject"] and arg["subject"]:
+                                    if doc[c_arg["lemma_end"] + 1].lemma_ != "と" and doc[c_arg["lemma_end"] + 1].lemma_ != "、":
+                                        ngw_f = True
+                                        for c_check in self.government_rule:
+                                            if c_check in c_arg["lemma"]:
+                                                ngw_f = False
+                                                for ng_w in self.ng_word:
+                                                    if ng_w in c_arg["lemma"]:
+                                                        ngw_f = True
+                                                        break
                         # 人名かチェック
                         for ac_pt in range(arg["lemma_start"], arg["lemma_end"]):
                             if "人名" in doc[ac_pt].tag_:
@@ -608,9 +624,17 @@ class PhaseCheker:
                                         if doc[doc[predicate_end].head.i + 1].lemma_ == "など" and doc[doc[predicate_end].head.i + 2].lemma_ == "の":
                                             next_p = c_h.num_chunk(doc[predicate_end].head.i + 3, *doc)["lemma_end"]
 
+                                    ############# 禁止系　#################################
+
                                     # 政府が発行した〇〇へ...　は政府活動でも背景でもない
                                     if len(doc) > next_p + 1 and doc[next_p + 1].lemma_ == "へ":
                                         self.subject_is_government = False
+                                    # 政府が発行する必要が...　は政府活動でも背景でもない
+                                    if doc[next_p].lemma_ in self.ng_kakarisaki:
+                                        self.subject_is_government = False
+
+                                    ################　背景 #################################
+
                                     # 〇〇が形容動詞
                                     if len(doc) > doc[predicate_end].head.i + 1 and doc[doc[predicate_end].head.i].pos_ == "NOUN" and doc[doc[predicate_end].head.i + 1].pos_ == "AUX":
                                         self.action_is_haikei = False
@@ -682,10 +706,12 @@ class PhaseCheker:
                                 # 政府が〇〇のにあわせる
                                 elif doc[predicate_end - 2].norm_ == "の" and doc[predicate_end - 1].norm_ == "に" and doc[predicate_end].norm_ == "合わせる":
                                     self.action_is_haikei = True
-                                # 政府が〇〇しても（しており）
-                                elif len(doc) > predicate_end + 2 and (doc[predicate_end + 1].norm_ == "て" or doc[predicate_end + 1].norm_ == "で") and (doc[predicate_end + 2].norm_ == "も" or doc[predicate_end + 2].norm_ == "おる"):
+                                # 政府が〇〇しても（しており,してから）
+                                elif (len(doc) > predicate_end + 2 and (doc[predicate_end + 1].norm_ == "て" or doc[predicate_end + 1].norm_ == "で") and
+                                      (doc[predicate_end + 2].norm_ == "も" or doc[predicate_end + 2].norm_ == "おる" or doc[predicate_end + 2].norm_ == "から")):
                                     self.action_is_haikei = True
-                                elif len(doc) > predicate_end + 3 and doc[predicate_end + 1].orth_ == "し" and doc[predicate_end + 2].norm_ == "て" and (doc[predicate_end + 3].norm_ == "も" or doc[predicate_end + 3].norm_ == "おる"):
+                                elif (len(doc) > predicate_end + 3 and doc[predicate_end + 1].orth_ == "し" and doc[predicate_end + 2].norm_ == "て" and
+                                      (doc[predicate_end + 3].norm_ == "も" or doc[predicate_end + 3].norm_ == "おる" or doc[predicate_end + 3].norm_ == "から")):
                                     self.action_is_haikei = True
                                 # 政府が〇〇したが（たなど）
                                 elif len(doc) > predicate_end + 2 and (doc[predicate_end + 1].norm_ == "た" or doc[predicate_end + 1].norm_ == "だ") and (doc[predicate_end + 2].norm_ == "が" or doc[predicate_end + 2].norm_ == "など"):
@@ -729,6 +755,8 @@ class PhaseCheker:
     #########################################################
     #  政府活動をマルチラベルでチェック
     #########################################################
+    # 政府の背景を表す述部
+    haikei_dic = ["後押しする"]
 
     def government_rule_chek_and_set(self, predicate, argument, mode, *doc):
 
@@ -762,15 +790,20 @@ class PhaseCheker:
         country = self.country_check(argument, predicate, *doc)
 
         # カテゴリとフェイズをチェック
-        houshin_f = False   # 方針が含まれる
-        is_main_shisuu = False  # 主述部で指数が述べられている
         ret = self.rule_chek_and_set(predicate, argument, GovernmentActionRule, *doc)
+
+        # 背景判断の例外処理
         last_ok = False
         for ch_arg in argument:
             if ch_arg["predicate_id"] == predicate[len(predicate) - 1]["id"] and "phase" in ch_arg:
                 last_ok = True
         if last_ok and self.lase_predicate_subject_is_government:
             self.action_is_haikei = False
+        if predicate[len(predicate) - 1]["lemma"] in self.haikei_dic and self.lase_predicate_subject_is_government:
+            self.action_is_haikei = True
+
+        houshin_f = False   # 方針が含まれる
+        is_main_shisuu = False  # 主述部で指数が述べられている
         if "方針" in ret:
             houshin_f = True
         if ret:
