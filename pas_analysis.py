@@ -130,6 +130,7 @@ class PasAnalysis:
         d_ret = ''
         new_verb = False
         pre_rentai_subj = False
+        argument_id = 0
 
         for token in doc:
             predicate = {}
@@ -336,6 +337,8 @@ class PasAnalysis:
                 ret_subj["case"] = subj_case
                 ret_subj["dummy"] = False
                 ret_subj["subject"] = True
+                ret_subj["id"] = argument_id
+                argument_id = argument_id + 1
                 ret_subj["predicate_id"] = predicate_id
                 argument.append(ret_subj)
                 if para_subj and para_subj[0]['lemma']:
@@ -343,15 +346,19 @@ class PasAnalysis:
                         p_subj["case"] = subj_case
                         p_subj["dummy"] = False
                         p_subj["subject"] = True
+                        p_subj["id"] = argument_id
+                        argument_id = argument_id + 1
                         p_subj["predicate_id"] = predicate_id
                         argument.append(p_subj)
             elif dummy_subj:
                 dummy_subj["dummy"] = True
                 dummy_subj["subject"] = True
+                dummy_subj["id"] = argument_id
+                argument_id = argument_id + 1
                 dummy_subj["predicate_id"] = predicate_id
+
                 argument.append(dummy_subj)
             # 項のセット
-            argument_id = 0
             for i in range(0, verb["lemma_start"]):
                 case = ''
                 ret_obj = {'lemma': '', 'lemma_start': -1, 'lemma_end': -1}
