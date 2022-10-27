@@ -717,7 +717,7 @@ class ChunkExtractor:
                 elif doc[i].lemma_ == 'を' and len(doc) > i + 1 and doc[i + 1].norm_ == '基':  # 〜を基に
                     start_pt = i
                     ret = self.connect_word(doc[i].orth_, ret)
-                elif doc[i].lemma_ == 'など' and len(doc) > i + 1 and doc[i + 1].norm_ == 'と' and doc[i + 2].norm_ == 'の':     # 〜などとの
+                elif doc[i].lemma_ == 'など' and len(doc) > i + 1 and (doc[i + 1].norm_ == 'と' or doc[i + 1].norm_ == 'から') and doc[i + 2].norm_ == 'の':     # 〜などとの
                     start_pt = i
                     ret = self.connect_word(doc[i].orth_, ret)
                 elif (doc[i].dep_ == 'fixed' and doc[i].lemma_ == '対する') or (len(doc) > i + 1 and doc[i].lemma_ == 'に' and doc[i + 1].dep_ == 'fixed' and doc[i + 1].lemma_ == '対する'):

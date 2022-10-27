@@ -489,7 +489,8 @@ class PhaseCheker:
     #########################################################
     #  政府活動か否かをチェック, "政府目標", "政府系"
     #########################################################
-    government_rule = ["省", "庁", "政府", "内閣", "党", "東京都", "北海道", "大阪府", "京都府", "県", "委員会", "審議会", "分科会", "部会", "首相", "大臣", "相"]
+    government_rule = ["省", "庁", "政府", "内閣", "党", "東京都", "北海道", "大阪府", "京都府", "県", "自治体",
+                       "委員会", "審議会", "分科会", "部会", "首相", "大臣", "相", "首長"]
     ng_word = ["帰省", "省エネ", "省エネルギー", "省力", "省略", "都市", "非政府", "官庁",
                "黒竜江省", "吉林省", "遼寧省", "河北省", "河南省", "山東省", "山西省", "湖南省", "湖北省", "江蘇省", "安徽省", "浙江省", "福建省", "江西省", "広東省",
                "海南省", "貴州省", "雲南省", "四川省", "陝西省", "青海省", "甘粛省", "台湾省",
@@ -524,6 +525,7 @@ class PhaseCheker:
                                 ngw_f = True
                                 break
                         # 並列で政府以外の主語がないか
+                        """
                         if doc[arg["lemma_end"] + 1].lemma_ != "と" and doc[arg["lemma_end"] + 1].lemma_ != "、":
                             for c_arg in argument:
                                 if not c_arg["lemma"].endswith("企業") and c_arg["lemma"] != arg["lemma"] and c_arg["predicate_id"] == arg["predicate_id"] and c_arg["subject"] and arg["subject"]:
@@ -536,6 +538,7 @@ class PhaseCheker:
                                                     if ng_w in c_arg["lemma"]:
                                                         ngw_f = True
                                                         break
+                        """
                         # 人名かチェック
                         for ac_pt in range(arg["lemma_start"], arg["lemma_end"]):
                             if "人名" in doc[ac_pt].tag_:
@@ -610,9 +613,17 @@ class PhaseCheker:
                                 ############################################
                                 #  企業活動の背景か否かのチェック
                                 ############################################
-                                predicate_end = predicate[arg["predicate_id"]]["lemma_end"]
-                                if predicate[arg["predicate_id"]]["sub_lemma_end"] != -1:
-                                    predicate_end = predicate[arg["predicate_id"]]["sub_lemma_end"]
+                                predicate_end = predicate[arg["predicate_id"]]["lemma_start"]
+                                if "名詞" in doc[predicate_end].tag_ or doc[predicate_end].head.i == predicate[arg["predicate_id"]]["lemma_end"]:
+                                    predicate_end = predicate[arg["predicate_id"]]["lemma_end"]
+                                if predicate[arg["predicate_id"]]["sub_lemma_start"] != -1:
+                                    predicate_end = predicate[arg["predicate_id"]]["sub_lemma_start"]
+                                predicate_end_case = ""
+                                for next_word in range(predicate_end + 1, len(doc) - 1):
+                                    if (doc[next_word].head.i == predicate_end or doc[next_word].head.head.i == predicate_end) and doc[next_word].pos_ != "PUNCT":
+                                        predicate_end_case = doc[next_word].lemma_
+                                        if doc[next_word - 1].pos_ == "SCONJ" and doc[next_word - 1].lemma_ == "の":
+                                            predicate_end_case = doc[next_word - 1].lemma_ + doc[next_word].lemma_
                                 # 政府が発行した〇〇
                                 if ((doc[predicate_end].morph.get("Inflection") and '連体形' in doc[predicate_end].morph.get("Inflection")[0]) or c_h.rentai_check(predicate_end, *doc)):
                                     self.action_is_haikei = True
@@ -636,10 +647,10 @@ class PhaseCheker:
                                     ################　背景 #################################
 
                                     # 〇〇が形容動詞
-                                    if len(doc) > doc[predicate_end].head.i + 1 and doc[doc[predicate_end].head.i].pos_ == "NOUN" and doc[doc[predicate_end].head.i + 1].pos_ == "AUX":
+                                    if predicate_end_case != "のが" and len(doc) > doc[predicate_end].head.i + 1 and doc[doc[predicate_end].head.i].pos_ == "NOUN" and doc[doc[predicate_end].head.i + 1].pos_ == "AUX":
                                         self.action_is_haikei = False
                                     # 〇〇が形容動詞
-                                    if len(doc) > predicate_end + 2 and doc[doc[predicate_end + 1].head.i].pos_ == "NOUN" and doc[predicate_end + 2].pos_ == "AUX":
+                                    if predicate_end_case != "のが" and len(doc) > predicate_end + 2 and doc[doc[predicate_end + 1].head.i].pos_ == "NOUN" and doc[predicate_end + 2].pos_ == "AUX":
                                         self.action_is_haikei = False
                                     # 〇〇が「ほか」
                                     if doc[predicate_end].head.lemma_ == "ほか":
@@ -676,6 +687,13 @@ class PhaseCheker:
                                                     if doc[doc[next_p].head.i + 1].lemma_ != "の":
                                                         if self.rule_check(doc[next_p].head.lemma_, rule["words"]):
                                                             self.action_is_haikei = False
+                                                            for c_pt in range(next_p + 1, len(doc)):
+                                                                if doc[c_pt].pos_ == "ADP":
+                                                                    if doc[c_pt].lemma_ == "に":
+                                                                        if not self.rule_check(doc[c_pt].head.head.lemma_, g_a_dic.action_dic):
+                                                                            self.action_is_haikei = True
+                                                                else:
+                                                                    break
                                                             break
                                         if doc[next_p].head.lemma_ == "もと":  # 〜をもとに
                                             self.action_is_haikei = True
@@ -703,30 +721,14 @@ class PhaseCheker:
                                 # 政府が〇〇できず
                                 elif len(doc) > predicate_end + 2 and doc[predicate_end + 1].norm_ == "出来る" and doc[predicate_end + 2].norm_ == "ず":
                                     self.action_is_haikei = True
+                                # 政府が〇〇のが
+                                elif len(doc) > predicate_end + 2 and doc[predicate_end + 1].norm_ == "の" and doc[predicate_end + 2].norm_ == "が":
+                                    self.action_is_haikei = True
                                 # 政府が〇〇のにあわせる
                                 elif doc[predicate_end - 2].norm_ == "の" and doc[predicate_end - 1].norm_ == "に" and doc[predicate_end].norm_ == "合わせる":
                                     self.action_is_haikei = True
-                                # 政府が〇〇しても（しており,してから）
-                                elif (len(doc) > predicate_end + 2 and (doc[predicate_end + 1].norm_ == "て" or doc[predicate_end + 1].norm_ == "で") and
-                                      (doc[predicate_end + 2].norm_ == "も" or doc[predicate_end + 2].norm_ == "おる" or doc[predicate_end + 2].norm_ == "から")):
-                                    self.action_is_haikei = True
-                                elif (len(doc) > predicate_end + 3 and doc[predicate_end + 1].orth_ == "し" and doc[predicate_end + 2].norm_ == "て" and
-                                      (doc[predicate_end + 3].norm_ == "も" or doc[predicate_end + 3].norm_ == "おる" or doc[predicate_end + 3].norm_ == "から")):
-                                    self.action_is_haikei = True
-                                # 政府が〇〇したが（たなど）
-                                elif len(doc) > predicate_end + 2 and (doc[predicate_end + 1].norm_ == "た" or doc[predicate_end + 1].norm_ == "だ") and (doc[predicate_end + 2].norm_ == "が" or doc[predicate_end + 2].norm_ == "など"):
-                                    self.action_is_haikei = True
-                                elif len(doc) > predicate_end + 3 and doc[predicate_end + 1].lemma_ == "する" and doc[predicate_end + 2].norm_ == "た" and (doc[predicate_end + 3].norm_ == "が" or doc[predicate_end + 3].norm_ == "など"):
-                                    self.action_is_haikei = True
-                                # 政府が〇〇しているが（しているなど）
-                                elif len(doc) > predicate_end + 3 and (doc[predicate_end + 1].norm_ == "て" or doc[predicate_end + 1].norm_ == "で") and doc[predicate_end + 2].lemma_ == "いる" and (doc[predicate_end + 3].norm_ == "が" or doc[predicate_end + 3].norm_ == "など"):
-                                    self.action_is_haikei = True
-                                elif len(doc) > predicate_end + 4 and doc[predicate_end + 1].lemma_ == "する" and doc[predicate_end + 2].norm_ == "て" and doc[predicate_end + 3].lemma_ == "いる" and (doc[predicate_end + 4].norm_ == "が" or doc[predicate_end + 4].norm_ == "など"):
-                                    self.action_is_haikei = True
-                                # 政府が〇〇するなど
-                                elif len(doc) > predicate_end + 1 and (doc[predicate_end + 1].norm_ == "が" or doc[predicate_end + 1].norm_ == "など"):
-                                    self.action_is_haikei = True
-                                elif len(doc) > predicate_end + 2 and doc[predicate_end + 1].lemma_ == "する" and (doc[predicate_end + 2].norm_ == "が" or doc[predicate_end + 2].norm_ == "など"):
+                                # 政府が〇〇しても（しており,してから,したが、したなど）
+                                elif predicate_end_case == "も" or predicate_end_case == "おる" or predicate_end_case == "から" or predicate_end_case == "が" or predicate_end_case == "など":
                                     self.action_is_haikei = True
                                 # 政府が〇〇、　連用中止
                                 elif (((doc[predicate_end].morph.get("Inflection") and '連用形' in doc[predicate_end].morph.get("Inflection")[0]) or
