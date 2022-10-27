@@ -146,7 +146,7 @@ class SubjectExtractor:
                  (len(doc) > i + 2 and doc[i].dep_ == "obl" and doc[i].tag_ != '名詞-普通名詞-副詞可能' and doc[i + 1].lemma_ == 'など' and (doc[i + 2].lemma_ == 'は' or doc[i + 2].lemma_ == 'が'))):
                 if doc[doc[i].head.i].norm_ == '出来る':
                     continue
-                if doc[doc[i].head.i].norm_ == '為':
+                if doc[doc[i].head.i].norm_ == '為' and doc[doc[i].head.i].head.i != verb_end_pt:
                     continue
                 if len(doc) > verb_end_pt + 1 and doc[verb_end_pt + 1].lemma_ == "こと":
                     continue

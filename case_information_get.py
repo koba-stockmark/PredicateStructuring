@@ -39,6 +39,8 @@ class CaseExtractor:
             return ret + '-副詞的'
 
         # 名詞系　格関係
+        if doc[pt - 2].norm_ == 'まで' and doc[pt - 1].norm_ == 'の' and doc[pt].norm_ == '為':
+            return 'までのため(に)'
         if doc[pt - 1].norm_ == 'の' and doc[pt].norm_ == '為':
             return 'のため(に)'
         elif doc[pt - 1].norm_ == 'の' and (doc[pt].norm_ == '下' or doc[pt].norm_ == 'もと'):

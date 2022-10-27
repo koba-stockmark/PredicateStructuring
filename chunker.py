@@ -425,6 +425,8 @@ class ChunkExtractor:
                 if (doc[pt].lemma_ == 'もと' or doc[pt].norm_ == '為') and doc[pt - 1].lemma_ == 'の':
                     new_pt = pt - 1
                     ret = ''
+                    if doc[pt - 2].pos_ == "ADP":
+                        new_pt = new_pt - 1
                 for i in reversed(range(0, new_pt)):
                     if (doc[i].pos_ != 'ADP' and doc[i].pos_ != 'SCONJ' and doc[i].tag_ != '補助記号-読点' and doc[i].tag_ != '補助記号-句点' and
                             (not doc[i].morph.get("Inflection") or '連用形' not in doc[i].morph.get("Inflection")[0])):
