@@ -29,7 +29,7 @@ class PhaseCheker:
                 return True
         return False
 
-    def phase_chek(self, start, end, obj_start, obj_end, pre_phase, p_rule, *doc):
+    def phase_chek(self, start, end, sub_start, sub_end, obj_start, obj_end, pre_phase, p_rule, *doc):
         ng_postfix = ["省", "庁", "局"]
 
         if start == -1 or end == -1:
@@ -44,7 +44,7 @@ class PhaseCheker:
                 new_end = c_pt - 1
                 break
         verb_word = chunker.compaound(start, new_end, *doc)
-        if doc[new_end + 1].lemma_ in ng_postfix:
+        if len(doc) > new_end + 1 and doc[new_end + 1].lemma_ in ng_postfix:
             return ""
         obj_word = chunker.compaound(obj_start, obj_end, *doc)
         # O-V　ルール
@@ -59,6 +59,23 @@ class PhaseCheker:
                     if verb_ok:
                         for check_obj in rule["rule"]["obj"]:
                             if check_obj and check_obj in obj_word:
+                                if ret:
+                                    ret = ret + ',' + rule["label"]
+                                else:
+                                    ret = ret + rule["label"]
+                                break
+        if sub_start >= 0:
+            sub_verb_word = chunker.compaound(sub_start, sub_end, *doc)
+            for rule in p_rule.phrase_rule:
+                if "rule" in rule:
+                    verb_ok = False
+                    for check_verb in rule["rule"]["verb"]:
+                        if check_verb and check_verb in sub_verb_word:
+                            verb_ok = True
+                            break
+                    if verb_ok:
+                        for check_obj in rule["rule"]["obj"]:
+                            if check_obj and check_obj in verb_word:
                                 if ret:
                                     ret = ret + ',' + rule["label"]
                                 else:
@@ -86,7 +103,7 @@ class PhaseCheker:
                                 ret = ret + rule["label"]
         # 目的語からフェーズをチェック
         if verb_word in s_v_dic.sub_verb_dic and verb_word not in s_v_dic.special_sub_verb_dic and obj_start >= 0:
-            ret2 = self.phase_chek(obj_start, obj_end, -1, -1, '', p_rule,  *doc)
+            ret2 = self.phase_chek(obj_start, obj_end, -1, -1, -1, -1, '', p_rule,  *doc)
             # 項全体として重複をチェック
             for ret3 in ret2.split(','):
                 if ret3 not in ret:
@@ -95,7 +112,7 @@ class PhaseCheker:
             for pt in range(obj_start, obj_end + 1):
                 if (len(doc) > pt + 1 and (doc[pt + 1].lemma_ == '方' or doc[pt + 1].lemma_ == 'ため')) or (len(doc) > pt + 2 and doc[pt + 1].pos_ == 'AUX' and (doc[pt + 2].lemma_ == '方' or doc[pt + 2].lemma_ == 'ため')):      # 〇〇する方　はフェーズ判断に用いな
                     continue
-                ret2 = self.phase_chek(pt, pt, -1, -1, '', p_rule, *doc)
+                ret2 = self.phase_chek(pt, pt, -1, -1, -1, -1, '', p_rule, *doc)
                 for ret3 in ret2.split(','):
                     if ret3 not in ret:
                         ret = ret + ',' + ret3 + ','
@@ -186,6 +203,19 @@ class PhaseCheker:
                                 for check_obj in rule["rule"]["obj"]:
                                     if check_obj and check_obj in obj_word:
                                         return True
+                if predicate["sub_lemma_start"] > 0:
+                    sub_verb = chunker.compaound(predicate["sub_lemma_start"], predicate["sub_lemma_end"], *doc)
+                    for rule in p_rule.phrase_rule:
+                        if "rule" in rule:
+                            verb_ok = False
+                            for check_verb in rule["rule"]["verb"]:
+                                if check_verb and check_verb in sub_verb:
+                                    verb_ok = True
+                                    break
+                            if verb_ok:
+                                for check_obj in rule["rule"]["obj"]:
+                                    if check_obj and check_obj in verb_word:
+                                        return True
 
         # 補助用言以外のメイン術部
         if verb_word not in s_v_dic.sub_verb_dic or verb_word in s_v_dic.special_sub_verb_dic or verb_word in s_v_dic.information_verb_dic:
@@ -225,6 +255,8 @@ class PhaseCheker:
                 pre_phase = ''
                 koto_f = False
                 for re_arg in argument:
+#                    if re_arg["lemma"].endswith("センター"):
+#                        continue
                     phase = ''
                     if chek_predicate["id"] != re_arg["predicate_id"]:
                         continue
@@ -271,7 +303,7 @@ class PhaseCheker:
                                 if check_p["lemma_start"] <= re_arg['lemma_start'] <= check_p["lemma_end"] or check_p["sub_lemma_start"] <= re_arg['lemma_start'] <= check_p["sub_lemma_end"]:
                                     for check_a in argument:
                                         if check_a["predicate_id"] == check_p["id"]:
-                                            sub_phase = self.phase_chek(check_p["lemma_start"], check_p["lemma_end"], check_a["lemma_start"], check_a["lemma_end"], '', p_rule, *doc)
+                                            sub_phase = self.phase_chek(check_p["lemma_start"], check_p["lemma_end"], check_p["sub_lemma_start"], check_p["sub_lemma_end"], check_a["lemma_start"], check_a["lemma_end"], '', p_rule, *doc)
                                             pre_phase = sub_phase
                                             if re_arg["subject"]:
                                                 koto_f = True
@@ -279,7 +311,7 @@ class PhaseCheker:
                                                 check_end = chek_predicate["sub_lemma_end"]
                                                 if doc[check_end].pos_ == 'AUX':  # 形容動詞の場合は助動詞部分を覗いてチェック
                                                     check_end = check_end - 1
-                                                add_phase = self.phase_chek(chek_predicate["sub_lemma_start"], check_end, re_arg['lemma_start'], re_arg['lemma_end'], pre_phase, p_rule, *doc)
+                                                add_phase = self.phase_chek(chek_predicate["sub_lemma_start"], check_end, -1, -1, re_arg['lemma_start'], re_arg['lemma_end'], pre_phase, p_rule, *doc)
                                                 pre_phase = add_phase
                                                 for append in add_phase.split(','):  # 重複は登録しない
                                                     if append != '<その他>' and append != '<告知>' and append not in sub_phase:
@@ -289,17 +321,17 @@ class PhaseCheker:
                                                             sub_phase = append
 #                            if not phase:
 #                                phase = self.phase_chek(chek_predicate["lemma_start"], check_end, re_arg['lemma_start'], re_arg['lemma_end'], pre_phase, p_rule, *doc)
-                            phase = self.phase_chek(chek_predicate["lemma_start"], check_end, re_arg['lemma_start'], re_arg['lemma_end'], pre_phase, p_rule, *doc)
+                            phase = self.phase_chek(chek_predicate["lemma_start"], check_end, chek_predicate["sub_lemma_start"], chek_predicate["sub_lemma_end"], re_arg['lemma_start'], re_arg['lemma_end'], pre_phase, p_rule, *doc)
                             if not phase:
                                 phase = sub_phase
                         else:
-                            phase = self.phase_chek(chek_predicate["lemma_start"], check_end, re_arg['lemma_start'], re_arg['lemma_end'], pre_phase, p_rule, *doc)
+                            phase = self.phase_chek(chek_predicate["lemma_start"], check_end, chek_predicate["sub_lemma_start"], chek_predicate["sub_lemma_end"], re_arg['lemma_start'], re_arg['lemma_end'], pre_phase, p_rule, *doc)
                         pre_phase = phase
                         if not phase and chek_predicate["sub_lemma"]:
                             check_end = chek_predicate["sub_lemma_end"]
                             if doc[check_end].pos_ == 'AUX':  # 形容動詞の場合は助動詞部分を覗いてチェック
                                 check_end = check_end - 1
-                            add_phase = self.phase_chek(chek_predicate["sub_lemma_start"], check_end, re_arg['lemma_start'], re_arg['lemma_end'], pre_phase, p_rule, *doc)
+                            add_phase = self.phase_chek(chek_predicate["sub_lemma_start"], check_end, -1, -1, re_arg['lemma_start'], re_arg['lemma_end'], pre_phase, p_rule, *doc)
                             pre_phase = add_phase
                             for append in add_phase.split(','):  # 重複は登録しない
                                 if append != '<その他>' and append != '<告知>' and append not in phase:
@@ -331,7 +363,7 @@ class PhaseCheker:
 #            if (chek_predicate["main"] or ok_f) and no_argument and not single:
             if (chek_predicate["main"] or ok_f) and no_argument:
                 # 項のない述部のチェック
-                phase = self.phase_chek(chek_predicate["lemma_start"], chek_predicate["lemma_end"], -1, -1, "", p_rule, *doc)
+                phase = self.phase_chek(chek_predicate["lemma_start"], chek_predicate["lemma_end"], chek_predicate["sub_lemma_start"], chek_predicate["sub_lemma_end"], -1, -1, "", p_rule, *doc)
                 if phase:
                     if p_rule == PhaseRule:
                         single = self.single_phase_get(phase)
@@ -399,7 +431,7 @@ class PhaseCheker:
     #########################################################
     #  Main述部以外のタグも評価するか否かのチェック
     #########################################################
-    check_all_predicate = ["<意思決定>", "<方針>", "<検討>", "<アクション>", "<支援>", "<情報公開>", "<所見>"]
+    check_all_predicate = ["<意思決定>", "<方針>", "<検討>", "<アクション>", "<支援>", "<情報公開>", "<所見>", "<方策内容>"]
     def all_predicate_need_check(self, tags):
         for check_phase in tags.split(","):
             if check_phase not in self.check_all_predicate:
@@ -470,8 +502,8 @@ class PhaseCheker:
     ok_no_word = ["研究所", "審議会", "委員会", "部会", "会議", "検討会", "分科会", "機関", "チーム", "機構", "公社", "連盟",
                   "省", "庁", "政府", "内閣", "党", "局", "東京都", "北海道", "大阪府", "京都府", "県",
                   "長官", "幹部", "参与", "長", "次官", "関係者", "司令塔", "職員", "ら", "首相", "大臣",
-                  "報告", "調査", "実験", "戦略",
-                  "延長", "金"]
+                  "報告", "調査", "実験", "戦略", "宣言", "指導", "思惑", "一環",
+                  "延長", "金", "工程表", "期限", "支援", "採択", "承認"]
     def is_ok_government_subject_chek(self, in_word, case):
         word = in_word
         if "の" in word:
@@ -489,12 +521,12 @@ class PhaseCheker:
     #########################################################
     #  政府活動か否かをチェック, "政府目標", "政府系"
     #########################################################
-    government_rule = ["省", "庁", "政府", "内閣", "党", "東京都", "北海道", "大阪府", "京都府", "県", "自治体",
+    government_rule = ["省", "庁", "政府", "内閣", "党", "東京都", "北海道", "大阪府", "京都府", "県", "自治体", "市",
                        "委員会", "審議会", "分科会", "部会", "首相", "大臣", "相", "首長"]
     ng_word = ["帰省", "省エネ", "省エネルギー", "省力", "省略", "都市", "非政府", "官庁",
                "黒竜江省", "吉林省", "遼寧省", "河北省", "河南省", "山東省", "山西省", "湖南省", "湖北省", "江蘇省", "安徽省", "浙江省", "福建省", "江西省", "広東省",
                "海南省", "貴州省", "雲南省", "四川省", "陝西省", "青海省", "甘粛省", "台湾省",
-               "沖", "沿岸", "山間", "東部", "南部", "北部", "西部", "東京電力", "都庁", "道庁", "府庁", "県庁",
+               "沖", "沿岸", "山間", "東部", "南部", "北部", "西部", "東京電力", "都庁", "道庁", "府庁", "県庁", "署",
                "ファンド", "政府系企業"
                ]
     ng_kakarisaki = ["必要", "重要性", "義務", "責務", "責任"]
@@ -512,13 +544,31 @@ class PhaseCheker:
         for arg in argument:
             is_ok_government_meishi = False
             if arg["subject"] or arg["case"] == "で" or arg["case"] == "と" or arg["case"] == "の" or arg["case"] == "から" or arg["case"] == "に" or arg["case"] == "は" or arg["case"] == "として-副詞的" or arg["case"] == "において-副詞的":
+                if arg["lemma"] == "私" and arg["predicate_id"] == predicate[len(predicate) - 1]["id"]:
+                    self.subject_is_government = False
+                    return
                 if "連体" in arg["case"]:
                     continue
-                if "から" in arg["lemma"]:
+                if "から" in arg["lemma"] and not "からの" in arg["lemma"]:
                     continue
+                if ((arg["lemma"].endswith("都") or arg["lemma"].endswith("道") or arg["lemma"].endswith("府") or arg["lemma"].endswith("県") or arg["lemma"].endswith("市") or arg["lemma"].endswith("区") or arg["lemma"].endswith("町") or arg["lemma"].endswith("村")) and
+                        (arg["case"] == "で" or arg["case"] == "に")):
+                    continue
+                if arg["case"] == "に" or ("では" in arg["case"] and arg["subject"]):
+                    ng_ni = False
+                    for chek in self.ok_no_word:
+                        if arg["lemma"].endswith(chek):
+                            ng_ni = True
+                            break
+                    if ng_ni:
+                        continue
                 # 主語が政府関係か？
                 for check in self.government_rule:
                     if check in arg["lemma"]:
+                        # 「市」が地名がチェック
+                        if check == "市":
+                            if not "地名" in doc[arg["lemma_end"]].tag_ or not doc[arg["lemma_end"]].lemma_.endswith("市"):
+                                continue
                         ngw_f = False
                         for ng_w in self.ng_word:
                             if ng_w in arg["lemma"]:
@@ -569,7 +619,8 @@ class PhaseCheker:
                                 # 最後の述部の主語が政府でカテゴリがあるときは背景ではない
 #                                if arg["predicate_id"] == predicate[len(predicate) - 1]["id"] and "の" not in arg["lemma"]:
                                 if arg["predicate_id"] == predicate[len(predicate) - 1]["id"] and is_ok_government_meishi:
-                                    self.lase_predicate_subject_is_government = True
+                                    if not "からの" in arg["lemma"]:
+                                        self.lase_predicate_subject_is_government = True
                                 bek_f = False
                                 for beki_p in range (predicate[arg["predicate_id"]]["lemma_end"] + 1, doc[predicate[arg["predicate_id"]]["lemma_end"]].head.i):
                                     if doc[beki_p].lemma_ == "べし":
@@ -681,7 +732,7 @@ class PhaseCheker:
                                                         self.action_is_haikei = True
                                                 else:
                                                     break
-                                        if doc[next_p].lemma_ != "こと":
+                                        if doc[next_p].lemma_ != "こと" and doc[next_p].lemma_ != "とき":
                                             for rule in g_a_dic.sub_phrase_rule:
                                                 if "words" in rule:
                                                     if doc[doc[next_p].head.i + 1].lemma_ != "の":
@@ -739,6 +790,12 @@ class PhaseCheker:
                                 # 政府目標に向ける　（例外処理）
                                 elif doc[predicate_end].norm_ == "向ける" and "政府目標" in arg["lemma"]:
                                     self.action_is_haikei = True
+                                # 政府が発行してください
+                                else:
+                                    for chek in range(predicate_end, len(doc) - 1):
+                                        if (doc[chek].lemma_ == "くださる" or doc[chek].lemma_ == "いただく") and (doc[chek].head.i == predicate_end or doc[chek].head.head.i == predicate_end):
+                                            self.subject_is_government = False
+                                            break
                             if not is_ok_government_meishi:
                                 self.action_is_haikei = True
 #                            elif self.action_is_haikei and len(predicate) - 1 == arg["predicate_id"]:     # 最終述部が政府主語の場合は背景ではない
@@ -752,6 +809,8 @@ class PhaseCheker:
                     if arg["lemma"] == "会議の様子":
                         self.subject_is_government = True
                         self.is_government_press = True
+                if "からの" in arg["lemma"]:
+                    self.action_is_haikei = True
         return
 
     #########################################################
@@ -811,6 +870,7 @@ class PhaseCheker:
         if ret:
             gover_ret = ""
             # まずはMain述部をチェック
+            sub_is_ok = False
             for arg in argument:
                 if (arg["predicate_id"] in self.government_predicate or self.is_government_press) and predicate[arg["predicate_id"]]["main"]:
                     if "phase" in arg:
@@ -822,8 +882,10 @@ class PhaseCheker:
                                     gover_ret = gover_ret + "," + check_phase
                                 else:
                                     gover_ret = check_phase
+                    if arg["lemma"] == "方向" and arg["case"] == "で":
+                        sub_is_ok = True
             # Main述部から意思決定など以外が見つからない場合は補助述部もチェック
-            if self.all_predicate_need_check(gover_ret) or self.action_is_haikei:
+            if self.all_predicate_need_check(gover_ret) or self.action_is_haikei or sub_is_ok:
                 for arg in argument:
                     if "phase" in arg:
                         for check_phase in arg["phase"].split(","):

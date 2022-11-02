@@ -8,6 +8,7 @@ articles = json.load(open('nikkei.json'))
 articles2 = json.load(open('nikkei_5000.json'))
 solution2 = open('government_news.txt')
 solution = open('government_add.txt')
+solution3 = open('error_text.txt')
 
 out_file2 = open('government_result.tsv', 'w')
 #out_file = open('government_add.tsv', 'w')
