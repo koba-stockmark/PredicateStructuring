@@ -9,6 +9,7 @@ class ParallelExtractor:
         """
         chunker = ChunkExtractor()
         self.num_chunk = chunker.num_chunk
+        self.verb_chunk = chunker.verb_chunk
         self.rentai_check = chunker.rentai_check
 
 
@@ -25,6 +26,14 @@ class ParallelExtractor:
         if doc[start].lemma_ == '共同':
             ret.append({'lemma': '', 'lemma_start': -1, 'lemma_end': -1})
             return ret
+        no_word = ""
+        """
+        for pt in range(sp, ep):
+            if doc[pt].lemma_ == "の" and doc[pt].pos_ == "ADP" and doc[pt - 1].pos_ != "ADP":
+                for npt in range(pt, ep + 1):
+                   no_word = no_word + doc[npt].orth_
+                break
+        """
         # 〇〇と（主語）が…　のパターン
         for cpt in reversed(range(0, start)):
 #            if (sp > cpt or cpt > ep) and (start <= doc[cpt].head.i <= end or sp <= doc[cpt].head.i <= ep or (doc[cpt].head.i == doc[end].head.i and doc[cpt + 1].lemma_ == 'と')):
@@ -37,13 +46,41 @@ class ParallelExtractor:
 #                if doc[cpt].tag_ != '名詞-普通名詞-副詞可能' and doc[end].tag_ == '名詞-普通名詞-副詞可能':     # 誤解析対応　山形空港と庄内空港は3月1日から、それぞれ空港ビル1階ロビーにモバイルバッテリーのレンタルスタンド「ChargeSPOT」を設置する
 #                    continue
                 chek = self.num_chunk(cpt, *doc)
+                """ 慣用句的(fixed)な連体修飾関係
+                if doc[chek["lemma_start"] - 1].dep_ == "fixed" and (doc[chek["lemma_start"] - 1].morph.get("Inflection") and '連体形' in doc[chek["lemma_start"] - 1].morph.get("Inflection")[0]):
+                    for v_c in reversed(range(0, chek["lemma_start"] - 2)):
+                        if "助詞" in doc[v_c].tag_:
+                            continue
+                        v_chunk = self.verb_chunk(v_c, *doc)
+                        chek["lemma_start"] = v_chunk["lemma_start"]
+                        chek["lemma"] = ""
+                        for v_p in range(chek["lemma_start"], chek["lemma_end"] + 1):
+                            chek["lemma"] = chek["lemma"] + doc[v_p].orth_
+                        break
+                """
                 if (len(doc) > chek["lemma_end"] + 1 and ((doc[chek["lemma_end"] + 1].lemma_ == 'と' and doc[chek["lemma_end"] + 2].lemma_ != 'の') or doc[chek["lemma_end"] + 1].lemma_ == 'や' or doc[chek["lemma_end"] + 1].norm_ == '及び' or doc[chek["lemma_end"] + 1].norm_ == 'など' or
                         (len(doc) > chek["lemma_end"] + 2 and doc[chek["lemma_end"] + 1].norm_ == 'を' and doc[chek["lemma_end"] + 2].norm_ == 'はじめ') or
                         doc[chek["lemma_end"] + 1].tag_ == '補助記号-読点')):
-                    ret.append((self.num_chunk(cpt, *doc)))
+#                    ret.append((self.num_chunk(cpt, *doc)))
+                    ret.append(chek)
                     find_ct = find_ct + 1
+                    """
+#                     〇〇や〇〇の〇〇　　曖昧なので難しい
+                    if doc[chek["lemma_start"] - 1].lemma_ == "や":
+                        ret_para = self.num_chunk(chek["lemma_start"] - 2, *doc)
+                        if "の" in chek["lemma"] and "の" not in ret_para["lemma"]:
+                            of_f = False
+                            for i in range(chek["lemma_start"], chek["lemma_end"] + 1):
+                                if of_f or doc[i].lemma_ == "の" or (doc[i + 1].lemma_ == "の" and doc[i].pos_ == "ADP"):
+                                    of_f = True
+                                    ret_para["lemma"] = ret_para["lemma"] + doc[i].orth_
+                            ret.append(ret_para)
+                            find_ct = find_ct + 1
+                    """
                     sp = ret[find_ct - 1]['lemma_start']
                     ep = ret[find_ct - 1]['lemma_end']
+                    if no_word and doc[chek["lemma_end"] + 1].lemma_ == 'や' and "の" not in ret[find_ct - 1]["lemma"]:
+                        ret[find_ct - 1]["lemma"] = ret[find_ct - 1]["lemma"] + no_word
         # （主語1）が（主語2）と…　のパターン
         if len(doc) > end + 1 and doc[end + 1].lemma_ == 'が':
             for i in range(end + 1, doc[end].head.i):
@@ -65,6 +102,8 @@ class ParallelExtractor:
                     find_ct = find_ct + 1
                     sp = ret[find_ct - 1]['lemma_start']
                     ep = ret[find_ct - 1]['lemma_end']
+                    if no_word and doc[i + 1].lemma_ == 'や' and "の" not in ret[find_ct - 1]["lemma"]:
+                        ret[find_ct - 1]["lemma"] = ret[find_ct - 1]["lemma"] + no_word
                     continue
                 if doc[i + 1].pos_ == 'ADP' and doc[i + 1].lemma_ != 'など':
                     break

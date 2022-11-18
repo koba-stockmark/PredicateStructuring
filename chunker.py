@@ -144,8 +144,9 @@ class ChunkExtractor:
                     (doc[i].pos_ != 'AUX' or doc[i].orth_ == 'する' or doc[i].orth_ == 'な') and
                     (doc[pt].pos_ != 'NOUN' or doc[pt].tag_ == '名詞-普通名詞-副詞可能' or doc[i].pos_ != 'VERB') and
                     (not doc[i].morph.get("Inflection") or '連体形' not in doc[i].morph.get("Inflection")[0]) and
-                  (doc[i].pos_ != 'ADP' or (doc[i].tag_ == '助詞-副助詞' and doc[i].lemma_ != 'まで' and doc[i].lemma_ != 'だけ' and doc[i].lemma_ != 'か')) and doc[i].pos_ != 'ADV' and doc[i].pos_ != 'ADJ' and doc[i].pos_ != 'PART' and doc[i].pos_ != 'SCONJ' and
+                    (doc[i].pos_ != 'ADP' or (doc[i].tag_ == '助詞-副助詞' and doc[i].lemma_ != 'まで' and doc[i].lemma_ != 'だけ' and doc[i].lemma_ != 'か')) and doc[i].pos_ != 'ADV' and doc[i].pos_ != 'ADJ' and doc[i].pos_ != 'PART' and doc[i].pos_ != 'SCONJ' and
                     doc[i].norm_ != 'から' and
+#                    doc[i].dep_ != 'advcl' and
                     doc[i].tag_ != '補助記号-一般' and doc[i].tag_ != '名詞-普通名詞-副詞可能' and doc[i].tag_ != '名詞-普通名詞-助数詞可能' and doc[i].tag_ != '接尾辞-名詞的-助数詞' and doc[i].tag_ != '名詞-普通名詞-助数詞可能'):
                 pre = doc[i].orth_ + pre
                 start_pt = i
@@ -164,10 +165,44 @@ class ChunkExtractor:
             elif len(doc) > i + 1 and doc[i - 1].pos_ == 'NOUN' and doc[i].orth_ == 'の' and doc[i + 1].lemma_ == 'まま':  # 名詞　＋　の　＋　まま
                 pre = doc[i].orth_ + pre
                 start_pt = i
-            elif ((len(doc) > i + 1 and doc[i - 1].pos_ == 'ADJ' and doc[i].orth_ == 'に' and doc[i + 1].lemma_ == 'する') or
-                  (len(doc) > i + 2 and doc[i].pos_ == 'ADJ' and doc[i + 1].orth_ == 'に' and doc[i + 2].lemma_ == 'する')):  # 形容動詞　＋　に　＋　する
+            elif ((len(doc) > i + 1 and (doc[i - 1].pos_ == 'ADJ' or doc[i - 1].tag_ == '形状詞-助動詞語幹') and doc[i].orth_ == 'に' and doc[i + 1].lemma_ == 'する') or
+                  (len(doc) > i + 2 and (doc[i].pos_ == 'ADJ' or doc[i].tag_ == '形状詞-助動詞語幹') and doc[i + 1].orth_ == 'に' and doc[i + 2].lemma_ == 'する')):  # 形容動詞　＋　に　＋　する
                 pre = doc[i].orth_ + pre
                 start_pt = i
+            elif len(doc) > i + 1 and doc[i].lemma_ == 'を' and doc[i + 1].lemma_ == 'する':  # 〇〇をする -> 〇〇する
+                start_pt = i
+            elif len(doc) > i + 3 and doc[i].lemma_ == 'を' and doc[i + 1].lemma_ == 'する' and doc[i + 2].orth_ == 'たり' and doc[i + 3].lemma_ == 'する':  # 〇〇したりする
+                pre = doc[i].orth_ + pre
+                start_pt = i
+            elif len(doc) > i + 2 and doc[i].lemma_ == 'する' and doc[i + 1].orth_ == 'たり' and doc[i + 2].lemma_ == 'する':  # 〇〇したりする
+                pre = doc[i].orth_ + pre
+                start_pt = i
+            elif len(doc) > i + 1 and doc[i - 1].lemma_ == 'する' and doc[i].orth_ == 'たり' and doc[i + 1].lemma_ == 'する':  # 〇〇したりする
+                pre = doc[i].orth_ + pre
+                start_pt = i
+                """
+            elif len(doc) > i + 1 and (doc[i - 1].lemma_ == 'いる' or doc[i - 1].lemma_ == 'ない') and doc[i].orth_ == 'と' and doc[i + 1].lemma_ == 'する':  # 〇〇しているとする
+                pre = doc[i].orth_ + pre
+                start_pt = i
+            elif len(doc) > i + 1 and doc[i - 1].lemma_ == 'いる' and doc[i].orth_ == 'ない' and doc[i + 1].orth_ == 'と' and doc[i + 2].lemma_ == 'する':  # 〇〇していないとする
+                pre = doc[i].orth_ + pre
+                start_pt = i
+            elif len(doc) > i + 2 and doc[i - 1].lemma_ == 'て' and doc[i].orth_ == 'いる' and doc[i + 1].lemma_ == 'と' and doc[i + 2].lemma_ == 'する':  # 〇〇しているとする
+                pre = doc[i].orth_ + pre
+                start_pt = i
+            elif len(doc) > i + 3 and (doc[i - 1].lemma_ == 'する' or doc[i - 1].lemma_ == 'れる') and doc[i].orth_ == 'て' and doc[i + 1].lemma_ == 'いる' and doc[i + 2].orth_ == 'と' and doc[i + 3].lemma_ == 'する':  # 〇〇しているとする
+                pre = doc[i].orth_ + pre
+                start_pt = i
+            elif len(doc) > i + 4 and (doc[i - 1].lemma_ == 'する' or doc[i - 1].lemma_ == 'れる') and doc[i].orth_ == 'て' and doc[i + 1].lemma_ == 'いる' and doc[i + 2].orth_ == 'ない' and doc[i + 3].orth_ == 'と' and doc[i + 4].lemma_ == 'する':  # 〇〇しているとする
+                pre = doc[i].orth_ + pre
+                start_pt = i
+            elif len(doc) > i + 4 and (doc[i].lemma_ == 'する' or doc[i].lemma_ == 'れる') and doc[i + 1].orth_ == 'て' and doc[i + 2].lemma_ == 'いる' and doc[i + 3].orth_ == 'と' and doc[i + 4].lemma_ == 'する':  # 〇〇しているとする
+                pre = doc[i].orth_ + pre
+                start_pt = i
+            elif len(doc) > i + 5 and (doc[i].lemma_ == 'する' or doc[i].lemma_ == 'れる') and doc[i + 1].orth_ == 'て' and doc[i + 2].lemma_ == 'いる' and doc[i + 3].orth_ == 'ない' and doc[i + 4].orth_ == 'と' and doc[i + 5].lemma_ == 'する':  # 〇〇しているとする
+                pre = doc[i].orth_ + pre
+                start_pt = i
+                """
             elif len(doc) > i + 1 and doc[i - 1].pos_ == 'NOUN' and doc[i].orth_ == 'が' and doc[i + 1].norm_ == '出来る':  # 名詞　＋　が　＋　できる
                 pre = doc[i].orth_ + pre
                 start_pt = i
@@ -185,9 +220,6 @@ class ChunkExtractor:
                 pre = doc[i].orth_ + pre
                 start_pt = i
             elif len(doc) > i + 2 and doc[i - 1].pos_ == 'VERB' and doc[i].norm_ == '為る' and doc[i + 1].tag_ == '助動詞' and doc[i + 2].lemma_ == 'ため':  # 応用させるための
-                pre = doc[i].orth_ + pre
-                start_pt = i
-            elif len(doc) > i + 1 and doc[i + 1].lemma_ == 'よう' and doc[i].tag_ == '動詞-非自立可能':  # できるようになる
                 pre = doc[i].orth_ + pre
                 start_pt = i
             elif (len(doc) > i + 1 and doc[i + 1].lemma_ == 'なる' and doc[i].lemma_ == 'ない') or (len(doc) > i + 1 and doc[i + 1].lemma_ == 'ない' and doc[i].tag_ == '動詞-非自立可能'):  # できなくなる
@@ -208,7 +240,16 @@ class ChunkExtractor:
             elif len(doc) > i + 1 and doc[i].pos_ == 'AUX' and doc[i].orth_ == 'な' and doc[i + 1].pos_ == 'NOUN':  # 〜な〇〇
                 pre = doc[i].orth_ + pre
                 start_pt = i
-            elif len(doc) > i + 2 and doc[i].pos_ == 'ADJ' and doc[i + 1].pos_ == 'AUX' and doc[i + 1].orth_ == 'な' and doc[i + 2].pos_ == 'NOUN':  # 〜な〇〇
+            elif len(doc) > i + 1 and doc[i].pos_ == 'AUX' and doc[i].orth_ == 'よう' and doc[i + 1].orth_ == 'な':  # 〜ような〇〇
+                pre = doc[i].orth_ + pre
+                start_pt = i
+            elif len(doc) > i + 1 and doc[i + 1].lemma_ == 'よう' and doc[i].tag_ == '動詞-非自立可能':  # できるようになる
+                pre = doc[i].orth_ + pre
+                start_pt = i
+            elif len(doc) > i + 1 and doc[i + 1].pos_ == 'AUX' and doc[i + 1].tag_ == '形状詞-助動詞語幹' and doc[i].pos_ == 'VERB':  # 〜ように
+                pre = doc[i].orth_ + pre
+                start_pt = i
+            elif len(doc) > i + 2 and (doc[i].pos_ == 'ADJ' or doc[i].tag_ == '接尾辞-形状詞的') and doc[i + 1].pos_ == 'AUX' and doc[i + 1].orth_ == 'な' and doc[i + 2].pos_ == 'NOUN':  # 〜な〇〇
                 pre = doc[i].orth_ + pre
                 start_pt = i
             elif len(doc) > i + 1 and doc[i].pos_ == 'AUX' and doc[i + 1].pos_ == 'AUX':
@@ -224,7 +265,7 @@ class ChunkExtractor:
                  doc[i - 1].tag_ != '名詞-普通名詞-助数詞可能' and doc[i - 1].tag_ != '接尾辞-名詞的-助数詞' and doc[i - 1].tag_ != '名詞-普通名詞-助数詞可能')):  # 〇〇となる
                 if doc[i].orth_ == 'に' and doc[i - 1].pos_ != 'ADJ' and doc[i - 1].pos_ != 'AUX':   # 補助用言以外の　〇〇になる　は「なる」と分ける　ex.東京になる
                     break
-                if doc[i - 1].pos_ == 'PUNCT':
+                if doc[i - 1].pos_ == 'PUNCT' or doc[i - 1].pos_ == 'PART':
                     pre_part = self.num_chunk(i - 2, *doc)
                 else:
                     pre_part = self.num_chunk(i - 1, *doc)
@@ -242,6 +283,8 @@ class ChunkExtractor:
                 break
             else:
                 break
+        if "したり" in pre:
+            return {'lemma': pre.split("したり")[0] + "する", 'lemma_start': start_pt, 'lemma_end': start_pt + 1, 'org_str': pre, 'org_start': start_pt, 'org_end': pt, 'modality': []}
         # 後方を結合
         find_f = False  # すでに結合する対象が見つかっているか否か。見つかっている場合は残りの付属語を収集
         append_o = ''   # 追加表記
@@ -263,7 +306,8 @@ class ChunkExtractor:
                 append_l = token.lemma_
                 end_pt = end_pt + 1
             # 動詞　＋　接尾辞
-            elif tail_ct == 0 and doc[token.i - 1].pos_ != 'ADV' and doc[token.i - 1].pos_ != 'ADJ' and doc[token.i - 1].tag_ != '助動詞' and (token.tag_ == '接尾辞-名詞的-サ変可能' or (token.pos_ == 'VERB' and token.tag_ == '名詞-普通名詞-サ変可能')):
+            elif tail_ct == 0 and doc[token.i - 1].dep_ != 'advcl' and doc[token.i - 1].pos_ != 'ADV' and doc[token.i - 1].pos_ != 'ADJ' and doc[token.i - 1].tag_ != '助動詞' and (token.tag_ == '接尾辞-名詞的-サ変可能' or token.tag_ == '接尾辞-形状詞的' or (token.pos_ == 'VERB' and token.tag_ == '名詞-普通名詞-サ変可能')):
+#            elif tail_ct == 0 and doc[token.i - 1].pos_ != 'ADV' and doc[token.i - 1].pos_ != 'ADJ' and doc[token.i - 1].tag_ != '助動詞' and (token.tag_ == '接尾辞-名詞的-サ変可能' or token.tag_ == '接尾辞-形状詞的' or (token.pos_ == 'VERB' and token.tag_ == '名詞-普通名詞-サ変可能')):
                 if find_f:
                     ret = ret + append_o
                 find_f = True
@@ -308,6 +352,7 @@ class ChunkExtractor:
                 append_l = tail_o + token.orth_ + doc[token.i + 1].lemma_
                 end_pt = token.i
             # VERB　＋　VERB 複合動詞
+#            elif tail_ct == 0 and doc[token.i - 1].pos_ == 'VERB' and doc[token.i].pos_ == 'VERB' and doc[token.i - 1].dep_ != 'advcl':
             elif tail_ct == 0 and doc[token.i - 1].pos_ == 'VERB' and doc[token.i].pos_ == 'VERB':
                 if find_f:
                     ret = ret + append_o
@@ -319,6 +364,22 @@ class ChunkExtractor:
                 else:
                     append_o = tail_o + token.orth_
                     append_l = tail_o + token.lemma_
+                end_pt = token.i
+            # 〇〇出来るとする
+            elif tail_ct == 0 and doc[token.i - 1].pos_ == 'VERB' and doc[token.i].tag_ == '動詞-非自立可能' and doc[token.i].norm_ == '出来る' and doc[token.i + 1].norm_ == 'と' and doc[token.i + 2].lemma_ == 'する':
+                if find_f:
+                    ret = ret + append_o
+                find_f = True
+                append_o = tail_o + token.orth_ + doc[token.i + 1].orth_ + doc[token.i + 2].orth_
+                append_l = tail_o + token.orth_ + doc[token.i + 1].orth_ + doc[token.i + 2].lemma_
+                end_pt = token.i + 2
+            # 〇〇出来る
+            elif tail_ct == 0 and doc[token.i - 1].pos_ == 'VERB' and doc[token.i].tag_ == '動詞-非自立可能' and doc[token.i].norm_ == '出来る':
+                if find_f:
+                    ret = ret + append_o
+                find_f = True
+                append_o = tail_o + token.orth_
+                append_l = tail_o + token.lemma_
                 end_pt = token.i
             # 出来るようになる
             elif tail_ct == 0 and doc[token.i - 1].pos_ == 'VERB' and doc[token.i].tag_ == '形状詞-助動詞語幹' and len(doc) > token.i + 1 and doc[token.i + 1].orth_ == 'に':
@@ -334,6 +395,59 @@ class ChunkExtractor:
                     append_l = tail_o + token.orth_ + doc[token.i + 1].lemma_
                     end_pt = token.i + 1
 
+                """ #koba
+            # 〇〇れる
+            elif tail_ct == 0 and doc[token.i - 1].pos_ == 'VERB' and doc[token.i].tag_ == '助動詞' and doc[token.i].norm_ == 'れる':
+                if find_f:
+                    ret = ret + append_o
+                find_f = True
+                append_o = tail_o + token.orth_
+                append_l = tail_o + token.lemma_
+                end_pt = token.i
+            # 〇〇れている
+            elif tail_ct == 0 and doc[token.i].norm_ == 'て' and doc[token.i + 1].lemma_ == 'いる':
+                if find_f:
+                    ret = ret + append_o
+                find_f = True
+                if len(doc) > token.i + 2 and doc[token.i + 2].lemma_ == "ない":
+                    if len(doc) > token.i + 3 and doc[token.i + 3].lemma_ == "と":
+                        if len(doc) > token.i + 4 and doc[token.i + 4].pos_ == 'VERB':
+                            append_o = tail_o + token.orth_ + doc[token.i + 1].orth_ + doc[token.i + 2].orth_ + doc[token.i + 3].orth_ + doc[token.i + 4].orth_
+                            append_l = tail_o + token.orth_ + doc[token.i + 1].orth_ + doc[token.i + 2].orth_ + doc[token.i + 3].orth_ + doc[token.i + 4].lemma_
+                            end_pt = token.i + 4
+                        else:
+                            append_o = tail_o + token.orth_ + doc[token.i + 1].orth_ + doc[token.i + 2].orth_ + doc[token.i + 3].orth_
+                            append_l = tail_o + token.orth_ + doc[token.i + 1].orth_ + doc[token.i + 2].orth_ + doc[token.i + 3].lemma_
+                            end_pt = token.i + 3
+                    else:
+                        if len(doc) > token.i + 3 and doc[token.i + 3].pos_ == 'VERB':
+                            append_o = tail_o + token.orth_ + doc[token.i + 1].orth_ + doc[token.i + 2].orth_ + doc[token.i + 3].orth_
+                            append_l = tail_o + token.orth_ + doc[token.i + 1].orth_ + doc[token.i + 2].orth_ + doc[token.i + 3].lemma_
+                            end_pt = token.i + 3
+                        else:
+                            append_o = tail_o + token.orth_ + doc[token.i + 1].orth_ + doc[token.i + 2].orth_
+                            append_l = tail_o + token.orth_ + doc[token.i + 1].orth_ + doc[token.i + 2].lemma_
+                            end_pt = token.i + 2
+                elif len(doc) > token.i + 2 and doc[token.i + 2].lemma_ == "と":
+                    if len(doc) > token.i + 3 and doc[token.i + 3].pos_ == 'VERB':
+                        append_o = tail_o + token.orth_ + doc[token.i + 1].orth_ + doc[token.i + 2].orth_ + doc[token.i + 3].orth_
+                        append_l = tail_o + token.orth_ + doc[token.i + 1].orth_ + doc[token.i + 2].orth_ + doc[token.i + 3].lemma_
+                        end_pt = token.i + 3
+                    else:
+                        append_o = tail_o + token.orth_ + doc[token.i + 1].orth_ + doc[token.i + 2].orth_
+                        append_l = tail_o + token.orth_ + doc[token.i + 1].orth_ + doc[token.i + 2].lemma_
+                        end_pt = token.i + 2
+                else:
+                    if len(doc) > token.i + 2 and doc[token.i + 2].pos_ == 'VERB':
+                        append_o = tail_o + token.orth_ + doc[token.i + 1].orth_ + doc[token.i + 2].orth_
+                        append_l = tail_o + token.orth_ + doc[token.i + 1].orth_ + doc[token.i + 2].lemma_
+                        end_pt = token.i + 2
+                    else:
+                        append_o = tail_o + token.orth_ + doc[token.i + 1].orth_
+                        append_l = tail_o + token.orth_ + doc[token.i + 1].lemma_
+                        end_pt = token.i + 1
+            """ #koba
+
             # 〇〇したとする
             elif tail_ct == 0 and doc[token.i - 1].pos_ == 'VERB' and doc[token.i].norm_ == '為る' and len(doc) > token.i + 3 and doc[token.i + 1].lemma_ == 'た' and doc[token.i + 2].lemma_ == 'と' and doc[token.i + 3].norm_ == '為る':
                 if find_f:
@@ -343,8 +457,69 @@ class ChunkExtractor:
                 append_l = tail_o + token.orth_ + doc[token.i + 1].orth_ + doc[token.i + 2].orth_ + doc[token.i + 3].lemma_
                 end_pt = token.i + 3
 
+                """ #koba
+            # 〇〇しているとする
+            elif tail_ct == 0 and doc[token.i - 1].pos_ == 'VERB' and doc[token.i].norm_ == '為る' and len(doc) > token.i + 4 and doc[token.i + 1].lemma_ == 'て' and doc[token.i + 2].lemma_ == 'いる' and doc[token.i + 3].lemma_ == 'と' and doc[token.i + 4].norm_ == '為る':
+                if find_f:
+                    ret = ret + append_o
+                find_f = True
+                append_o = tail_o + token.orth_
+                append_l = tail_o + token.lemma_
+                end_pt = token.i
+            # 〇〇されているとする
+            elif tail_ct == 0 and doc[token.i - 1].pos_ == 'VERB' and doc[token.i].norm_ == '為る' and len(doc) > token.i + 6 and doc[token.i + 1].lemma_ == 'れる' and doc[token.i + 2].lemma_ == 'て' and doc[token.i + 3].lemma_ == 'いる' and doc[token.i + 4].lemma_ == 'ない' and doc[token.i + 5].lemma_ == 'と' and doc[token.i + 6].norm_ == '為る':
+                if find_f:
+                    ret = ret + append_o
+                find_f = True
+                append_o = tail_o + token.orth_
+                append_l = tail_o + token.lemma_
+                end_pt = token.i
+            elif tail_ct == 0 and doc[token.i - 1].pos_ == 'VERB' and doc[token.i].norm_ == '為る' and len(doc) > token.i + 5 and doc[token.i + 1].lemma_ == 'れる' and doc[token.i + 2].lemma_ == 'て' and doc[token.i + 3].lemma_ == 'いる' and doc[token.i + 4].lemma_ == 'と' and doc[token.i + 5].norm_ == '為る':
+                if find_f:
+                    ret = ret + append_o
+                find_f = True
+                append_o = tail_o + token.orth_
+                append_l = tail_o + token.lemma_
+                end_pt = token.i
+            # 〇〇されているとする
+            elif tail_ct == 0 and doc[token.i].norm_ == 'れる' and len(doc) > token.i + 5 and doc[token.i + 1].lemma_ == 'て' and doc[token.i + 2].lemma_ == 'いる' and doc[token.i + 3].lemma_ == 'ない' and doc[token.i + 4].lemma_ == 'と' and doc[token.i + 5].norm_ == '為る':
+                if find_f:
+                    ret = ret + append_o
+                find_f = True
+                append_o = tail_o + token.orth_
+                append_l = tail_o + token.lemma_
+                end_pt = token.i
+            elif tail_ct == 0 and doc[token.i].norm_ == 'れる' and len(doc) > token.i + 4 and doc[token.i + 1].lemma_ == 'て' and doc[token.i + 2].lemma_ == 'いる' and doc[token.i + 3].lemma_ == 'と' and doc[token.i + 4].norm_ == '為る':
+                if find_f:
+                    ret = ret + append_o
+                find_f = True
+                append_o = tail_o + token.orth_
+                append_l = tail_o + token.lemma_
+                end_pt = token.i
+            """ #koba
+
+                # 〇〇のように
+                """
+            elif tail_ct == 0 and doc[token.i - 1].tag_ == '形状詞-助動詞語幹' and doc[token.i].tag_ == '助動詞' and doc[token.i].lemma_ == 'だ':
+                if find_f:
+                    ret = ret + append_o
+                find_f = True
+                append_o = tail_o + token.orth_
+                append_l = tail_o + token.lemma_
+                end_pt = token.i
+
+            # 〇〇のようにする
+            elif tail_ct == 0 and doc[token.i - 2].tag_ == '形状詞-助動詞語幹' and doc[token.i - 1].tag_ == '助動詞' and doc[token.i - 1].lemma_ == 'だ' and doc[token.i].lemma_ == 'する':
+                if find_f:
+                    ret = ret + append_o
+                find_f = True
+                append_o = tail_o + token.orth_
+                append_l = tail_o + token.lemma_
+                end_pt = token.i
+                """
             # 語幹以外の助動詞部の追加
-            elif token.pos_ == 'AUX' or token.pos_ == 'SCONJ' or token.pos_ == 'VERB' or token.pos_ == 'PART' or token.pos_ == 'ADJ' or token.tag_ == '名詞-普通名詞-サ変可能':          # 句情報用に助動詞を集める。  〇〇開始　〇〇する計画　などの時制も　含める
+            elif doc[token.i - 1].dep_ != 'advcl' and token.pos_ == 'AUX' or token.pos_ == 'SCONJ' or token.pos_ == 'VERB' or token.pos_ == 'PART' or token.pos_ == 'ADJ' or token.tag_ == '名詞-普通名詞-サ変可能':          # 句情報用に助動詞を集める。  〇〇開始　〇〇する計画　などの時制も　含める
+#            elif token.pos_ == 'AUX' or token.pos_ == 'SCONJ' or token.pos_ == 'VERB' or token.pos_ == 'PART' or token.pos_ == 'ADJ' or token.tag_ == '名詞-普通名詞-サ変可能':          # 句情報用に助動詞を集める。  〇〇開始　〇〇する計画　などの時制も　含める
                 tail_o = tail_o + token.orth_
                 tail_ct = tail_ct + 1
             else:
@@ -482,9 +657,10 @@ class ChunkExtractor:
             else:
                 if doc[pt - 1].lemma_ != 'と':   # 並列処理のため結合しない
                     for token in doc[0:]:
-                        if token.head.i == pt and (token.pos_ == 'AUX' or token.pos_ == 'VERB' or token.pos_ == 'PUNCT'):
-                            start_pt = token.i
-                            break
+                        if (token.head.i == pt or token.i == pt) and (token.pos_ == 'AUX' or token.pos_ == 'VERB' or token.pos_ == 'PUNCT'):
+                            if doc[token.i + 1].pos_ != "PUNCT" and doc[token.i + 1].norm_ != "出来る":
+                                start_pt = token.i
+                                break
                     for i in reversed(range(start_pt, pt)):
                         ret = self.connect_word(doc[i].orth_, ret)
             for i in range(pt + 1, len(doc)):
@@ -605,6 +781,8 @@ class ChunkExtractor:
                         (not doc[i].morph.get("Inflection") or (not doc[i].morph.get("Inflection") or '連体形' not in doc[i].morph.get("Inflection")[0])) and
                         (doc[i].tag_ != '名詞-普通名詞-副詞可能' or (doc[i].lemma_ != 'なか' and doc[i].lemma_ != 'ため' and doc[i].lemma_ != 'もと')) and doc[i].norm_ != '・' and doc[i].norm_ != '＊'):
 #                        (doc[i].tag_ != '名詞-普通名詞-副詞可能' or (doc[i].lemma_ != 'なか' and doc[i].lemma_ != 'ため' and doc[i].lemma_ != 'もと')) and doc[i].norm_ != '～' and doc[i].norm_ != '・' and doc[i].norm_ != '＊'):
+                    if doc[i].orth_ == '例えば':
+                        break
                     if doc[i].tag_ == '補助記号-括弧閉':
                         punc_ct = punc_ct + 1
                     start_pt = i
@@ -637,6 +815,8 @@ class ChunkExtractor:
                     if doc[i].tag_ == '接尾辞-名詞的-助数詞' and (doc[i].lemma_ == '日' or doc[i].lemma_ == '月' or doc[i].lemma_ == '年'):
                         break
                     if doc[i].tag_ == '名詞-普通名詞-助数詞可能' and len(doc) > i + 1 and doc[i + 1].lemma_ != 'の' and doc[i + 1].lemma_ != 'まで' and doc[i + 1].tag_ != '接尾辞-名詞的-一般' and doc[i].lemma_ == '日':
+                        break
+                    if doc[i].orth_ == '例えば':
                         break
                     if doc[i].orth_ == 'の' and doc[i - 1].tag_ == '助詞-副助詞' and (doc[i - 2].pos_ == 'AUX' or doc[i - 2].pos_ == 'VERB'):
                         break
@@ -681,6 +861,9 @@ class ChunkExtractor:
                     ((doc[i].pos_ == 'AUX' or doc[i].pos_ == 'VERB') and doc[i + 1].orth_ == 'か')):  # 〇〇か〇〇
                     start_pt = i
                     ret = self.connect_word(doc[i].orth_, ret)
+                elif doc[i].tag_ == '代名詞' and doc[i + 1].lemma_ == "の":
+                    start_pt = i
+                    ret = self.connect_word(doc[i].orth_, ret)
                 elif doc[i].tag_ == '名詞-普通名詞-一般':
                     start_pt = i
                     ret = self.connect_word(doc[i].orth_, ret)
@@ -696,6 +879,9 @@ class ChunkExtractor:
                     ret = self.connect_word(doc[i].orth_, ret)
                 elif(doc[i].tag_ == '補助記号-読点' and  doc[i - 1].orth_ == '株式会社' and doc[i - 2].pos_ != 'NOUN' and doc[i - 2].pos_ != 'PROPN' and
                         (doc[i - 1].head.i == doc[i + 1].head.i or doc[i - 1].head.i == pt or doc[i - 1].head.i == i + 1)):     # 〇〇、〇〇　の場合はまとめる
+                    start_pt = i
+                    ret = self.connect_word(doc[i].orth_, ret)
+                elif len(doc) > i + 2 and doc[i].orth_ == 'のみ' and doc[i + 1].orth_ == 'で' and doc[i + 2].orth_ == 'の':  # 〇〇のみでの〇〇
                     start_pt = i
                     ret = self.connect_word(doc[i].orth_, ret)
                 elif doc[i].pos_ == 'ADP' and doc[i].orth_ == 'に' and doc[i + 1].orth_ == 'なる':
@@ -719,7 +905,7 @@ class ChunkExtractor:
                 elif doc[i].lemma_ == 'を' and len(doc) > i + 1 and doc[i + 1].norm_ == '基':  # 〜を基に
                     start_pt = i
                     ret = self.connect_word(doc[i].orth_, ret)
-                elif doc[i].lemma_ == 'など' and len(doc) > i + 1 and (doc[i + 1].norm_ == 'と' or doc[i + 1].norm_ == 'から') and doc[i + 2].norm_ == 'の':     # 〜などとの
+                elif doc[i].lemma_ == 'など' and len(doc) > i + 1 and (doc[i + 1].norm_ == 'と' or doc[i + 1].norm_ == 'から' or doc[i + 1].norm_ == 'へ') and doc[i + 2].norm_ == 'の':     # 〜などとの
                     start_pt = i
                     ret = self.connect_word(doc[i].orth_, ret)
                 elif (doc[i].dep_ == 'fixed' and doc[i].lemma_ == '対する') or (len(doc) > i + 1 and doc[i].lemma_ == 'に' and doc[i + 1].dep_ == 'fixed' and doc[i + 1].lemma_ == '対する'):

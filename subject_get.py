@@ -53,7 +53,7 @@ class SubjectExtractor:
                     break
                 if doc[doc[chek].i + 1].tag_ == '形状詞-助動詞語幹' and doc[doc[chek].i + 1].head.i == doc[doc[chek].i].i:
                     break
-                if doc[chek].tag_ == '名詞-普通名詞-助数詞可能':
+                if doc[chek].tag_ == '名詞-普通名詞-助数詞可能' and (doc[chek + 1].pos_ == 'ADP' and doc[chek + 1].lemma_ != 'の'):
                     break
                 if doc[chek].lemma_ == 'もの' and doc[chek].dep_ == "advcl":
                     break
@@ -75,6 +75,8 @@ class SubjectExtractor:
                         elif doc[chek].head.i == chek + 1 and doc[chek + 1].lemma_ == "ため":
                             pass
                         elif doc[doc[chek].head.i].pos_ == "NOUN" and doc[doc[chek].head.i].lemma_ != "こと" and doc[doc[chek].head.i + 1].lemma_ == "を":
+                            pass
+                        elif doc[chek + 1].lemma_ == "方針" or doc[chek + 1].lemma_ == "つもり" or doc[chek + 1].lemma_ == "計画" or doc[chek + 1].lemma_ == "予定":
                             pass
                         else:
                             break
@@ -100,7 +102,10 @@ class SubjectExtractor:
                     ret["special_connection"] = True
                 chek = doc[chek].head.i
         if doc[pt].i != ng_pt and (ng_pt <= chek <= verb_pt or (chek == doc[verb_pt].head.i and doc[verb_pt].pos_ != "ADJ") or
-                                   (chek == doc[verb_pt].head.head.i and doc[verb_pt].pos_ != "ADJ" and ((doc[verb_pt].head.pos_ != 'NUM' and doc[verb_pt].head.pos_ != 'NOUN') or (doc[verb_pt].head.dep_ == 'advcl' and doc[verb_pt].head.head.pos_ == 'VERB') or doc[verb_pt].head.lemma_ == 'こと'))):
+                                   (chek == doc[verb_pt].head.head.i and doc[verb_pt].pos_ != "ADJ" and
+                                    ((doc[verb_pt].head.pos_ != 'NUM' and doc[verb_pt].head.pos_ != 'NOUN') or
+                                     (doc[verb_pt].head.dep_ == 'advcl' and doc[verb_pt].head.head.pos_ == 'VERB') or
+                                     doc[verb_pt].head.lemma_ == 'こと'))):
             ret_subj = self.num_chunk(doc[pt].i, *doc)
             if pt > 0 and '名詞-固有名詞-地名' in doc[pt].tag_ and doc[doc[pt].i - 1].pos_ == 'NOUN':  # NPO法人ラ・レーチェ・リーグ日本は　など地名がわかれる場合の処理
                 append_subj = self.num_chunk(pt - 1, *doc)
@@ -131,6 +136,8 @@ class SubjectExtractor:
         candidate = []
         # subjで直接接続をチェック
         for token in doc:
+            if token.i > verb_pt:
+                break
 #            if token.dep_ == "nsubj" and (token.head.i == verb_end_pt and token.i != ng_pt and token.tag_ != '名詞-普通名詞-副詞可能'):
             if token.dep_ == "nsubj" and (verb_pt <= token.head.i <= verb_end_pt and token.i != ng_pt and token.tag_ != '名詞-普通名詞-副詞可能'):
                 if doc[token.head.i].norm_ == '出来る':
@@ -146,10 +153,14 @@ class SubjectExtractor:
                  (len(doc) > i + 2 and doc[i].dep_ == "obl" and doc[i].tag_ != '名詞-普通名詞-副詞可能' and doc[i + 1].lemma_ == 'など' and (doc[i + 2].lemma_ == 'は' or doc[i + 2].lemma_ == 'が'))):
                 if doc[doc[i].head.i].norm_ == '出来る':
                     continue
+                if doc[doc[i].head.i].pos_ == 'NOUN' and doc[doc[i].head.i + 1].tag_ == "補助記号-括弧閉":
+                    continue
                 if doc[doc[i].head.i].norm_ == '為' and doc[doc[i].head.i].head.i != verb_end_pt:
                     continue
                 if len(doc) > verb_end_pt + 1 and doc[verb_end_pt + 1].lemma_ == "こと":
                     continue
+#                if doc[i].head.i > verb_end_pt and "と-副詞的" in self.case_get(doc[verb_end_pt].i, *doc):
+#                    continue
                 ret = self.relational_connect_check(i, ng_pt, verb_end_pt, *doc)
                 if ret['lemma']:
                     ret['not_direct_subject'] = True
@@ -222,17 +233,20 @@ class SubjectExtractor:
                  doc[doc[verb_end_pt].head.i].lemma_ != 'こと' and
                  ((self.rentai_check(doc[verb_end_pt].i, *doc) or (doc[verb_end_pt].morph.get("Inflection") and '連体形' in doc[verb_end_pt].morph.get("Inflection")[0])) or
                   (self.shuusi_check(doc[verb_end_pt].i, *doc) or (doc[verb_end_pt].morph.get("Inflection") and '終止' in doc[verb_end_pt].morph.get("Inflection")[0])))):
-            if (doc[doc[verb_end_pt].head.i].pos_ == 'NOUN' or doc[doc[verb_end_pt].head.i].pos_ == 'PROPN' or doc[doc[verb_end_pt].head.i].pos_ == 'NUM') and doc[doc[verb_end_pt].head.i].lemma_ != '予定':
-                if doc[verb_end_pt + 1].lemma_ != 'さまざま' and doc[verb_end_pt + 1].lemma_ != '能力' and (doc[verb_end_pt + 1].lemma_ != 'する' or doc[verb_end_pt + 2].lemma_ != '能力'):
-#                    if doc[verb_end_pt].head.head.tag_ != "動詞-非自立可能":
-                    if doc[verb_end_pt].pos_ != "ADJ" and doc[verb_end_pt].head.tag_ != "名詞-普通名詞-副詞可能": # 形容詞の連体形、修飾先が形式名詞の場合はNG
-                        if doc[verb_end_pt].head.i > verb_end_pt:
-                            ret_subj = self.num_chunk(doc[verb_end_pt].head.i, *doc)
+            next_pt = verb_end_pt
+            if doc[verb_end_pt].head.i == verb_pt:
+                next_pt = verb_pt
+            if (doc[doc[next_pt].head.i].pos_ == 'NOUN' or doc[doc[next_pt].head.i].pos_ == 'PROPN' or doc[doc[next_pt].head.i].pos_ == 'NUM') and doc[doc[next_pt].head.i].lemma_ != '予定':
+                if doc[next_pt + 1].lemma_ != 'さまざま' and doc[next_pt + 1].lemma_ != '能力' and (doc[next_pt + 1].lemma_ != 'する' or doc[next_pt + 2].lemma_ != '能力'):
+#                    if doc[next_pt].head.head.tag_ != "動詞-非自立可能":
+                    if doc[next_pt].pos_ != "ADJ" and doc[next_pt].head.tag_ != "名詞-普通名詞-副詞可能": # 形容詞の連体形、修飾先が形式名詞の場合はNG
+                        if doc[next_pt].head.i > next_pt:
+                            ret_subj = self.num_chunk(doc[next_pt].head.i, *doc)
                         else:
-                            ret_subj = self.num_chunk(verb_end_pt + 1, *doc)
+                            ret_subj = self.num_chunk(next_pt + 1, *doc)
                         ret['lemma_end'] = ret_subj['lemma_end']
-                        if ret_subj['lemma_start'] == verb_end_pt and doc[verb_end_pt].pos_ == 'ADJ':    # 形容詞が前についているときは削る
-                            ret_subj['lemma_start'] = verb_end_pt + 1
+                        if ret_subj['lemma_start'] == next_pt and doc[next_pt].pos_ == 'ADJ':    # 形容詞が前についているときは削る
+                            ret_subj['lemma_start'] = next_pt + 1
                         if '「' not in ret_subj["lemma"] and '”' not in ret_subj["lemma"]:
                             for i in reversed(range(ret_subj['lemma_start'], ret_subj['lemma_end'] + 1)):  # 〇〇と〇〇　は切り離す
                                 if doc[i].pos_ == 'ADP' and doc[i].lemma_ == 'と':
@@ -299,7 +313,7 @@ class SubjectExtractor:
                     candidate.append({'lemma': '', 'lemma_start': -1, 'lemma_end': -1})
                     return candidate
         # 〜〇〇とした（ている）〇〇
-        if(len(doc) > verb_end_pt + 2 and doc[doc[verb_end_pt].head.i].dep_ == 'acl' and doc[verb_end_pt + 1].lemma_ == 'と'and doc[verb_end_pt + 2].lemma_ == 'する' and
+        if(len(doc) > verb_end_pt + 2 and doc[doc[verb_end_pt].head.i].dep_ == 'acl' and doc[verb_end_pt + 1].lemma_ == 'と' and doc[verb_end_pt + 2].lemma_ == 'する' and
                 ((self.rentai_check(doc[verb_end_pt + 2].i, *doc) or (doc[verb_end_pt + 2].morph.get("Inflection") and '連体形' in doc[verb_end_pt + 2].morph.get("Inflection")[0])) or
                 (self.shuusi_check(doc[verb_end_pt + 2].i, *doc) or (doc[verb_end_pt + 2].morph.get("Inflection") and '終止形' in doc[verb_end_pt + 2].morph.get("Inflection")[0])))):
             if doc[verb_end_pt].head.i > verb_end_pt:

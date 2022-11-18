@@ -37,7 +37,7 @@ class PredicateGet:
 #                return {}
             if token.tag_ == '接頭辞':
                 return {}
-            if doc[token.i - 1].lemma_ != 'を' and doc[token.i - 1].lemma_ != 'に' and doc[token.i - 1].pos_ != 'ADJ' and doc[token.i].morph.get("Inflection") and '連用形' in doc[token.i].morph.get("Inflection")[0] and len(doc) > token.i + 1 and doc[token.i + 1].pos_ == 'NOUN':   # 連用名　お届けキャンペーン　
+            if doc[token.i - 1].lemma_ != 'を' and doc[token.i - 1].lemma_ != 'に' and doc[token.i - 1].lemma_ != 'と' and doc[token.i - 1].pos_ != 'ADJ' and doc[token.i].morph.get("Inflection") and '連用形' in doc[token.i].morph.get("Inflection")[0] and len(doc) > token.i + 1 and doc[token.i + 1].pos_ == 'NOUN':   # 連用名　お届けキャンペーン　
                 return {}
             if token.pos_ == 'VERB' or token.pos_ == 'ADJ' or (token.dep_ == 'nmod' and token.i > 0 and doc[token.i - 1].pos_ == 'ADP') or (token.dep_ == 'ROOT' and token.tag_ == '名詞-普通名詞-サ変可能'):
                 return self.predicate_phrase_get(token.i, *doc)
