@@ -232,7 +232,8 @@ class SubjectExtractor:
                   (doc[doc[verb_end_pt].head.i].dep_ == 'ROOT' and doc[doc[verb_end_pt].head.i].i != doc[len(doc) - 1].head.i)) and
                  doc[doc[verb_end_pt].head.i].lemma_ != 'こと' and
                  ((self.rentai_check(doc[verb_end_pt].i, *doc) or (doc[verb_end_pt].morph.get("Inflection") and '連体形' in doc[verb_end_pt].morph.get("Inflection")[0])) or
-                  (self.shuusi_check(doc[verb_end_pt].i, *doc) or (doc[verb_end_pt].morph.get("Inflection") and '終止' in doc[verb_end_pt].morph.get("Inflection")[0])))):
+                  (self.shuusi_check(doc[verb_end_pt].i, *doc) or (doc[verb_end_pt].morph.get("Inflection") and '終止' in doc[verb_end_pt].morph.get("Inflection")[0]))) or
+                 (doc[verb_end_pt].pos_ == "AUX" and doc[verb_end_pt -1 ].pos_ == "VERB" and (self.rentai_check(doc[verb_end_pt - 1].i, *doc) or self.shuusi_check(doc[verb_end_pt - 1].i, *doc)))):
             next_pt = verb_end_pt
             if doc[verb_end_pt].head.i == verb_pt:
                 next_pt = verb_pt

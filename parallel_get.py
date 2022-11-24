@@ -14,6 +14,7 @@ class ParallelExtractor:
 
 
 
+    para_ng_word = ["合弁", "競合", "共同", "同盟", "統合", "連合"]
     def para_get(self, start, end, *doc):
         """
         並列句の取得
@@ -23,17 +24,37 @@ class ParallelExtractor:
         sp = start
         ep = end
         find_ct = 0
-        if doc[start].lemma_ == '共同':
-            ret.append({'lemma': '', 'lemma_start': -1, 'lemma_end': -1})
-            return ret
+        subject_f = False
+        if doc[start].lemma_ in self.para_ng_word:
+            subject_f = True
+#            ret.append({'lemma': '', 'lemma_start': -1, 'lemma_end': -1})
+#            return ret
         no_word = ""
-        """
-        for pt in range(sp, ep):
-            if doc[pt].lemma_ == "の" and doc[pt].pos_ == "ADP" and doc[pt - 1].pos_ != "ADP":
-                for npt in range(pt, ep + 1):
-                   no_word = no_word + doc[npt].orth_
-                break
-        """
+#        """
+        if doc[ep].tag_ == "名詞-普通名詞-サ変可能":
+            stop_f = False
+            for pt in range(sp, ep):
+                if stop_f:
+                    break
+                re_katakana = re.compile(r'[\u30A1-\u30F4ー]+')
+                if doc[pt].lemma_ == "・" and not re_katakana.fullmatch(doc[pt - 1].lemma_):
+                    for ppt in range(pt, ep):
+                        if doc[ppt].lemma_ == "の":
+                            no_word = ""
+                            break
+                    if not no_word:
+                        break
+                if doc[pt].lemma_ == "の" and doc[pt].pos_ == "ADP" and doc[pt - 1].pos_ != "ADP":
+                    if doc[pt - 1].tag_ == "名詞-普通名詞-サ変可能":
+                        no_word = ""
+                        continue
+                    for npt in range(pt, ep + 1):
+                        no_word = no_word + doc[npt].orth_
+                        if doc[npt].lemma_ == "の" and npt != pt:
+                            no_word = ""
+                            stop_f = True
+                            break
+        #       """
         # 〇〇と（主語）が…　のパターン
         for cpt in reversed(range(0, start)):
 #            if (sp > cpt or cpt > ep) and (start <= doc[cpt].head.i <= end or sp <= doc[cpt].head.i <= ep or (doc[cpt].head.i == doc[end].head.i and doc[cpt + 1].lemma_ == 'と')):
@@ -46,6 +67,22 @@ class ParallelExtractor:
 #                if doc[cpt].tag_ != '名詞-普通名詞-副詞可能' and doc[end].tag_ == '名詞-普通名詞-副詞可能':     # 誤解析対応　山形空港と庄内空港は3月1日から、それぞれ空港ビル1階ロビーにモバイルバッテリーのレンタルスタンド「ChargeSPOT」を設置する
 #                    continue
                 chek = self.num_chunk(cpt, *doc)
+                chek["subject"] = subject_f
+                if subject_f:
+                    chek["dummy"] = False
+                if "の" not in chek["lemma"] and "な" not in chek["lemma"] and (doc[chek["lemma_end"] + 1].lemma_ != "など" or doc[chek["lemma_end"] + 2].lemma_ != "に") and no_word:
+                    chek["lemma"] = chek["lemma"] + no_word
+                elif "の" in chek["lemma"]:
+                    if doc[chek["lemma_end"]].tag_ == "名詞-普通名詞-サ変可能":
+                        no_word = ""
+                        for pt in range(chek["lemma_start"], chek["lemma_end"]):
+                            if doc[pt].lemma_ == "の" and doc[pt].pos_ == "ADP" and doc[pt - 1].pos_ != "ADP":
+                                if no_word:
+                                    no_word = ""
+                                    break
+                                for npt in range(pt, chek["lemma_end"] + 1):
+                                    no_word = no_word + doc[npt].orth_
+
                 """ 慣用句的(fixed)な連体修飾関係
                 if doc[chek["lemma_start"] - 1].dep_ == "fixed" and (doc[chek["lemma_start"] - 1].morph.get("Inflection") and '連体形' in doc[chek["lemma_start"] - 1].morph.get("Inflection")[0]):
                     for v_c in reversed(range(0, chek["lemma_start"] - 2)):
@@ -79,8 +116,8 @@ class ParallelExtractor:
                     """
                     sp = ret[find_ct - 1]['lemma_start']
                     ep = ret[find_ct - 1]['lemma_end']
-                    if no_word and doc[chek["lemma_end"] + 1].lemma_ == 'や' and "の" not in ret[find_ct - 1]["lemma"]:
-                        ret[find_ct - 1]["lemma"] = ret[find_ct - 1]["lemma"] + no_word
+#                    if no_word and doc[chek["lemma_end"] + 1].lemma_ == 'や' and "の" not in ret[find_ct - 1]["lemma"]:
+#                        ret[find_ct - 1]["lemma"] = ret[find_ct - 1]["lemma"] + no_word
         # （主語1）が（主語2）と…　のパターン
         if len(doc) > end + 1 and doc[end + 1].lemma_ == 'が':
             for i in range(end + 1, doc[end].head.i):
@@ -91,19 +128,24 @@ class ParallelExtractor:
                 if len(doc) > i + 1 and doc[i + 1].lemma_ == 'の' and doc[i + 1].pos_ == 'ADP':  # 〇〇の〇〇　は並列扱いしない
                     if sp <= doc[i].head.i <= ep:
                         if not find_ct:
-                            ret.append({'lemma': '', 'lemma_start': -1, 'lemma_end': -1})
+                            ret.append({'lemma': '', 'lemma_start': -1, 'lemma_end': -1, "subject": False})
                         return ret
                     else:
                         continue
                 if doc[i].head.i == doc[end].head.i and (doc[i + 1].lemma_ == 'と' or doc[i + 1].lemma_ == 'や' or doc[i + 1].norm_ == '及び' or (doc[i + 1].lemma_ == 'など' and (doc[i + 2].lemma_ == 'と' or doc[i + 2].lemma_ == 'や' or doc[i + 2].norm_ == '及び' or doc[i + 2].pos_ != 'ADP')) or (doc[i + 1].lemma_ == '、' and doc[i + 2].pos_ != 'ADP')) and doc[i + 2].lemma_ != 'する' and doc[i + 2].lemma_ != 'なる':
                     if doc[i].head.i != doc[end].head.i:
                         continue
-                    ret.append((self.num_chunk(i, *doc)))
+                    chek = self.num_chunk(i, *doc)
+                    chek["subject"] = subject_f
+                    if subject_f:
+                        chek["dummy"] = False
+#                    ret.append((self.num_chunk(i, *doc)))
+                    ret.append(chek)
                     find_ct = find_ct + 1
                     sp = ret[find_ct - 1]['lemma_start']
                     ep = ret[find_ct - 1]['lemma_end']
-                    if no_word and doc[i + 1].lemma_ == 'や' and "の" not in ret[find_ct - 1]["lemma"]:
-                        ret[find_ct - 1]["lemma"] = ret[find_ct - 1]["lemma"] + no_word
+#                    if no_word and doc[i + 1].lemma_ == 'や' and "の" not in ret[find_ct - 1]["lemma"]:
+#                        ret[find_ct - 1]["lemma"] = ret[find_ct - 1]["lemma"] + no_word
                     continue
                 if doc[i + 1].pos_ == 'ADP' and doc[i + 1].lemma_ != 'など':
                     break
@@ -115,7 +157,7 @@ class ParallelExtractor:
 #                    if doc[i].head.i == doc[end].head.i and doc[i].lemma_ == '共同':
 #                        ret = self.para_get(i, i, *doc)
 #                        return ret
-            ret.append({'lemma': '', 'lemma_start': -1, 'lemma_end': -1})
+            ret.append({'lemma': '', 'lemma_start': -1, 'lemma_end': -1, "subject": False})
         return ret
 
 

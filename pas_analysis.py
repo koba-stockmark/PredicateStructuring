@@ -33,6 +33,7 @@ class PasAnalysis:
         self.subject_get = s_g.subject_get
         p_g = ParallelExtractor()
         self.para_get = p_g.para_get
+        self.para_ng_word = p_g.para_ng_word
         v_s = VerbSpliter()
         self.verb_devide = v_s.verb_devide
         self.sub_verb_chek = v_s.sub_verb_chek
@@ -367,7 +368,7 @@ class PasAnalysis:
                 case = ''
                 ret_obj = {'lemma': '', 'lemma_start': -1, 'lemma_end': -1}
                 rule_id = verb_rule_id
-                para_obj = [{'lemma': '', 'lemma_start': -1, 'lemma_end': -1}]
+                para_obj = [{'lemma': '', 'lemma_start': -1, 'lemma_end': -1, "subject": False}]
                 if find_f and i in argument_map:
                     #
                     # 項の取得
@@ -386,32 +387,51 @@ class PasAnalysis:
                         #
                         # 項の獲得
                         #
-                        if (doc[i].dep_ == 'advcl' or doc[i].dep_ == 'acl') and (doc[i].pos_ == 'AUX' or doc[i].pos_ == 'VERB'):
+                        if ((doc[i].dep_ == 'advcl' or doc[i].dep_ == 'acl' or doc[i].dep_ == 'ccomp') and (doc[i].pos_ == 'ADJ' or doc[i].pos_ == 'AUX' or doc[i].pos_ == 'VERB')) or (len(doc) > i + 1 and doc[i].pos_ == 'VERB' and doc[i + 1].pos_ == 'AUX'):
                             """
                             ret_obj = self.verb_chunk(i, *doc)
                             """
-                            if doc[i].lemma_ == "する" and doc[i - 1].pos_ == "ADP" and doc[i - 1].lemma_ == "と" and doc[i - 2].pos_ == "NOUN":
-                                for j in reversed(range(0, i)):
-                                    if j == 0 or ((doc[j].pos_ != "ADP" or doc[j].lemma_ != "と") and doc[j].pos_ != "AUX"):
-                                        ret_obj = self.verb_chunk(j, *doc)
-                                        for jj in range(j + 1, i):
-                                            ret_obj['lemma'] = ret_obj['lemma'] + doc[jj].orth_
-                                        ret_obj['lemma'] = ret_obj['lemma'] + doc[i].lemma_
-                                        ret_obj['lemma_end'] = i
-                                        break
-                            else:
-                                ret_obj = self.verb_chunk(i, *doc)
+                            #
+                            #   PAS リレーション
+                            #
+                            predicate_find = False
+                            for check_predict in append_predict:
+                                if check_predict["lemma_start"] <= i <= check_predict["lemma_end"]:
+                                    ret_obj["lemma"] = check_predict["lemma"]
+                                    ret_obj["lemma_start"] = check_predict["lemma_start"]
+                                    ret_obj["lemma_end"] = check_predict["lemma_end"]
+                                    predicate_find = True
+                                    break
+                            if not predicate_find:
+                                if doc[i].lemma_ == "する" and doc[i - 1].pos_ == "ADP" and doc[i - 1].lemma_ == "と" and doc[i - 2].pos_ == "NOUN":
+                                    for j in reversed(range(0, i)):
+                                        if j == 0 or ((doc[j].pos_ != "ADP" or doc[j].lemma_ != "と") and doc[j].pos_ != "AUX"):
+                                            ret_obj = self.verb_chunk(j, *doc)
+                                            for jj in range(j + 1, i):
+                                                ret_obj['lemma'] = ret_obj['lemma'] + doc[jj].orth_
+                                            ret_obj['lemma'] = ret_obj['lemma'] + doc[i].lemma_
+                                            ret_obj['lemma_end'] = i
+                                            break
+                                else:
+                                    ret_obj = self.verb_chunk(i, *doc)
                         else:
                             ret_obj = self.num_chunk(i, *doc)
                             #
                             # 項の並列処理
                             #
+                            if len(doc) > ret_obj["lemma_end"] + 2 and doc[ret_obj["lemma_end"] + 1].lemma_ == "と" and doc[ret_obj["lemma_end"] + 2].lemma_ in self.para_ng_word:   # NGワードは並列処理しない
+                                continue
                             if doc[ret_obj["lemma_start"]].dep_ != 'advcl':
                                 para_obj = self.para_get(ret_obj['lemma_start'], ret_obj['lemma_end'], *doc)
                                 if para_obj and (ret_obj["lemma"] == 'とも' or ret_obj["lemma"] == '共') and doc[ret_obj['lemma_start'] - 1].lemma_ == 'と' and doc[ret_obj['lemma_start'] + 1].lemma_ == 'に':    # 〇〇とともに　は例外
                                     ret_obj = para_obj[0]
                                     del para_obj[0]
                                     case = "とともに"
+                                para_subject_case = ""
+                                if para_obj and para_obj[0]["subject"]:
+                                    for check_arg in argument:
+                                        if check_arg["subject"]:
+                                            para_subject_case = check_arg["case"]
                     elif verb["lemma"] == 'ため':     # ためだけの述部はNGとする
                         continue
                     else:
@@ -441,8 +461,11 @@ class PasAnalysis:
                     argument.append(ret_obj)
                     if para_obj and para_obj[0]["lemma"]:
                         for p_obj in para_obj:
-                            p_obj["case"] = case
-                            p_obj["subject"] = False
+                            if para_subject_case:
+                                p_obj["case"] = para_subject_case
+                            else:
+                                p_obj["case"] = case
+#                            p_obj["subject"] = False
                             p_obj["id"] = argument_id
                             p_obj["predicate_id"] = predicate_id
                             argument_id = argument_id + 1
@@ -487,7 +510,7 @@ class PasAnalysis:
                 if para_obj and para_obj[0]["lemma"]:
                     for p_obj in para_obj:
                         p_obj["case"] = case
-                        p_obj["subject"] = False
+#                        p_obj["subject"] = False
                         p_obj["id"] = argument_id
                         p_obj["predicate_id"] = predicate_id
                         argument_id = argument_id + 1
@@ -559,6 +582,8 @@ class PasAnalysis:
                         re_arg["lemma"] = ''
                         re_arg["lemma_start"] = -1
                         re_arg["lemma_end"] = -1
+                    elif (dev_obj["object"] != re_arg['lemma'].split("(")[0] and dev_obj["object"] != re_arg['lemma'].split("の")[0] and not re_arg['lemma'].endswith("」")) and len(dev_obj["object"]) < len(re_arg['lemma']):
+                        re_arg['lemma'] = dev_obj["object"]
 
                 ##########################################################################################################################################
                 #    複合術部のメインと補助への分割

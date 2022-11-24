@@ -86,12 +86,16 @@ class GovernmentActionRule:
     # 認可, "できる"
     ninka_dic = [
         "承認", "認める", "許可", "該当", "適合", "認定", "認可", "了承", "了解", "受領", "採択", "解禁", "解除", "合格",
-        "出せるようにする", "容認", "受理", "署名"
+        "出せるようにする", "容認", "受理", "署名", "登録"
     ]
     # O-V 規則
     o_v_ninka_dic = {"obj": {"承認", "許可", "認可", "手続き", "採択"},
                      "verb": {"決める", "決定", "見送る", "出す", "継続", "見直す", "受ける", "下りる", "下る"}
                      }
+
+    o_v_ninka2_dic = {"obj": {"承認", "許可", "認可", "手続き", "採択", "登録"},
+                      "verb": {"できる"}
+                      }
 
     # 契約
     keiyaku_dic = [
@@ -378,6 +382,7 @@ class GovernmentActionRule:
                    {"label": "<要請>", "words": yousei_dic},
                    {"label": "<認可>", "words": ninka_dic},
                    {"label": "<認可>", "rule": o_v_ninka_dic},
+                   {"label": "<認可>", "rule": o_v_ninka2_dic},
                    {"label": "<契約>", "words": keiyaku_dic},
                    {"label": "<訴訟>", "words": sosyou_dic},
                    {"label": "<勧告>", "words": kannkoku_dic},

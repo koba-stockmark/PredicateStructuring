@@ -296,6 +296,7 @@ class PredicatePhraseExtractor:
                             (doc[verb["lemma_end"] + 1].lemma_ == 'する' or doc[verb["lemma_end"] + 1].lemma_ == 'できる' or doc[verb["lemma_end"]].tag_ == '名詞-普通名詞-サ変可能' or
                              doc[verb["lemma_end"]].tag_ == '名詞-普通名詞-サ変形状詞可能' or doc[verb["lemma_end"]].tag_ == '名詞-普通名詞-一般')):
                         verb_w = verb["lemma"] + 'する'
+                        verb["lemma_end"] = verb["lemma_end"] + 1
                     else:
                         verb_w = verb["lemma"]
                     modality_w = verb["modality"]

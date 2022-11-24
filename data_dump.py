@@ -156,10 +156,12 @@ class DataDumpSave:
                     predic_ret = predic["lemma"] + '\t' + predic["sub_lemma"] + '\t' + predic["modality"] + '\t' + str(predic["rule_id"]) + '\t' + '\t'
             ret_subj = "\t"
             subject_only = 0
+            subjects = []
             for a_id, arg in enumerate(argument):
                 if predic["id"] == arg["predicate_id"]:
                     if arg["subject"]:
                         ret_subj = arg["lemma"] + "\t" + arg["case"]
+                        subjects.append(ret_subj)
                         if subject_only != 2:
                             subject_only = 1
                     else:
@@ -179,10 +181,17 @@ class DataDumpSave:
                                 ret = ret + text + "\t" + str(predic["id"]) + '\t' + '\t' + arg["lemma"] + "\t" + arg["case"] + '\t\t\t' + predic_ret + phase + "\n"
                     else:
                         print("\tID = %d %s(%s) phase = %s" % (a_id, arg["lemma"], arg["case"], phase))
-                        if predic["main"]:
-                            ret = ret + text + "\t" + str(predic["id"]) + '\t' + 'Main' + '\t' + ret_subj + "\t" + arg["lemma"] + "\t" + arg["case"] + '\t' + predic_ret + phase + "\n"
+                        if subjects:
+                            for ret_subject in subjects:
+                                if predic["main"]:
+                                    ret = ret + text + "\t" + str(predic["id"]) + '\t' + 'Main' + '\t' + ret_subject + "\t" + arg["lemma"] + "\t" + arg["case"] + '\t' + predic_ret + phase + "\n"
+                                else:
+                                    ret = ret + text + "\t" + str(predic["id"]) + '\t' + '\t' + ret_subject + "\t" + arg["lemma"] + "\t" + arg["case"] + '\t' + predic_ret + phase + "\n"
                         else:
-                            ret = ret + text + "\t" + str(predic["id"]) + '\t' + '\t' + ret_subj + "\t" + arg["lemma"] + "\t" + arg["case"] + '\t' + predic_ret + phase + "\n"
+                            if predic["main"]:
+                                ret = ret + text + "\t" + str(predic["id"]) + '\t' + 'Main' + '\t' + "\t" + "\t" + arg["lemma"] + "\t" + arg["case"] + '\t' + predic_ret + phase + "\n"
+                            else:
+                                ret = ret + text + "\t" + str(predic["id"]) + '\t' + "\t" + '\t' + "\t" + arg["lemma"] + "\t" + arg["case"] + '\t' + predic_ret + phase + "\n"
         return ret
 
     def data_dump_and_save4(self, text, argument, predicate):

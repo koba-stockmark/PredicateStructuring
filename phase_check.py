@@ -172,6 +172,8 @@ class PhaseCheker:
             return False
         start = predicate["lemma_start"]
         end = predicate["lemma_end"]
+        if doc[end].lemma_ == "する" and "名詞" in doc[end - 1].tag_:
+            end = end - 1
         new_end = end
         # かかり先がフェーズ判定語の場合はNG
 #        for rule in p_rule.phrase_rule:
@@ -667,6 +669,8 @@ class PhaseCheker:
                                 predicate_end = predicate[arg["predicate_id"]]["lemma_start"]
                                 if "名詞" in doc[predicate_end].tag_ or doc[predicate_end].head.i == predicate[arg["predicate_id"]]["lemma_end"]:
                                     predicate_end = predicate[arg["predicate_id"]]["lemma_end"]
+                                    if doc[predicate[arg["predicate_id"]]["lemma_end"]].lemma_ == "する" and "名詞" in doc[predicate[arg["predicate_id"]]["lemma_end"] - 1].tag_:
+                                        predicate_end = predicate_end - 1
                                 if predicate[arg["predicate_id"]]["sub_lemma_start"] != -1:
                                     predicate_end = predicate[arg["predicate_id"]]["sub_lemma_start"]
                                 predicate_end_case = ""

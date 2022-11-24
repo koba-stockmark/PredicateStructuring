@@ -23,6 +23,8 @@ class MainVerbChek:
         #                """
         # 複合動詞の場合、複合動詞間のかかり受けがあるのでそれを排除して最終かかり先を求める
         predic_head = pt
+        if doc[predic_head].pos_ == "AUX" and predic_head > 0 and doc[predic_head - 1].pos_ == "VERB":
+            predic_head = predic_head - 1
         if doc[pt].pos_ == 'VERB':
             comp_verb = self.verb_chunk(doc[doc[pt].i].i, *doc)
             for i in range(comp_verb['lemma_start'], comp_verb['lemma_end']):

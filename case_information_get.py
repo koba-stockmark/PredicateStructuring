@@ -22,7 +22,7 @@ class CaseExtractor:
         if pt < 0:
             return ret
         # 副詞系
-        if doc[pt].pos_ == "VERB" or doc[pt].pos_ == "ADJ":
+        if doc[pt].pos_ == "VERB" or doc[pt].pos_ == "AUX" or doc[pt].pos_ == "ADJ":
             is_fukushiteki = True
         if ((doc[pt].dep_ == 'advmod' and doc[pt].pos_ == 'ADV') or doc[pt].tag_ == '名詞-普通名詞-助数詞可能' or doc[pt].tag_ == '助詞-副助詞') and doc[pt + 1].pos_ != 'ADP':
             return "副詞的"
