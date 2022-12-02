@@ -30,8 +30,10 @@ class DataDumpSave:
                 subj_f = True
                 if subj['dummy'] and subj["predicate_id"] == id:
                     dummy_subject = subj["lemma"]
+                    subject_case = subj["case"]
                 else:
                     subject_w = subj["lemma"]
+                    subject_case = subj["case"]
                 # 見つけた主語ごとに他を展開
                 for data in argument:
                     if data["predicate_id"] != id:
@@ -46,10 +48,10 @@ class DataDumpSave:
 
                     if dummy_subject:
                         print('all = 【%s(%s) - %s】 subj = 【%s (省略)】 modality = %s rule_id = %d' % (obj_w, case, verb_w, dummy_subject, modal, rule_id))
-                        ret = ret + text + '\t\t' + dummy_subject + '(省略)\t' + obj_w + '\t' + case + '\t' + verb_w + '\t\t' + phase + '\t' + modal + '\t' + str(rule_id) + '\n'
+                        ret = ret + text + '\tー\t' + dummy_subject + '(省略)\t' + subject_case + "\t" + obj_w + '\t' + case + '\t' + verb_w + '\t\t' + phase + '\t' + modal + '\t' + str(rule_id) + '\n'
                     else:
                         print('all = 【%s(%s) - %s】 subj = 【%s】 modality = %s rule_id = %d' % (obj_w, case, verb_w, subject_w, modal, rule_id))
-                        ret = ret + text + '\t\t' + subject_w + '\t' + obj_w + '\t' + case + '\t' + verb_w + '\t\t' + phase + '\t' + modal + '\t' + str(rule_id) + '\n'
+                        ret = ret + text + '\tー\t' + subject_w + '\t' + subject_case + "\t" + obj_w + '\t' + case + '\t' + verb_w + '\t\t' + phase + '\t' + modal + '\t' + str(rule_id) + '\n'
             else:
                 continue
         if not subj_f:
@@ -60,16 +62,17 @@ class DataDumpSave:
                 case = data["case"]
                 if dummy_subject and data["predicate_id"] == id:
                     print('all = 【%s(%s) - %s】 subj = 【%s (省略)】 modality = %s rule_id = %d' % (obj_w, case, verb_w, dummy_subject, modal, rule_id))
-                    ret = ret + text + '\t\t' + dummy_subject + '(省略)\t' + obj_w + '\t' + case + '\t' + verb_w + '\t\t' + phase + '\t' + modal + '\t' + str(rule_id) + '\n'
+                    ret = ret + text + '\tー\t' + dummy_subject + '(省略)\t'  + "\t" + obj_w + '\t' + case + '\t' + verb_w + '\t\t' + phase + '\t' + modal + '\t' + str(rule_id) + '\n'
                 else:
                     print('all = 【%s(%s) - %s】 subj = 【%s】 modality = %s rule_id = %d' % (obj_w, case, verb_w, subject_w, modal, rule_id))
-                    ret = ret + text + '\t\t' + subject_w + '\t' + obj_w + '\t' + case + '\t' + verb_w + '\t\t' + phase + '\t' + modal + '\t' + str(rule_id) + '\n'
+                    ret = ret + text + '\tー\t' + subject_w + '\t' + "\t" + obj_w + '\t' + case + '\t' + verb_w + '\t\t' + phase + '\t' + modal + '\t' + str(rule_id) + '\n'
         return ret
 
     def data_dump_and_save2(self, text, argument, predicate):
 
         ret = ''
         subject_w = ''
+        subject_case = ''
         dummy_subject = ''
 
         for chek_predicate in predicate:
@@ -92,8 +95,10 @@ class DataDumpSave:
                         subj_f = True
                         if subj['dummy'] and chek_predicate["id"] == subj["predicate_id"]:
                             dummy_subject = subj["lemma"]
+                            subject_case = subj["case"]
                         else:
                             subject_w = subj["lemma"]
+                            subject_case = subj["case"]
                         for data in argument:
                             if chek_predicate["id"] != data["predicate_id"]:
                                 continue
@@ -112,10 +117,10 @@ class DataDumpSave:
 
                             if dummy_subject:
                                 print('【%s(%s) - %s - (%s)】 subj = 【%s(省略)】 フェーズ = 【%s】modality = %s rule_id = %d' % (obj_w, case, verb_w, sub_verb_w, dummy_subject, phase, modal, rule_id))
-                                ret = ret + text + '\tMain\t' + dummy_subject + '(省略)\t' + obj_w + '\t' + case + '\t' + verb_w + '\t' + sub_verb_w + '\t' + phase + '\t' + modal + '\t' + str(rule_id) + '\n'
+                                ret = ret + text + '\tMain\t' + dummy_subject + '(省略)\t' + subject_case + "\t" + obj_w + '\t' + case + '\t' + verb_w + '\t' + sub_verb_w + '\t' + phase + '\t' + modal + '\t' + str(rule_id) + '\n'
                             else:
                                 print('【%s(%s) - %s - (%s)】 subj = 【%s】 フェーズ = 【%s】modality = %s rule_id = %d' % (obj_w, case, verb_w, sub_verb_w, subject_w, phase, modal, rule_id))
-                                ret = ret + text + '\tMain\t' + subject_w + '\t' + obj_w + '\t' + case + '\t' + verb_w + '\t' + sub_verb_w + '\t' + phase + '\t' + modal + '\t' + str(rule_id) + '\n'
+                                ret = ret + text + '\tMain\t' + subject_w + '\t' + subject_case + "\t" + obj_w + '\t' + case + '\t' + verb_w + '\t' + sub_verb_w + '\t' + phase + '\t' + modal + '\t' + str(rule_id) + '\n'
                     else:
                         continue
                 if not subj_f:
@@ -130,10 +135,10 @@ class DataDumpSave:
                             phase = ''
                         if dummy_subject:
                             print('【%s(%s) - %s - (%s)】 subj = 【%s(省略)】 フェーズ = 【%s】modality = %s rule_id = %d' % (obj_w, case, verb_w, sub_verb_w, dummy_subject, phase, modal, rule_id))
-                            ret = ret + text + '\tMain\t' + dummy_subject + '(省略)\t' + obj_w + '\t' + case + '\t' + verb_w + '\t' + sub_verb_w + '\t' + phase + '\t' + modal + '\t' + str(rule_id) + '\n'
+                            ret = ret + text + '\tMain\t' + dummy_subject + '(省略)\t' + subject_case + "\t" + obj_w + '\t' + case + '\t' + verb_w + '\t' + sub_verb_w + '\t' + phase + '\t' + modal + '\t' + str(rule_id) + '\n'
                         else:
                             print('【%s(%s) - %s - (%s)】 subj = 【%s】 フェーズ = 【%s】modality = %s rule_id = %d' % (obj_w, case, verb_w, sub_verb_w, subject_w, phase, modal, rule_id))
-                            ret = ret + text + '\tMain\t' + subject_w + '\t' + obj_w + '\t' + case + '\t' + verb_w + '\t' + sub_verb_w + '\t' + phase + '\t' + modal + '\t' + str(rule_id) + '\n'
+                            ret = ret + text + '\tMain\t' + subject_w + '\t' + subject_case + "\t" + obj_w + '\t' + case + '\t' + verb_w + '\t' + sub_verb_w + '\t' + phase + '\t' + modal + '\t' + str(rule_id) + '\n'
         return ret
 
     def data_dump_and_save3(self, text, argument, predicate):
@@ -178,7 +183,7 @@ class DataDumpSave:
                             if predic["main"]:
                                 ret = ret + text + "\t" + str(predic["id"]) + '\t' + 'Main' + '\t' + arg["lemma"] + "\t" + arg["case"] +  '\t\t\t' + predic_ret + phase + "\n"
                             else:
-                                ret = ret + text + "\t" + str(predic["id"]) + '\t' + '\t' + arg["lemma"] + "\t" + arg["case"] + '\t\t\t' + predic_ret + phase + "\n"
+                                ret = ret + text + "\t" + str(predic["id"]) + '\t' + "ー" + '\t' + arg["lemma"] + "\t" + arg["case"] + '\t\t\t' + predic_ret + phase + "\n"
                     else:
                         print("\tID = %d %s(%s) phase = %s" % (a_id, arg["lemma"], arg["case"], phase))
                         if subjects:
@@ -186,12 +191,12 @@ class DataDumpSave:
                                 if predic["main"]:
                                     ret = ret + text + "\t" + str(predic["id"]) + '\t' + 'Main' + '\t' + ret_subject + "\t" + arg["lemma"] + "\t" + arg["case"] + '\t' + predic_ret + phase + "\n"
                                 else:
-                                    ret = ret + text + "\t" + str(predic["id"]) + '\t' + '\t' + ret_subject + "\t" + arg["lemma"] + "\t" + arg["case"] + '\t' + predic_ret + phase + "\n"
+                                    ret = ret + text + "\t" + str(predic["id"]) + '\t' + "ー" + '\t' + ret_subject + "\t" + arg["lemma"] + "\t" + arg["case"] + '\t' + predic_ret + phase + "\n"
                         else:
                             if predic["main"]:
                                 ret = ret + text + "\t" + str(predic["id"]) + '\t' + 'Main' + '\t' + "\t" + "\t" + arg["lemma"] + "\t" + arg["case"] + '\t' + predic_ret + phase + "\n"
                             else:
-                                ret = ret + text + "\t" + str(predic["id"]) + '\t' + "\t" + '\t' + "\t" + arg["lemma"] + "\t" + arg["case"] + '\t' + predic_ret + phase + "\n"
+                                ret = ret + text + "\t" + str(predic["id"]) + '\t' + "ー" + "\t" + '\t' + "\t" + arg["lemma"] + "\t" + arg["case"] + '\t' + predic_ret + phase + "\n"
         return ret
 
     def data_dump_and_save4(self, text, argument, predicate):

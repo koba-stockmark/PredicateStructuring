@@ -101,6 +101,8 @@ class SubjectExtractor:
                 if doc[chek].tag_ == '名詞-普通名詞-副詞可能':
                     ret["special_connection"] = True
                 chek = doc[chek].head.i
+        if doc[doc[pt].head.i - 1].lemma_ == "と" and doc[doc[pt].head.i - 2].tag_ == "補助記号-括弧閉" and doc[pt].head.head.i != verb_pt:
+            return ret
         if doc[pt].i != ng_pt and (ng_pt <= chek <= verb_pt or (chek == doc[verb_pt].head.i and doc[verb_pt].pos_ != "ADJ") or
                                    (chek == doc[verb_pt].head.head.i and doc[verb_pt].pos_ != "ADJ" and
                                     ((doc[verb_pt].head.pos_ != 'NUM' and doc[verb_pt].head.pos_ != 'NOUN') or
@@ -157,9 +159,11 @@ class SubjectExtractor:
                     continue
                 if doc[doc[i].head.i].norm_ == '為' and doc[doc[i].head.i].head.i != verb_end_pt:
                     continue
+                if len(doc) > verb_end_pt + 1 and doc[verb_end_pt + 1].lemma_ == "れる":
+                    continue
                 if len(doc) > verb_end_pt + 1 and doc[verb_end_pt + 1].lemma_ == "こと":
                     continue
-#                if doc[i].head.i > verb_end_pt and "と-副詞的" in self.case_get(doc[verb_end_pt].i, *doc):
+    #                if doc[i].head.i > verb_end_pt and "と-副詞的" in self.case_get(doc[verb_end_pt].i, *doc):
 #                    continue
                 ret = self.relational_connect_check(i, ng_pt, verb_end_pt, *doc)
                 if ret['lemma']:
@@ -237,7 +241,7 @@ class SubjectExtractor:
             next_pt = verb_end_pt
             if doc[verb_end_pt].head.i == verb_pt:
                 next_pt = verb_pt
-            if (doc[doc[next_pt].head.i].pos_ == 'NOUN' or doc[doc[next_pt].head.i].pos_ == 'PROPN' or doc[doc[next_pt].head.i].pos_ == 'NUM') and doc[doc[next_pt].head.i].lemma_ != '予定':
+            if (doc[doc[next_pt].head.i].pos_ == 'NOUN' or doc[doc[next_pt].head.i].pos_ == 'PROPN' or doc[doc[next_pt].head.i].pos_ == 'NUM') and doc[doc[next_pt].head.i].lemma_ != '予定' and doc[doc[next_pt].head.i].lemma_ != 'はず':
                 if doc[next_pt + 1].lemma_ != 'さまざま' and doc[next_pt + 1].lemma_ != '能力' and (doc[next_pt + 1].lemma_ != 'する' or doc[next_pt + 2].lemma_ != '能力'):
 #                    if doc[next_pt].head.head.tag_ != "動詞-非自立可能":
                     if doc[next_pt].pos_ != "ADJ" and doc[next_pt].head.tag_ != "名詞-普通名詞-副詞可能": # 形容詞の連体形、修飾先が形式名詞の場合はNG

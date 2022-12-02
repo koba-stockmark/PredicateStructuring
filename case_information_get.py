@@ -29,7 +29,7 @@ class CaseExtractor:
         # 動詞系　格と修飾関係
         if doc[pt].lemma_ == "を":   # 〇〇をする　の対応
             pt = pt + 1
-        if len(doc) > pt + 1 and (doc[pt].pos_ == 'VERB' or (doc[pt].pos_ == 'AUX' and doc[pt + 1].pos_ != "AUX")) and doc[pt + 1].tag_ != "助詞-準体助詞" and doc[pt + 1].tag_ != "形状詞-助動詞語幹" and doc[pt].morph.get("Inflection") and '連体形' in doc[pt].morph.get("Inflection")[0]:
+        if len(doc) > pt + 1 and (doc[pt].pos_ == 'VERB' or (doc[pt].pos_ == 'AUX' and doc[pt + 1].pos_ != "AUX")) and doc[pt + 1].tag_ != "助詞-準体助詞" and doc[pt + 1].tag_ != "名詞-普通名詞-副詞可能" and doc[pt + 1].tag_ != "形状詞-助動詞語幹" and doc[pt].morph.get("Inflection") and '連体形' in doc[pt].morph.get("Inflection")[0]:
             return ret + '連体修飾'
         if (doc[pt].pos_ == 'VERB' or doc[pt].pos_ == 'AUX' or doc[pt].pos_ == 'ADJ') and (len(doc) > pt + 1 and (doc[pt + 1].pos_ == 'AUX' or doc[pt + 1].pos_ == 'SCONJ')):
             if doc[pt + 1].pos_ == 'AUX' and (doc[pt + 1].orth_ == 'た' or doc[pt + 1].orth_ == 'だ' or doc[pt + 1].orth_ == 'です' or doc[pt + 1].orth_ == 'ます'):
@@ -241,6 +241,10 @@ class CaseExtractor:
                         ret = doc[i].lemma_ + ret
                     else:
                         break
+            if doc[pt].norm_ == "中" and doc[pt].tag_ == "名詞-普通名詞-副詞可能":
+                return "なか-副詞的"
+            if doc[pt].norm_ == "うち" and doc[pt].tag_ == "名詞-普通名詞-副詞可能":
+                return "うち-副詞的"
         if doc[pt].pos_ == 'VERB' or doc[pt].pos_ == 'AUX' and doc[pt].dep_ != "advcl" and "副詞的" not in ret:
             if ret.endswith("する"):
                 ret2 = "連体修飾"

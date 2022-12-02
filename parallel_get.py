@@ -57,6 +57,8 @@ class ParallelExtractor:
         #       """
         # 〇〇と（主語）が…　のパターン
         for cpt in reversed(range(0, start)):
+            if doc[cpt].lemma_ == "なか" and doc[cpt + 1].pos_ != "ADP":  # 〇〇のなか、…
+                continue
 #            if (sp > cpt or cpt > ep) and (start <= doc[cpt].head.i <= end or sp <= doc[cpt].head.i <= ep or (doc[cpt].head.i == doc[end].head.i and doc[cpt + 1].lemma_ == 'と')):
             if (sp > cpt or cpt > ep) and (start <= doc[cpt].head.i <= end or sp <= doc[cpt].head.i <= ep):
                 if (doc[cpt].pos_ == 'CCONJ' or doc[cpt].pos_ == 'SCONJ' or doc[cpt].pos_ == 'PUNCT' or doc[cpt].pos_ == 'ADP' or doc[cpt].pos_ == 'DET' or doc[cpt].pos_ == 'AUX' or

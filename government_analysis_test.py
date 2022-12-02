@@ -4,7 +4,6 @@ from government_news_analysis import GovernmentNewsAnalysis
 gnp = GovernmentNewsAnalysis()
 
 input_file = "keisan_input.json"
-input_file2 = "env.json"
 out_file = open('keisan_result.tsv', 'w')
 
 # 政府ニュースのチェック

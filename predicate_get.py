@@ -22,6 +22,8 @@ class PredicateGet:
 
     def predicate_get(self, pt, *doc):
         token = doc[pt]
+        if doc[pt].tag_ == "補助記号-一般":
+            return {}
         if (len(doc) > token.i + 1 and doc[token.i + 1].tag_ == '接尾辞-名詞的-一般') or (len(doc) > token.i + 2 and doc[token.i + 1].pos_ == 'AUX' and doc[token.i + 2].tag_ == '接尾辞-名詞的-一般'):     # 生成名詞はNG
             return {}
         if (token.pos_ == 'VERB' or token.pos_ == 'ADJ' or token.pos_ == 'ADV' or token.dep_ == 'ROOT' or token.dep_ == 'ROOT' or token.dep_ == 'obl' or token.dep_ == 'acl' or token.dep_ == 'advcl' or token.tag_ == '名詞-普通名詞-副詞可能' or
@@ -81,7 +83,7 @@ class PredicateGet:
                 return self.predicate_phrase_get(token.i, *doc)
             #   〇〇　＋　を　＋　〇〇(名詞) + 、+ ... 　
             #
-            elif token.i > 0 and doc[token.i - 1].pos_ == 'ADP' and (len(doc) > token.i + 1 and (token.pos_ == 'NOUN' and token.tag_ != '接尾辞-名詞的-副詞可能' and token.tag_ != '接尾辞-名詞的-助数詞' and token.tag_ != '名詞-普通名詞-助数詞可能') and token.tag_ != '名詞-普通名詞-形状詞可能' and doc[token.i + 1].tag_ == '補助記号-読点'):
+            elif token.i > 0 and doc[token.i - 1].pos_ == 'ADP' and (len(doc) > token.i + 1 and (token.pos_ == 'NOUN' and token.tag_ != '接尾辞-名詞的-副詞可能' and token.tag_ != '接尾辞-名詞的-助数詞' and token.tag_ != '名詞-普通名詞-助数詞可能' and token.tag_ != '名詞-普通名詞-形状詞可能' and token.tag_ != '名詞-普通名詞-副詞可能') and doc[token.i + 1].tag_ == '補助記号-読点'):
                 return self.predicate_phrase_get(token.i, *doc)
             #   〇〇　＋　を　＋　普通名詞。　　　体言止 連用中止
             #

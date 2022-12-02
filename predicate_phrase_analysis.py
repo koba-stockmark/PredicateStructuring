@@ -402,9 +402,15 @@ class PredicatePhraseExtractor:
             ###############################
             #    普通名詞　〇〇　＋　を　＋　〇〇日
             ###############################
-            elif (doc[pt].tag_ == '接尾辞-名詞的-助数詞' or doc[pt].tag_ == '名詞-普通名詞-助数詞可能' or doc[pt].tag_ == '名詞-普通名詞-副詞可能') and (len(doc) <= doc[pt].i + 1 or doc[doc[pt].i + 1].lemma_ != '」'):
+            elif (doc[pt].tag_ == '接尾辞-名詞的-助数詞' or doc[pt].tag_ == '名詞-普通名詞-助数詞可能' or doc[pt].tag_ == '名詞-普通名詞-副詞可能') and (len(doc) <= doc[pt].i + 1 or (doc[doc[pt].i + 1].lemma_ != '」' and doc[doc[pt].i + 1].pos_ != "AUX")):
                 verb_w = ''
                 verb = self.num_chunk(doc[pt].i, *doc)
+                verb["lemma"] = ""
+                for ch in reversed(range(verb["lemma_start"], verb["lemma_end"] + 1)):
+                    if doc[ch].lemma_ == "の":
+                        verb["lemma_start"] = ch + 1
+                        break
+                    verb["lemma"] = doc[ch].orth_ + verb["lemma"]
                 verb_w = verb["lemma"]
                 modality_w = ""
                 rule_id = 33

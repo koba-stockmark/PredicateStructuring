@@ -168,7 +168,7 @@ class VerbSpliter:
                     if doc[end].lemma_ == 'ため' or doc[end].lemma_ == 'もの' or doc[end].lemma_ == 'とき' or doc[end].lemma_ == '際' or doc[end].lemma_ == 'こと' or doc[end].lemma_ == '場合' or doc[end].lemma_ == '人' or doc[end].lemma_ == 'とき':
                         return {'verb': '', 'sub_verb': self.compaound(i, end, *doc) + 'だ', 'verb_start': -1, 'verb_end': -1, 'sub_verb_start': i, 'sub_verb_end': end}
                     elif doc[end].tag_ == '名詞-普通名詞-サ変可能':
-                        if doc[i - 1].tag_ == '名詞-普通名詞-一般':
+                        if doc[i - 1].tag_ == '名詞-普通名詞-一般' or (doc[i - 1].tag_ == '形状詞-一般' and doc[i - 1].head.i == i):
                             return {'verb': self.compaound(start, end, *doc), 'sub_verb': '', 'verb_start': start, 'verb_end': end, 'sub_verb_start': -1, 'sub_verb_end': -1}
                         return {'verb': '', 'sub_verb': self.compaound(i, end, *doc) + 'する', 'verb_start': -1, 'verb_end': -1, 'sub_verb_start': i, 'sub_verb_end': end}
                     elif doc[end].lemma_ == 'だ' or doc[end].lemma_ == 'です':
@@ -191,6 +191,8 @@ class VerbSpliter:
                     elif doc[end].norm_ == '成る':
                         return {'verb': '', 'sub_verb': self.compaound(i, end, *doc), 'verb_start': -1, 'verb_end': -1, 'sub_verb_start': i, 'sub_verb_end': end}
                     elif doc[end].norm_ == '為る':
+                        if doc[i - 1].tag_ == '名詞-普通名詞-一般' or doc[i - 1].tag_ == '名詞-普通名詞-サ変可能' or (doc[i - 1].tag_ == '形状詞-一般' and doc[i - 1].head.i == i):
+                            return {'verb': self.compaound(start, end, *doc), 'sub_verb': '', 'verb_start': start, 'verb_end': end, 'sub_verb_start': -1, 'sub_verb_end': -1}
                         return {'verb': '', 'sub_verb': self.compaound(i, end, *doc), 'verb_start': -1, 'verb_end': -1, 'sub_verb_start': i, 'sub_verb_end': end}
                     else:
                         return {'verb': '', 'sub_verb': self.compaound(i, end, *doc) + 'する', 'verb_start': -1, 'verb_end': -1, 'sub_verb_start': i, 'sub_verb_end': end}
