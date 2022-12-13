@@ -15,6 +15,7 @@ class ParallelExtractor:
 
 
     para_ng_word = ["合弁", "競合", "共同", "同盟", "統合", "連合"]
+
     def para_get(self, start, end, *doc):
         """
         並列句の取得
@@ -25,6 +26,8 @@ class ParallelExtractor:
         ep = end
         find_ct = 0
         subject_f = False
+        if end > 1 and doc[end - 2].lemma_ == "など" and (doc[end - 1].lemma_ == "を" or doc[end - 1].lemma_ == "が" or doc[end - 1].lemma_ == "は" or doc[end - 1].lemma_ == "へ" or doc[end - 1].lemma_ == "に"):
+            return ret
         if doc[start].lemma_ in self.para_ng_word:
             subject_f = True
 #            ret.append({'lemma': '', 'lemma_start': -1, 'lemma_end': -1})
@@ -63,6 +66,8 @@ class ParallelExtractor:
             if (sp > cpt or cpt > ep) and (start <= doc[cpt].head.i <= end or sp <= doc[cpt].head.i <= ep):
                 if (doc[cpt].pos_ == 'CCONJ' or doc[cpt].pos_ == 'SCONJ' or doc[cpt].pos_ == 'PUNCT' or doc[cpt].pos_ == 'ADP' or doc[cpt].pos_ == 'DET' or doc[cpt].pos_ == 'AUX' or
                         ((doc[cpt].pos_ == 'VERB' or doc[cpt].pos_ == 'ADJ' or doc[cpt].pos_ == 'ADV') and (len(doc) <= cpt + 1 or doc[cpt + 1].tag_ != '接尾辞-名詞的-一般'))):
+                    continue
+                if doc[cpt].tag_ == "名詞-普通名詞-助数詞可能" and cpt > 0 and doc[cpt - 1].lemma_ == "この":
                     continue
                 if len(doc) > cpt + 1 and (doc[cpt + 1].pos_ == 'VERB' or doc[cpt + 1].tag_ == '動詞-非自立可能'):
                     continue

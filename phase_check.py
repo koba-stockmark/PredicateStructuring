@@ -448,7 +448,7 @@ class PhaseCheker:
                    "加": "カナダ", "印": "インド", "豪": "オーストラリア", "蘭": "オランダ", "朝": "北朝鮮", "西": "スペイン",
                    "台": "台湾", "比": "フィリピン", "露": "ロシア", "香港": "香港", "欧州": "欧州",
                    "州": "米国"}
-    ng_country_dic = {"九州", "本州"}
+    ng_country_dic = {"九州", "本州", "米粉", "米菓", "純米"}
 
     def country_check(self, argument, predicate, *doc):
         country = "日本"
@@ -470,7 +470,7 @@ class PhaseCheker:
                             other_country = doc[i].lemma_
                     else:
                         if i != arg["lemma_end"] and len(doc) > i + 1 and doc[i + 1].pos_ != "ADP":
-                            if doc[i].lemma_ in self.country_dic and doc[i].lemma_ not in self.ng_country_dic:
+                            if doc[i].lemma_ in self.country_dic and doc[i].lemma_ not in self.ng_country_dic and doc[i].tag_ != "接尾辞-名詞的-一般":
                                 if predicate_is_main:
                                     subject_ari = True
                                     country = self.country_dic[doc[i].lemma_]

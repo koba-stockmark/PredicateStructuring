@@ -875,6 +875,9 @@ class ChunkExtractor:
                     ((doc[i].pos_ == 'AUX' or doc[i].pos_ == 'VERB') and doc[i + 1].orth_ == 'か')):  # 〇〇か〇〇
                     start_pt = i
                     ret = self.connect_word(doc[i].orth_, ret)
+                elif doc[i].pos_ == 'ADP' and doc[i + 1].lemma_ == "を":
+                    start_pt = i
+                    ret = self.connect_word(doc[i].orth_, ret)
                 elif doc[i].tag_ == '代名詞' and doc[i + 1].lemma_ == "の":
                     start_pt = i
                     ret = self.connect_word(doc[i].orth_, ret)
@@ -926,6 +929,9 @@ class ChunkExtractor:
                     start_pt = i
                     ret = self.connect_word(doc[i].orth_, ret)
                 elif doc[i].lemma_ == 'する' and len(doc) > i + 1 and doc[i + 1].pos_ == 'NOUN' and doc[i - 1].pos_ == 'ADV':  # 〇〇する〇〇
+                    start_pt = i
+                    ret = self.connect_word(doc[i].orth_, ret)
+                elif doc[i].lemma_ == 'この' and len(doc) > i + 1 and doc[i + 1].lemma_ == '度':  # この度
                     start_pt = i
                     ret = self.connect_word(doc[i].orth_, ret)
                 else:

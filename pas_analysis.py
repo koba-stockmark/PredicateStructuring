@@ -504,11 +504,13 @@ class PasAnalysis:
             if (subject_w and ret_subj["case"] == 'が' and
                     ("rentai_subject" not in ret_subj or not ret_subj["rentai_subject"]) and
                     not argument_map and
-                    (self.shuusi_check(verb["lemma_end"], *doc) or self.rentai_check(verb["lemma_end"], *doc)) and
+#                    (self.shuusi_check(verb["lemma_end"], *doc) or self.rentai_check(verb["lemma_end"], *doc)) and
+                    (self.rentai_check(verb["lemma_end"], *doc)) and
                     doc[verb["lemma_end"] + 1].lemma_ != 'こと' and
                     (doc[verb["lemma_end"] + 1].pos_ != 'AUX' or (doc[verb["lemma_end"] + 2].lemma_ != 'こと' and doc[verb["lemma_end"] + 2].norm_ != '中')) and
                     doc[doc[verb["lemma_end"]].head.i].lemma_ != 'こと' and doc[verb["lemma_end"]].pos_ != "ADJ"):
 #                    doc[doc[verb["lemma_end"]].head.i].pos_ == 'NOUN' and doc[doc[verb["lemma_end"]].head.i].lemma_ != 'こと' and doc[verb["lemma_end"]].pos_ != "ADJ":
+                ret_obj = {'lemma': '', 'lemma_start': -1, 'lemma_end': -1}
                 if doc[doc[verb["lemma_end"]].head.i].pos_ == 'NOUN':
                     ret_obj = self.num_chunk(doc[verb["lemma_end"]].head.i, *doc)
                 else:

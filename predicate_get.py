@@ -33,6 +33,12 @@ class PredicateGet:
                 (len(doc) > token.i + 1 and token.pos_ == 'NOUN' and doc[token.i + 1].tag_ == '動詞-非自立可能') or
                 (len(doc) > token.i + 2 and token.tag_ == '名詞-普通名詞-サ変可能' and token.dep_ == 'nmod' and token.head.dep_ == 'obj' and doc[token.i + 1].lemma_ == 'や' and self.rentai_check(token.i + 2, *doc)) or
                 (len(doc) > token.i + 1 and token.tag_ == '名詞-普通名詞-サ変可能' and token.dep_ == 'nmod' and (doc[token.i + 1].lemma_ == '、' or doc[token.i + 1].lemma_ == '：'))):
+            is_meishi_syuusyoku = False
+            if len(doc) > pt + 1 and doc[pt + 1].pos_ != "VERB" and doc[pt + 1].lemma_ != "に":
+                for chp in range(0, pt):
+                    if doc[chp].head.i == pt and pt > chp + 1 and doc[pt + 1].tag_ != "助詞-副助詞" and doc[chp + 1].pos_ == "ADP" and doc[chp + 1].lemma_ != "の" and doc[chp + 1].lemma_ != "や" and doc[chp + 1].lemma_ != "と":
+                        is_meishi_syuusyoku = True
+                        break
             if token.dep_ == 'fixed':
                 return {}
 #            if token.dep_ == 'compound':
@@ -60,6 +66,8 @@ class PredicateGet:
             elif len(doc) > token.i + 1 and token.pos_ == 'NOUN' and doc[token.i + 1].pos_ == 'AUX':
                 return self.predicate_phrase_get(token.i, *doc)
             elif len(doc) > token.i + 2 and token.pos_ == 'NOUN' and doc[token.i + 1].pos_ == 'PUNCT' and doc[token.i + 2].pos_ == 'AUX':
+                return self.predicate_phrase_get(token.i, *doc)
+            elif is_meishi_syuusyoku:     # 〇〇が〇〇で、　名詞が格を伴って名詞を修飾している場合
                 return self.predicate_phrase_get(token.i, *doc)
             elif token.tag_ == '名詞-普通名詞-サ変可能' and ((len(doc) > token.i + 1 and doc[token.i + 1].pos_ == 'ADP') or (len(doc) > token.i + 2 and doc[token.i + 1].pos_ == 'PUNCT' and doc[token.i + 2].pos_ == 'ADP')):
                 return {}
