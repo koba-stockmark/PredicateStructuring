@@ -92,6 +92,7 @@ class DataDumpSave:
                         all_subject = False
                 for subj in argument:
                     if subj['subject'] and chek_predicate["id"] == subj["predicate_id"]:
+                        phase = ""
                         subj_f = True
                         if subj['dummy'] and chek_predicate["id"] == subj["predicate_id"]:
                             dummy_subject = subj["lemma"]
@@ -99,6 +100,10 @@ class DataDumpSave:
                         else:
                             subject_w = subj["lemma"]
                             subject_case = subj["case"]
+                        if "phase" in subj:
+                            phase = subj["phase"]
+                        if "category" in subj:
+                            phase = subj["category"]
                         for data in argument:
                             if chek_predicate["id"] != data["predicate_id"]:
                                 continue
@@ -110,11 +115,18 @@ class DataDumpSave:
                                 if subject_w != data["lemma"]:
                                     continue
                             case = data["case"]
-                            if "phase" in data:
-                                phase = data["phase"]
-                            else:
-                                phase = ''
-
+                            if "phase" in data and data["phase"] not in phase:
+                                phase = phase + data["phase"]
+                            if "category" in data and data["category"] not in phase:
+                                if "," in data["category"] and phase:
+                                    for add in data["category"].split(","):
+                                        if add not in phase:
+                                            phase = phase + "," + add
+                                else:
+                                    if phase:
+                                        phase = phase + "," + data["category"]
+                                    else:
+                                        phase = data["category"]
                             if dummy_subject:
                                 print('【%s(%s) - %s - (%s)】 subj = 【%s(省略)】 フェーズ = 【%s】modality = %s rule_id = %d' % (obj_w, case, verb_w, sub_verb_w, dummy_subject, phase, modal, rule_id))
                                 ret = ret + text + '\tMain\t' + dummy_subject + '(省略)\t' + subject_case + "\t" + obj_w + '\t' + case + '\t' + verb_w + '\t' + sub_verb_w + '\t' + phase + '\t' + modal + '\t' + str(rule_id) + '\n'
@@ -124,15 +136,17 @@ class DataDumpSave:
                     else:
                         continue
                 if not subj_f:
+                    phase = ""
                     for data in argument:
                         if chek_predicate["id"] != data["predicate_id"]:
                             continue
                         obj_w = data["lemma"]
                         case = data["case"]
+                        phase = ""
                         if "phase" in data:
                             phase = data["phase"]
-                        else:
-                            phase = ''
+                        if "category" in data:
+                            phase = data["category"]
                         if dummy_subject:
                             print('【%s(%s) - %s - (%s)】 subj = 【%s(省略)】 フェーズ = 【%s】modality = %s rule_id = %d' % (obj_w, case, verb_w, sub_verb_w, dummy_subject, phase, modal, rule_id))
                             ret = ret + text + '\tMain\t' + dummy_subject + '(省略)\t' + subject_case + "\t" + obj_w + '\t' + case + '\t' + verb_w + '\t' + sub_verb_w + '\t' + phase + '\t' + modal + '\t' + str(rule_id) + '\n'
@@ -173,10 +187,11 @@ class DataDumpSave:
                         subject_only = 2
             for a_id, arg in enumerate(argument):
                 if predic["id"] == arg["predicate_id"]:
+                    phase = ''
                     if "phase" in arg:
                         phase = arg["phase"]
-                    else:
-                        phase = ''
+                    if "category" in arg:
+                        phase = arg["category"]
                     if arg["subject"]:
                         print("\tID = %d %s(%s)_主語 phase = %s" % (a_id, arg["lemma"], arg["case"], phase))
                         if subject_only == 1:
@@ -231,10 +246,11 @@ class DataDumpSave:
                         "sub_lemma"] + '\t\t\t\t\t' + predic["modality"] + '\t' + str(predic["rule_id"]) + '\t' + '\n'
             for a_id, arg in enumerate(argument):
                 if predic["id"] == arg["predicate_id"]:
+                    phase = ''
                     if "phase" in arg:
                         phase = arg["phase"]
-                    else:
-                        phase = ''
+                    if "category" in arg:
+                        phase = arg["category"]
                     if arg["subject"]:
                         print("\tID = %d %s(%s)_主語 phase = %s" % (a_id, arg["lemma"], arg["case"], phase))
                         ret = ret + "\t\t\t\t\t" + arg["case"] + "\t主語\t" + arg["lemma"] + phase + "\n"
