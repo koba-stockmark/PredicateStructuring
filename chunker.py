@@ -1,10 +1,14 @@
 import re
+from modality_analysis import ModalityAnalysis
 class ChunkExtractor:
 
     def __init__(self):
         """
         関数`__init__`はクラスをインスタンス化した時に実行されます。
         """
+        m_a = ModalityAnalysis()
+        self.modality_get = m_a.modality_get
+
 #        self.knp = KNP()  # Default is JUMAN++. If you use JUMAN, use KNP(jumanpp=False)
 
 
@@ -89,10 +93,10 @@ class ChunkExtractor:
     """
     KNPによるモダリティー処理
     """
-    def modality_get(self, text):
+#    def modality_get(self, sp, *doc):
 
-        ret = []
-        return ret
+#        ret = []
+#        return ret
     """
         if len(text) > 1:
             result = self.knp.parse(text)
@@ -573,7 +577,7 @@ class ChunkExtractor:
         if doc[pt].dep_ == 'nmod':
             return {'lemma': ret_lemma, 'lemma_start': start_pt, 'lemma_end': end_pt, 'org_str': org_str, 'org_start': start_pt, 'org_end': end_pt + tail_ct, 'modality': []}
         else:
-            return {'lemma': ret_lemma, 'lemma_start': start_pt, 'lemma_end': end_pt, 'org_str': org_str, 'org_start': start_pt, 'org_end': end_pt + tail_ct, 'modality': [*self.modality_get(org_str)]}
+            return {'lemma': ret_lemma, 'lemma_start': start_pt, 'lemma_end': end_pt, 'org_str': org_str, 'org_start': start_pt, 'org_end': end_pt + tail_ct, 'modality': [*self.modality_get(start_pt, *doc)]}
 
 
     """
