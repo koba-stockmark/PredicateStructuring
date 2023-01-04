@@ -1,6 +1,6 @@
 """
   モダリティ解析
-     過去、否定、意思・願望、推量、仮定、疑問
+     過去、否定、意思・願望、勧誘、推量、仮定、疑問
 """
 
 
@@ -23,6 +23,10 @@ class ModalityAnalysis:
     # 意思
     ishi_rule = [
         ["たい"]
+    ]
+    # 勧誘
+    kanyuu_rule = [
+        ["ましょう"]
     ]
     # 推量
     suiron_rule = [
@@ -48,16 +52,18 @@ class ModalityAnalysis:
         "VERB", "NOUN", "PUNCT", "PRON", "SYM", "NUM"
     ]
 
+    # orth で比較必要する必要なあるルール
+    orth_chek_rule = [suiron_rule, kako_rule, kanyuu_rule]
+
     def rule_chek(self, rule, tag, ret, pt, *doc):
         for chek in rule:
-            if ((rule == self.suiron_rule or rule == self.kako_rule) and doc[pt].orth_ == chek[0]) or (
-                    rule != self.suiron_rule and rule != self.kako_rule and doc[pt].lemma_ == chek[0]):
+            if (rule in self.orth_chek_rule and doc[pt].orth_ == chek[0]) or (rule not in self.orth_chek_rule and doc[pt].lemma_ == chek[0]):
                 baias = 0
                 find = True
                 for n_chek in chek:
                     if (len(doc) < pt + baias or
-                            ((rule == self.suiron_rule or rule == self.kako_rule) and doc[pt + baias].orth_ != n_chek) or
-                            (rule != self.suiron_rule and rule != self.kako_rule and doc[pt + baias].lemma_ != n_chek)):
+                            (rule in self.orth_chek_rule and doc[pt + baias].orth_ != n_chek) or
+                            (rule not in self.orth_chek_rule and doc[pt + baias].lemma_ != n_chek)):
                         find = False
                         break
                     baias = baias + 1
@@ -83,6 +89,9 @@ class ModalityAnalysis:
 
             # 意思・願望
             self.rule_chek(self.ishi_rule, "<意思・願望>", ret, pt, *doc)
+
+            # 勧誘
+            self.rule_chek(self.kanyuu_rule, "<勧誘>", ret, pt, *doc)
 
             # 推量
             self.rule_chek(self.suiron_rule, "<推量>", ret, pt, *doc)
