@@ -26,7 +26,8 @@ class ModalityAnalysis:
     ]
     # 勧誘
     kanyuu_rule = [
-        ["ましょう"]
+        ["ましょう"],
+        ["ください"]
     ]
     # 推量
     suiron_rule = [

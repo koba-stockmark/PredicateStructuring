@@ -140,6 +140,7 @@ class PredicatePhraseExtractor:
                         verb_w = self.compaound(k + 1, ret_obj["lemma_end"], *doc)
                         verb["lemma_start"] = k + 1
                         verb["lemma_end"] = ret_obj["lemma_end"]
+                        modality_w = verb["modality"]
                         rule_id = 10
                         break
                 if not verb_w:
@@ -190,6 +191,7 @@ class PredicatePhraseExtractor:
               doc[pt].tag_ != '名詞-普通名詞-形状詞可能' and doc[pt].tag_ != '名詞-普通名詞-副詞可能' and doc[doc[pt].i + 1].tag_ == '補助記号-読点' and doc[doc[pt].i - 1].lemma_ != 'の'):
             verb = self.verb_chunk(doc[pt].i, *doc)
             verb_w = verb["lemma"] + '(する)'
+            modality_w = verb["modality"]
             rule_id = 16
         #
         #   〇〇　＋　を　＋　普通名詞。　　　体言止 連用中止
@@ -213,6 +215,7 @@ class PredicatePhraseExtractor:
                 verb_w = verb["lemma"]
             else:
                 verb_w = verb["lemma"] + '(する)'
+            modality_w = verb["modality"]
             rule_id = 17
         #
         #           ○○する　以外の一般の動詞
