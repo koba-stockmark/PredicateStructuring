@@ -5,6 +5,7 @@ from predicate_split import VerbSpliter
 from phase_check import PhaseCheker
 from kanyouku_check import KanyoukuExtractor
 from case_information_get import CaseExtractor
+from modality_analysis import ModalityAnalysis
 
 class PredicatePhraseExtractor:
 
@@ -33,6 +34,8 @@ class PredicatePhraseExtractor:
         k = KanyoukuExtractor()
         self.kanyouku_chek = k.kanyouku_chek
         self.kanyouku_get = k.kanyouku_get
+        m = ModalityAnalysis()
+        self.modality_get = m.modality_get
 
 
     """
@@ -140,7 +143,7 @@ class PredicatePhraseExtractor:
                         verb_w = self.compaound(k + 1, ret_obj["lemma_end"], *doc)
                         verb["lemma_start"] = k + 1
                         verb["lemma_end"] = ret_obj["lemma_end"]
-                        modality_w = verb["modality"]
+                        modality_w = [*self.modality_get(verb["lemma_start"], *doc)]
                         rule_id = 10
                         break
                 if not verb_w:
