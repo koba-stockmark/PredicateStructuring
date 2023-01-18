@@ -24,7 +24,7 @@ class CaseExtractor:
         # 副詞系
         if doc[pt].pos_ == "VERB" or doc[pt].pos_ == "AUX" or doc[pt].pos_ == "ADJ":
             is_fukushiteki = True
-        if ((doc[pt].dep_ == 'advmod' and doc[pt].pos_ == 'ADV') or doc[pt].tag_ == '名詞-普通名詞-助数詞可能' or doc[pt].tag_ == '助詞-副助詞') and doc[pt + 1].pos_ != 'ADP':
+        if ((doc[pt].dep_ == 'advmod' and doc[pt].pos_ == 'ADV') or doc[pt].tag_ == '名詞-普通名詞-助数詞可能' or doc[pt].tag_ == '助詞-副助詞') and (len(doc) > pt + 1 and doc[pt + 1].pos_ != 'ADP'):
             return "副詞的"
         # 動詞系　格と修飾関係
         if doc[pt].lemma_ == "を":   # 〇〇をする　の対応
@@ -89,7 +89,7 @@ class CaseExtractor:
             if (token.dep_ == "case" or token.tag_ == '助詞-格助詞') and token.tag_ != '名詞-普通名詞-一般' and token.head.i <= pt:
                 for i in range(token.i, len(doc)):
                     if (doc[i].dep_ == "case" or doc[i].tag_ == '助詞-格助詞') and doc[i].lemma_ != '～':
-                        if doc[i].lemma_ == 'と' and doc[i + 1].lemma_ == 'する' and doc[i + 2].lemma_ == 'て':
+                        if len(doc) > i + 2 and doc[i].lemma_ == 'と' and doc[i + 1].lemma_ == 'する' and doc[i + 2].lemma_ == 'て':
                             ret = ret + doc[i].lemma_ + 'して'
                             return ret + '-副詞的'
                         elif doc[i].lemma_ == 'や':
@@ -100,7 +100,7 @@ class CaseExtractor:
                             ret = self.case_get(re_nun["lemma_end"], *doc)
                             if ret == 'との':
                                 ret = self.case_get(re_nun["lemma_end"] + 3, *doc)
-                            elif doc[i + 1].pos_ == 'ADJ':
+                            elif len(doc) > i + 1 and doc[i + 1].pos_ == 'ADJ':
                                 ret = ''
                                 for np in reversed(range(0, doc[i - 1].head.i)):
                                     if doc[np].pos_ != 'ADP':
@@ -126,12 +126,12 @@ class CaseExtractor:
             elif (token.dep_ == "case" or token.tag_ == '助詞-格助詞') and token.tag_ != '名詞-普通名詞-一般' and token.head.head.i == pt and token.head.pos_ == 'NOUN' and token.lemma_ != 'の':  # 括弧書きを挟んだ係り受けの場合　ex.SaaSソリューション「Ecomedia」を開発する
                 for i in range(token.i, len(doc)):
                     if doc[i].dep_ == "case" or doc[i].tag_ == '助詞-格助詞':
-                        if doc[i].lemma_ == 'と' and doc[i + 1].lemma_ == 'する' and doc[i + 2].lemma_ == 'て':
+                        if len(doc) > i + 2 and doc[i].lemma_ == 'と' and doc[i + 1].lemma_ == 'する' and doc[i + 2].lemma_ == 'て':
                             ret = ret + doc[i].lemma_ + 'して'
                             return ret + '-副詞的'
                         elif doc[i].lemma_ == 'や':
                             ret = doc[doc[i].head.head.i - 1].lemma_
-                        elif doc[i].lemma_ == 'に' and doc[i + 1].orth_ == 'より':
+                        elif len(doc) > i + 1 and doc[i].lemma_ == 'に' and doc[i + 1].orth_ == 'より':
                             ret = 'により'
                         else:
                             ret = ret + doc[i].lemma_
@@ -217,12 +217,12 @@ class CaseExtractor:
                 elif (token.dep_ == "case" or token.tag_ == '助詞-格助詞') and token.tag_ != '名詞-普通名詞-一般' and token.head.head.i == pt and token.head.pos_ == 'NOUN':    # 括弧書きを挟んだ係り受けの場合　ex.SaaSソリューション「Ecomedia」を開発する
                     for i in range(token.i, len(doc)):
                         if doc[i].dep_ == "case" or doc[i].tag_ == '助詞-格助詞':
-                            if doc[i].lemma_ == 'と' and doc[i + 1].lemma_ == 'する' and doc[i + 2].lemma_ == 'て':
+                            if len(doc) > i + 2 and doc[i].lemma_ == 'と' and doc[i + 1].lemma_ == 'する' and doc[i + 2].lemma_ == 'て':
                                 ret = ret + doc[i].lemma_ + 'して'
                                 return ret + '-副詞的'
                             elif doc[i].lemma_ == 'や':
                                 ret = doc[doc[i].head.head.i - 1].lemma_
-                            elif doc[i].lemma_ == 'に' and doc[i + 1].orth_ == 'より':
+                            elif len(doc) > i + 1 and doc[i].lemma_ == 'に' and doc[i + 1].orth_ == 'より':
                                 ret = 'により'
                             else:
                                 ret = ret + doc[i].lemma_

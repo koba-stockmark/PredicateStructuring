@@ -172,7 +172,7 @@ class PredicatePhraseExtractor:
         #   〇〇 + を + 〇〇 + に、... 　
         #
         elif len(doc) > doc[pt].i + 2 and doc[pt].pos_ == 'NOUN' and doc[doc[pt].i + 1].lemma_ == 'に' and \
-                ((doc[doc[pt].i + 2].tag_ == '補助記号-読点' or doc[doc[pt].i + 2].pos_ == 'NOUN' or doc[doc[pt].i + 2].tag_ == '名詞-普通名詞-副詞可能') and (len(doc) <= doc[pt].i + 2 or doc[doc[pt].i + 3].lemma_ != 'に')):
+                ((doc[doc[pt].i + 2].tag_ == '補助記号-読点' or doc[doc[pt].i + 2].pos_ == 'NOUN' or doc[doc[pt].i + 2].tag_ == '名詞-普通名詞-副詞可能') and (len(doc) <= doc[pt].i + 2 or (len(doc) > doc[pt].i + 3 and doc[doc[pt].i + 3].lemma_ != 'に'))):
             verb = self.verb_chunk(doc[pt].i, *doc)
             verb_w = verb["lemma"] + doc[doc[pt].i + 1].lemma_ + '(する)'
             verb["lemma_end"] = doc[doc[pt].i + 1].i
@@ -298,7 +298,7 @@ class PredicatePhraseExtractor:
                 else:
                     if doc[verb["lemma_end"]].lemma_ == 'ため' or doc[verb["lemma_end"]].lemma_ == 'もの' or doc[verb["lemma_end"]].lemma_ == 'とき' or doc[verb["lemma_end"]].lemma_ == '際' or doc[verb["lemma_end"]].lemma_ == 'こと' or doc[verb["lemma_end"]].lemma_ == '場合':
                         verb_w = verb["lemma"] + '(です)'
-                    elif (doc[doc[pt].i].tag_ != '動詞-一般' and doc[doc[pt].i].tag_ != '形容詞-一般' and
+                    elif (doc[doc[pt].i].tag_ != '動詞-一般' and doc[doc[pt].i].tag_ != '形容詞-一般' and len(doc) > verb["lemma_end"] + 1 and
                             (doc[verb["lemma_end"] + 1].lemma_ == 'する' or doc[verb["lemma_end"] + 1].lemma_ == 'できる' or doc[verb["lemma_end"]].tag_ == '名詞-普通名詞-サ変可能' or
                              doc[verb["lemma_end"]].tag_ == '名詞-普通名詞-サ変形状詞可能' or doc[verb["lemma_end"]].tag_ == '名詞-普通名詞-一般')):
                         verb_w = verb["lemma"] + 'する'

@@ -670,7 +670,8 @@ class PasAnalysis:
                     predicate["lemma_start"] = verb["lemma_start"]
                     predicate["lemma_end"] = verb["lemma_end"]
                     predicate["orth"] = verb_w
-                    predicate["modality"] = ', '.join([str(x) for x in modality_w])
+#                    predicate["modality"] = ', '.join([str(x) for x in modality_w])
+                    predicate["modality"] = modality_w
                     predicate["rule_id"] = rule_id
                     if sub_verb and sub_verb_w:
                         predicate["sub_lemma"] = sub_verb["lemma"]
@@ -731,7 +732,8 @@ class PasAnalysis:
                 predicate["lemma_start"] = verb["lemma_start"]
                 predicate["lemma_end"] = verb["lemma_end"]
                 predicate["orth"] = verb_w
-                predicate["modality"] = ', '.join([str(x) for x in modality_w])
+#                predicate["modality"] = ', '.join([str(x) for x in modality_w])
+                predicate["modality"] = modality_w
                 predicate["rule_id"] = rule_id
                 if sub_verb and sub_verb_w:
                     predicate["sub_lemma"] = sub_verb["lemma"]

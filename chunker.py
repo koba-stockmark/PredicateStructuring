@@ -381,7 +381,7 @@ class ChunkExtractor:
                     append_l = tail_o + token.lemma_
                 end_pt = token.i
             # 〇〇出来るとする
-            elif tail_ct == 0 and doc[token.i - 1].pos_ == 'VERB' and doc[token.i].tag_ == '動詞-非自立可能' and doc[token.i].norm_ == '出来る' and doc[token.i + 1].norm_ == 'と' and doc[token.i + 2].lemma_ == 'する':
+            elif tail_ct == 0 and doc[token.i - 1].pos_ == 'VERB' and doc[token.i].tag_ == '動詞-非自立可能' and doc[token.i].norm_ == '出来る' and len(doc) > token.i + 2 and doc[token.i + 1].norm_ == 'と' and doc[token.i + 2].lemma_ == 'する':
                 if find_f:
                     ret = ret + append_o
                 find_f = True
@@ -569,7 +569,7 @@ class ChunkExtractor:
             ret_lemma = pre + doc[pt].orth_ + ret + append_l
             org_str = pre + doc[pt].orth_ + ret + append_o + tail_o
         else:
-            if doc[pt].pos_ == "ADJ" and doc[pt + 1].pos_ == "VERB":
+            if len(doc) > pt + 1 and doc[pt].pos_ == "ADJ" and doc[pt + 1].pos_ == "VERB":
                 ret_lemma = pre + doc[pt].orth_
             else:
                 ret_lemma = pre + doc[pt].lemma_
@@ -592,7 +592,7 @@ class ChunkExtractor:
         punc_ct = 0  # カッコのバランス　０：均衡　＋：右カッコが多い　ー：左カッコが多い
         pre_punc_ct = 0
         if doc[pt].lemma_ in self.keishki_meishi or (doc[pt].norm_ == '中' and doc[pt].tag_ == "名詞-普通名詞-副詞可能"):
-            if (doc[pt + 1].tag_ == '補助記号-括弧閉' or doc[pt + 1].lemma_ == '＂') and doc[pt + 1].head.i == doc[pt].i:
+            if len(doc) > pt + 1 and (doc[pt + 1].tag_ == '補助記号-括弧閉' or doc[pt + 1].lemma_ == '＂') and doc[pt + 1].head.i == doc[pt].i:
                 ret = self.connect_word(ret, doc[pt + 1].orth_)
                 for i in reversed(range(0, pt)):
                     if doc[i].tag_ == '補助記号-括弧開':
@@ -710,7 +710,7 @@ class ChunkExtractor:
                             break
                         if token.pos_ == 'ADP' and token.lemma_ == 'と':    # 名詞と名詞　は切り離して並列処理にまかせる
                             break
-                        if token.pos_ == 'ADP' and token.lemma_ == 'へ' and doc[token.i + 1].lemma_ != '」':    # 名詞へ　は切り離して並列処理にまかせる
+                        if len(doc) > token.i + 1 and token.pos_ == 'ADP' and token.lemma_ == 'へ' and doc[token.i + 1].lemma_ != '」':    # 名詞へ　は切り離して並列処理にまかせる
                             break
                         if token.pos_ == 'ADP' and token.lemma_ == 'など':    # 名詞など名詞　は切り離して並列処理にまかせる
                             break
@@ -722,7 +722,7 @@ class ChunkExtractor:
                             break
                         if token.pos_ == 'ADP' and token.lemma_ == 'まで':    # 名詞で名詞　は切り離す
                             break
-                        if token.pos_ == 'ADP' and token.lemma_ == 'の' and token.head.i < doc[token.i + 1].head.i and (doc[token.i + 1].lemma_ != '間' and doc[token.i + 1].lemma_ != '日'):    # 後方は　の　で切る　ただし、その先の語が　の　の前にかかるときはつなげる
+                        if len(doc) > token.i + 1 and token.pos_ == 'ADP' and token.lemma_ == 'の' and token.head.i < doc[token.i + 1].head.i and (doc[token.i + 1].lemma_ != '間' and doc[token.i + 1].lemma_ != '日'):    # 後方は　の　で切る　ただし、その先の語が　の　の前にかかるときはつなげる
                             break
                         if token.pos_ == 'CCONJ':
                             break

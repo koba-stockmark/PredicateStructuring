@@ -74,25 +74,25 @@ class SubjectExtractor:
                             pass
                         elif doc[chek].head.i == chek + 1 and doc[chek + 1].lemma_ == "ため":
                             pass
-                        elif doc[doc[chek].head.i].pos_ == "NOUN" and doc[doc[chek].head.i].lemma_ != "こと" and doc[doc[chek].head.i + 1].lemma_ == "を":
+                        elif len(doc) > doc[chek].head.i + 1 and doc[doc[chek].head.i].pos_ == "NOUN" and doc[doc[chek].head.i].lemma_ != "こと" and doc[doc[chek].head.i + 1].lemma_ == "を":
                             pass
-                        elif doc[chek + 1].lemma_ == "方針" or doc[chek + 1].lemma_ == "つもり" or doc[chek + 1].lemma_ == "計画" or doc[chek + 1].lemma_ == "予定":
+                        elif len(doc) > chek + 1 and doc[chek + 1].lemma_ == "方針" or doc[chek + 1].lemma_ == "つもり" or doc[chek + 1].lemma_ == "計画" or doc[chek + 1].lemma_ == "予定":
                             pass
                         else:
                             break
                     if self.rentai_check(chek, *doc):
-                        if doc[doc[chek].head.i].lemma_ != 'こと' and doc[doc[chek].head.i + 1].lemma_ != "を":
+                        if len(doc) > doc[chek].head.i + 1 and doc[doc[chek].head.i].lemma_ != 'こと' and doc[doc[chek].head.i + 1].lemma_ != "を":
                             break
-                if doc[chek].pos_ == 'VERB' and doc[doc[chek].i + 1].pos_ == "AUX" and doc[doc[chek].i + 2].lemma_ != "ない" and doc[doc[chek].i + 2].tag_ != "助詞-副助詞" and not self.renyou_check(chek, *doc) and doc[chek].head.lemma_ != 'ほか':
+                if len(doc) > doc[chek].head.i + 2 and doc[chek].pos_ == 'VERB' and doc[doc[chek].i + 1].pos_ == "AUX" and doc[doc[chek].i + 2].lemma_ != "ない" and doc[doc[chek].i + 2].tag_ != "助詞-副助詞" and not self.renyou_check(chek, *doc) and doc[chek].head.lemma_ != 'ほか':
                     if len(doc) > doc[chek].i + 4 and doc[doc[chek].i + 2].lemma_ == 'と':
                         pass
                     elif doc[doc[chek].head.i].pos_ == "NOUN" and doc[doc[chek].head.i + 1].lemma_ == "を":
                         pass
                     else:
                         break
-                if doc[chek + 1].orth_ == 'さ' and doc[chek + 2].lemma_ == 'れる' and doc[chek + 3].lemma_ == 'た':
+                if len(doc) > chek + 3 and doc[chek + 1].orth_ == 'さ' and doc[chek + 2].lemma_ == 'れる' and doc[chek + 3].lemma_ == 'た':
                     break
-                if doc[chek].pos_ == 'NOUN' and doc[chek - 1].orth_ == 'が' and doc[chek + 1].orth_ == 'で':  # 〜が理由で…
+                if len(doc) > chek + 1 and doc[chek].pos_ == 'NOUN' and doc[chek - 1].orth_ == 'が' and doc[chek + 1].orth_ == 'で':  # 〜が理由で…
                     break
                 if doc[chek].norm_ == '成る' and doc[chek - 1].orth_ == 'に':  # 〜が〜になる〜する…
                     break
@@ -155,7 +155,7 @@ class SubjectExtractor:
                  (len(doc) > i + 2 and doc[i].dep_ == "obl" and doc[i].tag_ != '名詞-普通名詞-副詞可能' and doc[i + 1].lemma_ == 'など' and (doc[i + 2].lemma_ == 'は' or doc[i + 2].lemma_ == 'が'))):
                 if doc[doc[i].head.i].norm_ == '出来る':
                     continue
-                if doc[doc[i].head.i].pos_ == 'NOUN' and doc[doc[i].head.i + 1].tag_ == "補助記号-括弧閉":
+                if len(doc) > doc[i].head.i + 1 and doc[doc[i].head.i].pos_ == 'NOUN' and doc[doc[i].head.i + 1].tag_ == "補助記号-括弧閉":
                     continue
                 if doc[doc[i].head.i].norm_ == '為' and doc[doc[i].head.i].head.i != verb_end_pt:
                     continue

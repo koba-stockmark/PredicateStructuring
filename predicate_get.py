@@ -107,6 +107,8 @@ class PredicateGet:
                 return self.predicate_phrase_get(token.i, *doc)
             elif len(doc) > token.i + 2 and token.tag_ == '名詞-普通名詞-サ変可能' and token.dep_ == 'nmod' and token.head.dep_ == 'obj' and doc[token.i + 1].lemma_ == 'や' and self.rentai_check(token.i + 2, *doc):
                 return self.predicate_phrase_get(token.i, *doc)
+            elif token.dep_ == 'ROOT' and token.head.i == token.i:
+                return self.predicate_phrase_get(token.i, *doc)
             else:
                 return {}
 
