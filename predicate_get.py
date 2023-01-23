@@ -31,6 +31,7 @@ class PredicateGet:
                 (token.pos_ == 'NOUN' and doc[token.head.i].norm_ == '為る' and doc[token.head.i - 1].lemma_ != 'に') or
                 (len(doc) > token.i + 1 and token.pos_ == 'NOUN' and doc[token.i + 1].pos_ == 'AUX') or
                 (len(doc) > token.i + 1 and token.pos_ == 'NOUN' and doc[token.i + 1].tag_ == '動詞-非自立可能') or
+                (len(doc) > token.i + 1 and token.tag_ == '名詞-普通名詞-形状詞可能' and doc[token.i + 1].tag_ == '補助記号-読点') or
                 (len(doc) > token.i + 2 and token.tag_ == '名詞-普通名詞-サ変可能' and token.dep_ == 'nmod' and token.head.dep_ == 'obj' and doc[token.i + 1].lemma_ == 'や' and self.rentai_check(token.i + 2, *doc)) or
                 (len(doc) > token.i + 1 and token.tag_ == '名詞-普通名詞-サ変可能' and token.dep_ == 'nmod' and (doc[token.i + 1].lemma_ == '、' or doc[token.i + 1].lemma_ == '：'))):
             is_meishi_syuusyoku = False

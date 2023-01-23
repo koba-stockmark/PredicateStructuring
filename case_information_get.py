@@ -27,11 +27,11 @@ class CaseExtractor:
         if ((doc[pt].dep_ == 'advmod' and doc[pt].pos_ == 'ADV') or doc[pt].tag_ == '名詞-普通名詞-助数詞可能' or doc[pt].tag_ == '助詞-副助詞') and (len(doc) > pt + 1 and doc[pt + 1].pos_ != 'ADP'):
             return "副詞的"
         # 動詞系　格と修飾関係
-        if doc[pt].lemma_ == "を":   # 〇〇をする　の対応
+        if len(doc) > pt + 1 and doc[pt].lemma_ == "を":   # 〇〇をする　の対応
             pt = pt + 1
         if len(doc) > pt + 1 and (doc[pt].pos_ == 'VERB' or (doc[pt].pos_ == 'AUX' and doc[pt + 1].pos_ != "AUX")) and doc[pt + 1].tag_ != "助詞-準体助詞" and doc[pt + 1].tag_ != "名詞-普通名詞-副詞可能" and doc[pt + 1].tag_ != "形状詞-助動詞語幹" and doc[pt].morph.get("Inflection") and '連体形' in doc[pt].morph.get("Inflection")[0]:
             return ret + '連体修飾'
-        if (doc[pt].pos_ == 'VERB' or doc[pt].pos_ == 'AUX' or doc[pt].pos_ == 'ADJ') and (len(doc) > pt + 1 and (doc[pt + 1].pos_ == 'AUX' or doc[pt + 1].pos_ == 'SCONJ')):
+        if len(doc) > pt + 1 and (doc[pt].pos_ == 'VERB' or doc[pt].pos_ == 'AUX' or doc[pt].pos_ == 'ADJ') and (doc[pt + 1].pos_ == 'AUX' or doc[pt + 1].pos_ == 'SCONJ'):
             if doc[pt + 1].pos_ == 'AUX' and (doc[pt + 1].orth_ == 'た' or doc[pt + 1].orth_ == 'だ' or doc[pt + 1].orth_ == 'です' or doc[pt + 1].orth_ == 'ます'):
                 sp = pt + 2
             else:
@@ -265,5 +265,7 @@ class CaseExtractor:
                 return ret + '-副詞的'
             else:
                 return "副詞的"
+        if not ret:
+            return "連接"
         return ret
 

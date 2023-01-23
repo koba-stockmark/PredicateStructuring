@@ -123,6 +123,8 @@ class ChunkExtractor:
     """
     def compaound(self, start, end, *doc):
         ret = ''
+        if start == -1:
+            return ret
         for i in range(start, end):
             ret = self.connect_word(ret, doc[i].orth_)
         if re.compile(r'^[a-zA-Z]+$').search(doc[end].lemma_):
@@ -309,7 +311,10 @@ class ChunkExtractor:
         ret = ''        # チャンク結果
         for token in doc[pt + 1:]:
             if token.head.i != pt and doc[pt].head.i != token.i and doc[pt].head.i != token.head.i and (token.head.i < pt or token.head.i > token.i):
-                break
+                if doc[pt].pos_ == "NOUN" and doc[pt].dep_ == "ROOT" and (doc[token.i].head.i == pt or doc[doc[token.i].head.i].head.i == pt):
+                    pass
+                else:
+                    break
             if token.tag_ == '接尾辞-名詞的-一般':
                 break
             if ((tail_ct == 0 and pt == token.head.i and token.pos_ != 'ADP' and token.pos_ != 'SCONJ' and token.pos_ != 'PART' and token.pos_ != 'AUX' and token.pos_ != 'VERB' and token.pos_ != 'PUNCT' and token.pos_ != 'SYM') and
@@ -472,6 +477,13 @@ class ChunkExtractor:
                 append_l = tail_o + token.orth_ + doc[token.i + 1].orth_ + doc[token.i + 2].orth_ + doc[token.i + 3].lemma_
                 end_pt = token.i + 3
 
+#            elif doc[pt].pos_ == "NOUN" and doc[pt].dep_ == "ROOT" and doc[token.i].tag_ != "補助記号-句点" and doc[token.i].tag_ != "補助記号-括弧閉" and (doc[token.i].head.i == pt or doc[doc[token.i].head.i].head.i == pt):
+#                if find_f:
+#                    ret = ret + append_o
+#                find_f = True
+#                append_o = token.orth_
+#                append_l = token.lemma_
+#                end_pt = end_pt + 1
                 """ #koba
             # 〇〇しているとする
             elif tail_ct == 0 and doc[token.i - 1].pos_ == 'VERB' and doc[token.i].norm_ == '為る' and len(doc) > token.i + 4 and doc[token.i + 1].lemma_ == 'て' and doc[token.i + 2].lemma_ == 'いる' and doc[token.i + 3].lemma_ == 'と' and doc[token.i + 4].norm_ == '為る':

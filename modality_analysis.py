@@ -3,7 +3,6 @@
      断定、過去、否定、意思・願望、勧誘、推量、仮定、可能、疑問
 """
 import re
-
 class ModalityAnalysis:
 
     def __init__(self):
@@ -56,6 +55,11 @@ class ModalityAnalysis:
     katei_rule = [
         ["ば"]
     ]
+    # 限定
+    gentei_rule = [
+        ["だけ"],
+        ["まで"]
+    ]
     # 可能
     kanou_rule = [
         ["!する", "れる"],
@@ -79,6 +83,11 @@ class ModalityAnalysis:
         ["の", "か", "、"],
         ["の", "か", "\?"],
         ["いかに", "\?"],
+        ["か", "。"],
+        ["か", "\?"],
+        ["は", "\?"],
+        [".*", "\!", "\?"],
+        ["と", "は"],
         ["だ", "の", "か"],
         ["か", "どう", "か"],
         ["べし", "か"],   # べきか
@@ -100,10 +109,15 @@ class ModalityAnalysis:
             if chek_w[0] == "!":
                 chek_w = chek_w[1:]
                 ng_word = True
-            if (rule in self.orth_chek_rule and re.match(chek_w, doc[pt].orth_)) or (rule not in self.orth_chek_rule and re.match(chek_w, doc[pt].lemma_)) or ng_word:
-                if ng_word and ((rule in self.orth_chek_rule and re.match(chek_w, doc[pt].orth_)) or (rule not in self.orth_chek_rule and re.match(chek_w, doc[pt].lemma_))):
+            elif chek_w == "\!":
+                chek_w = chek_w[1:]
+            if ((rule in self.orth_chek_rule and re.match(chek_w, doc[pt].orth_))
+                    or (rule not in self.orth_chek_rule and re.match(chek_w, doc[pt].lemma_))
+                    or ng_word):
+                if (ng_word and ((rule in self.orth_chek_rule and re.match(chek_w, doc[pt].orth_))
+                                 or (rule not in self.orth_chek_rule and re.match(chek_w, doc[pt].lemma_)))):
                     continue
-                if chek_w[0] == "." and doc[pt].orth_ == doc[pt].norm_:
+                if rule in self.orth_chek_rule and chek_w[0] == "." and doc[pt].orth_ == doc[pt].norm_:
                     continue
                 baias = 0
                 find = True
@@ -131,13 +145,20 @@ class ModalityAnalysis:
     def modality_get(self, sp, *doc):
         ret = []
         verb_in = False
+        noun_ok_f = True
 
         for pt in range(sp, len(doc)):
             if len(doc) < pt:
                 return ret
+            if doc[sp].pos_ != "NOUN":
+                noun_ok_f = False
+            if doc[sp].pos_ == "NOUN" and noun_ok_f:
+                if doc[pt].pos_ == "ADP":
+                    noun_ok_f = False
             if doc[pt].pos_ in self.stop_pos and pt != sp:
-                if doc[pt].norm_ != "為る" and doc[pt].norm_ != "こと" and (doc[pt - 1].lemma_ != "を" or doc[pt].lemma_ != "する") and doc[pt - 1].pos_ != "NOUN":
-                    break
+                if not noun_ok_f or doc[pt].pos_ == "VERB":
+                    if doc[pt].norm_ != "為る" and doc[pt].norm_ != "こと" and (doc[pt - 1].lemma_ != "を" or doc[pt].lemma_ != "する") and doc[pt - 1].pos_ != "NOUN":
+                        break
             if pt != sp and (doc[pt].pos_ == "VERB" or doc[pt].pos_ == "AUX"):
                 verb_in = True
 
@@ -163,6 +184,9 @@ class ModalityAnalysis:
 
             # 仮定
             self.rule_chek(self.katei_rule, "<仮定>", ret, pt, *doc)
+
+            # 限定
+            self.rule_chek(self.gentei_rule, "<限定>", ret, pt, *doc)
 
             # 可能
             self.rule_chek(self.kanou_rule, "<可能>", ret, pt, *doc)
