@@ -32,6 +32,8 @@ class ModalityAnalysis:
     ]
     # 否定
     hitei_rule = [
+        ["ず"],
+        ["ぬ"],
         ["ない"]
     ]
     # 意思
@@ -42,6 +44,7 @@ class ModalityAnalysis:
     ]
     # 勧誘
     kanyuu_rule = [
+        [".*よう"],
         ["ましょう"],
         ["ください"]
     ]
@@ -55,10 +58,23 @@ class ModalityAnalysis:
     katei_rule = [
         ["ば"]
     ]
+    # 引用
+    innyou_rule = [
+        ["より"]
+    ]
+    # 容易
+    youi_rule = [
+        ["やすい"]
+    ]
     # 限定
     gentei_rule = [
         ["だけ"],
         ["まで"]
+    ]
+    # 目標
+    mokuhyou_rule = [
+        ["へ", "。"],
+        ["へ", "$"]
     ]
     # 可能
     kanou_rule = [
@@ -82,15 +98,21 @@ class ModalityAnalysis:
         ["の", "か", "。"],
         ["の", "か", "、"],
         ["の", "か", "\?"],
+        ["の", "か", "$"],
         ["いかに", "\?"],
         ["か", "。"],
+        ["か", "$"],
         ["か", "\?"],
         ["は", "\?"],
+        ["た", "\?"],
+        ["だ", "\?"],
+        [".*", "\?"],
         [".*", "\!", "\?"],
-        ["と", "は"],
+        ["と", "は", "$"],
         ["だ", "の", "か"],
         ["か", "どう", "か"],
         ["べし", "か"],   # べきか
+        ["た", "か"],      # たろうか
         ["だ", "か"]      # だろうか
     ]
 
@@ -122,6 +144,9 @@ class ModalityAnalysis:
                 baias = 0
                 find = True
                 for n_chek in chek:
+                    if n_chek == "$":  # 文末
+                        if pt + baias == len(doc):
+                            break
                     if n_chek[0] == "!":
                         n_chek = n_chek[1:]
                         if (len(doc) < pt + baias or
@@ -157,8 +182,10 @@ class ModalityAnalysis:
                     noun_ok_f = False
             if doc[pt].pos_ in self.stop_pos and pt != sp:
                 if not noun_ok_f or doc[pt].pos_ == "VERB":
-                    if doc[pt].norm_ != "為る" and doc[pt].norm_ != "こと" and (doc[pt - 1].lemma_ != "を" or doc[pt].lemma_ != "する") and doc[pt - 1].pos_ != "NOUN":
+                    if doc[pt].norm_ != "為る" and doc[pt].norm_ != "成る"  and doc[pt].norm_ != "有る" and doc[pt].norm_ != "こと" and (doc[pt - 1].lemma_ != "を" or doc[pt].lemma_ != "する") and doc[pt - 1].pos_ != "NOUN":
                         break
+                if doc[pt].tag_ == "補助記号-句点":
+                    break
             if pt != sp and (doc[pt].pos_ == "VERB" or doc[pt].pos_ == "AUX"):
                 verb_in = True
 
@@ -185,8 +212,17 @@ class ModalityAnalysis:
             # 仮定
             self.rule_chek(self.katei_rule, "<仮定>", ret, pt, *doc)
 
+            # 引用
+            self.rule_chek(self.innyou_rule, "<引用>", ret, pt, *doc)
+
+            # 容易
+            self.rule_chek(self.youi_rule, "<容易>", ret, pt, *doc)
+
             # 限定
             self.rule_chek(self.gentei_rule, "<限定>", ret, pt, *doc)
+
+            # 目標
+            self.rule_chek(self.mokuhyou_rule, "<目標>", ret, pt, *doc)
 
             # 可能
             self.rule_chek(self.kanou_rule, "<可能>", ret, pt, *doc)
