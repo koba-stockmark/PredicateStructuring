@@ -291,7 +291,7 @@ class PredicatePhraseExtractor:
                 rule_id = 21
             elif len(doc) > doc[pt].i + 1 and (doc[doc[pt].i + 1].tag_ == '動詞-非自立可能'):  # 動詞　＋　補助動詞
                 verb = self.verb_chunk(doc[doc[pt].i].i, *doc)
-                if len(doc) > doc[pt].i + 3 and doc[doc[pt].i + 2].tag_ == '形状詞-助動詞語幹' and doc[doc[pt].i + 3].orth_ == 'に' and doc[doc[pt].i + 4].pos_ == 'VERB':  # 動詞　＋　補助動詞 +  ように + 動詞
+                if len(doc) > doc[pt].i + 4 and doc[doc[pt].i + 2].tag_ == '形状詞-助動詞語幹' and doc[doc[pt].i + 3].orth_ == 'に' and doc[doc[pt].i + 4].pos_ == 'VERB':  # 動詞　＋　補助動詞 +  ように + 動詞
                     verb2 = self.verb_chunk(doc[doc[pt].i].i + 4, *doc)
                     if verb2["lemma_start"] <= verb["lemma_start"]:
                         verb["lemma_start"] = verb2["lemma_start"]

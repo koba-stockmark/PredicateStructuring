@@ -688,7 +688,7 @@ class ChunkExtractor:
                 if doc[pt - 1].lemma_ != 'と':   # 並列処理のため結合しない
                     for token in doc[0:]:
                         if (token.head.i == pt or token.i == pt) and (token.pos_ == 'AUX' or token.pos_ == 'VERB' or token.pos_ == 'PUNCT'):
-                            if doc[token.i + 1].pos_ != "PUNCT" and doc[token.i + 1].norm_ != "出来る":
+                            if len(doc) > token.i + 1 and doc[token.i + 1].pos_ != "PUNCT" and doc[token.i + 1].norm_ != "出来る":
                                 start_pt = token.i
                                 break
                     for i in reversed(range(start_pt, pt)):
@@ -718,7 +718,7 @@ class ChunkExtractor:
                         if token.pos_ == 'ADP' and (token.lemma_ == 'を' or token.lemma_ == 'は' or token.lemma_ == 'が' or token.lemma_ == 'で' or token.lemma_ == 'も' or token.lemma_ == 'に' or token.lemma_ == 'にて' or token.orth_ == 'で' or token.orth_ == 'より'):  # 名詞の名詞　名詞と名詞　は接続させたい
                             if len(doc) > token.i + 1 and doc[token.i + 1].tag_ != '補助記号-括弧閉':
                                 break
-                        if token.pos_ == 'ADP' and token.lemma_ == 'と' and doc[token.i + 1].tag_ == '補助記号-読点':    # 名詞と、名愛　は切り離す　
+                        if len(doc) > token.i + 1 and token.pos_ == 'ADP' and token.lemma_ == 'と' and doc[token.i + 1].tag_ == '補助記号-読点':    # 名詞と、名愛　は切り離す　
                             break
                         if token.pos_ == 'ADP' and token.lemma_ == 'と':    # 名詞と名詞　は切り離して並列処理にまかせる
                             break
@@ -738,9 +738,9 @@ class ChunkExtractor:
                             break
                         if token.pos_ == 'CCONJ':
                             break
-                        if len(doc) > token.i + 1 and (token.lemma_ == '。' or token.tag_ == '補助記号-読点') and doc[token.i + 1].tag_ != '補助記号-括弧閉':
+                        if len(doc) > token.i + 1 and (token.lemma_ == '。' or token.lemma_ == '!' or token.tag_ == '補助記号-読点') and doc[token.i + 1].tag_ != '補助記号-括弧閉':
                             break
-                        if len(doc) == token.i + 1 and (token.lemma_ == '。' or token.tag_ == '補助記号-読点'):
+                        if len(doc) == token.i + 1 and (token.lemma_ == '。' or token.lemma_ == '!' or token.tag_ == '補助記号-読点'):
                             break
                         if token.head.head.i != token.i + 1 and token.lemma_ == '・':    # 〇〇・△△　で〇〇が△△にかからない場合は　・　を分離
                             break

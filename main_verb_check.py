@@ -43,7 +43,7 @@ class MainVerbChek:
 #        elif doc[predic_head].pos_ == "VERB" and doc[doc[predic_head].i].head.i == doc[doc[predic_head].i].head.head.i and doc[doc[predic_head].i].head.pos_ == "VERB":  # 最後の動詞を修飾する動詞？
         elif (doc[predic_head].pos_ == "VERB" and "には" not in case) and doc[doc[predic_head].i].head.i == doc[doc[predic_head].i].head.head.i and doc[doc[predic_head].i].head.pos_ == "VERB":  # 最後の動詞を修飾する動詞？
             rule_id = 102
-        elif doc[predic_head].pos_ == "VERB" and doc[doc[predic_head].i].head.pos_ == "VERB" and doc[doc[doc[predic_head].i].head.i + 1].lemma_ == "と" and doc[doc[predic_head].i].head.head.dep_ == "ROOT":  # 〇〇し、〇〇すると〇〇した
+        elif len(doc) > doc[doc[predic_head].i].head.i + 1 and doc[predic_head].pos_ == "VERB" and doc[doc[predic_head].i].head.pos_ == "VERB" and doc[doc[doc[predic_head].i].head.i + 1].lemma_ == "と" and doc[doc[predic_head].i].head.head.dep_ == "ROOT":  # 〇〇し、〇〇すると〇〇した
             rule_id = 115
         #
         #  最終術部が名詞から形成される場合
@@ -81,7 +81,7 @@ class MainVerbChek:
             rule_id = 119
         elif len(doc) > doc[predic_head].head.i + 2 and doc[predic_head].pos_ == 'VERB' and doc[doc[predic_head].head.i].pos_ == 'VERB' and doc[doc[predic_head].head.i + 1].pos_ == 'AUX' and doc[doc[predic_head].head.i + 1].lemma_ != 'ない' and (doc[doc[predic_head].head.i + 2].lemma_ == 'た' or doc[doc[predic_head].head.i + 2].lemma_ == 'だ'):  # 〇〇すると〇〇したと[動詞]。
             rule_id = 120
-        elif doc[predic_head].pos_ == 'VERB' and doc[predic_head + 1].lemma_ == 'する' and doc[doc[predic_head].head.i].lemma_ == 'する':  # 〇〇し〇〇する。
+        elif len(doc) > predic_head + 1 and doc[predic_head].pos_ == 'VERB' and doc[predic_head + 1].lemma_ == 'する' and doc[doc[predic_head].head.i].lemma_ == 'する':  # 〇〇し〇〇する。
             rule_id = 121
         elif doc[predic_head].pos_ == 'NOUN' and doc[predic_head].head.i <= predic_head:  # 体言どめ
             rule_id = 122
@@ -89,4 +89,6 @@ class MainVerbChek:
             rule_id = 123
         elif doc[predic_head].pos_ == 'SCONJ' and doc[doc[predic_head].head.i].pos_ == 'ADP' and doc[doc[doc[predic_head].head.i].head.i].dep_ == "ROOT":  # 体言どめ + 助詞
             rule_id = 124
+        elif doc[predic_head].pos_ == 'NUM' and doc[doc[predic_head].head.i].dep_ == "ROOT":  # 体言どめ
+            rule_id = 125
         return rule_id
