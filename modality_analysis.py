@@ -182,7 +182,7 @@ class ModalityAnalysis:
                     noun_ok_f = False
             if doc[pt].pos_ in self.stop_pos and pt != sp:
                 if not noun_ok_f or doc[pt].pos_ == "VERB":
-                    if doc[pt].norm_ != "為る" and doc[pt].norm_ != "成る"  and doc[pt].norm_ != "有る" and doc[pt].norm_ != "こと" and (doc[pt - 1].lemma_ != "を" or doc[pt].lemma_ != "する") and doc[pt - 1].pos_ != "NOUN":
+                    if doc[pt].norm_ != "為る" and doc[pt].norm_ != "成る"  and doc[pt].norm_ != "有る" and doc[pt].norm_ != "こと" and doc[pt].pos_ != "PRON" and (doc[pt - 1].lemma_ != "を" or doc[pt].lemma_ != "する") and doc[pt - 1].pos_ != "NOUN":
                         break
                 if doc[pt].tag_ == "補助記号-句点":
                     break

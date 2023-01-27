@@ -31,6 +31,8 @@ class PredicateGet:
                 (token.pos_ == 'NOUN' and doc[token.head.i].norm_ == '為る' and doc[token.head.i - 1].lemma_ != 'に') or
                 (len(doc) > token.i + 1 and token.pos_ == 'NOUN' and doc[token.i + 1].pos_ == 'AUX') or
                 (len(doc) > token.i + 1 and token.pos_ == 'NOUN' and doc[token.i + 1].tag_ == '動詞-非自立可能') or
+                (len(doc) > token.i + 1 and token.pos_ == 'NOUN' and doc[token.i + 1].tag_ == '接尾辞-形状詞的') or
+                (len(doc) > token.i + 1 and token.pos_ == 'NOUN' and doc[token.i + 1].tag_ == '接尾辞-名詞的-サ変可能') or
                 (len(doc) > token.i + 1 and token.tag_ == '名詞-普通名詞-形状詞可能' and doc[token.i + 1].tag_ == '補助記号-読点') or
                 (len(doc) > token.i + 1 and token.tag_ == '名詞-普通名詞-サ変可能' and token.dep_ == "dep" and doc[token.i + 1].tag_ == '補助記号-読点') or
                 (len(doc) > token.i + 2 and token.tag_ == '名詞-普通名詞-サ変可能' and token.dep_ == 'nmod' and token.head.dep_ == 'obj' and doc[token.i + 1].lemma_ == 'や' and self.rentai_check(token.i + 2, *doc)) or
@@ -101,7 +103,7 @@ class PredicateGet:
                 return {}
             elif token.i > 0 and (doc[token.i - 1].pos_ == 'ADP' or doc[token.i - 1].pos_ == 'SCONJ') and (token.pos_ == 'NOUN' and ((token.dep_ == 'ROOT' and token.i == token.head.i) or (len(doc) > token.i + 1 and doc[token.i + 1].pos_ == 'SYM'))):
                 return self.predicate_phrase_get(token.i, *doc)
-            elif len(doc) > token.i + 1 and token.tag_ == '形状詞-一般' and doc[token.i + 1].tag_ == '助動詞':
+            elif len(doc) > token.i + 1 and (token.tag_ == '形状詞-一般' or token.tag_ == '接尾辞-形状詞的') and doc[token.i + 1].tag_ == '助動詞':
                 return self.predicate_phrase_get(token.i, *doc)
             elif len(doc) > token.i + 1 and token.pos_ == 'NOUN' and doc[token.i + 1].tag_ == '動詞-非自立可能':
                 return self.predicate_phrase_get(token.i, *doc)

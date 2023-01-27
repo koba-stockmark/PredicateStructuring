@@ -207,7 +207,7 @@ class PredicatePhraseExtractor:
                 if doc[verb["lemma_end"]].tag_ == '補助記号-句点':
                     verb["lemma"] = verb["lemma"][:-1]
                     verb["lemma_end"] = verb["lemma_end"] - 1
-            if len(doc) > verb["lemma_end"] + 1 and doc[verb["lemma_end"] + 1].tag_ == "補助記号-括弧開" and doc[verb["lemma_end"] + 1].head.i  == verb["lemma_end"]:
+            if len(doc) > verb["lemma_end"] + 2 and doc[verb["lemma_end"] + 1].tag_ == "補助記号-括弧開" and doc[verb["lemma_end"] + 1].head.i  == verb["lemma_end"]:
                 append_w = self.num_chunk(verb["lemma_end"] + 2, *doc)
                 if append_w["lemma_start"] == verb["lemma_end"] + 1:
                     verb["lemma"] = verb["lemma"] + append_w["lemma"]
@@ -380,7 +380,7 @@ class PredicatePhraseExtractor:
             ###############################
             #    普通名詞　〇〇　＋　を　＋　〇〇日　＋　から
             ###############################
-            elif len(doc) > doc[pt].i + 1 and doc[pt].tag_ == '名詞-普通名詞-副詞可能' and doc[doc[pt].i + 1].pos_ == 'ADP' and doc[doc[pt].i + 1].lemma_ == 'から':
+            elif len(doc) > doc[pt].i + 1 and len(doc) > doc[pt].head.i + 1 and doc[pt].tag_ == '名詞-普通名詞-副詞可能' and doc[doc[pt].i + 1].pos_ == 'ADP' and doc[doc[pt].i + 1].lemma_ == 'から':
                 verb = self.verb_chunk(doc[doc[pt].head.i].i, *doc)
                 verb_w = verb["lemma"] + doc[doc[pt].head.i + 1].orth_
                 verb["lemma_end"] = doc[doc[pt].head.i + 1].i

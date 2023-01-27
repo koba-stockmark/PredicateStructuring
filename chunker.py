@@ -143,7 +143,8 @@ class ChunkExtractor:
     def verb_chunk(self, pt, *doc):
         start_pt = pt   # 始点
         end_pt = pt     # 終点
-        pre = ''        # 前方文字
+        pre = ''
+        # 前方文字
         # 前方を結合
         for i in reversed(range(0, pt)):
             if ((pt == doc[i].head.i or pt == doc[i].head.head.i or i < doc[i].head.i <= pt) and
@@ -151,7 +152,7 @@ class ChunkExtractor:
                     (doc[i].pos_ != 'AUX' or doc[i].orth_ == 'する' or doc[i].orth_ == 'な') and
                     (doc[pt].pos_ != 'NOUN' or doc[pt].tag_ == '名詞-普通名詞-副詞可能' or doc[i].pos_ != 'VERB') and
                     (not doc[i].morph.get("Inflection") or '連体形' not in doc[i].morph.get("Inflection")[0]) and
-                    (doc[i].pos_ != 'ADP' or (doc[i].tag_ == '助詞-副助詞' and doc[i].lemma_ != 'まで' and doc[i].lemma_ != 'だけ' and doc[i].lemma_ != 'か')) and doc[i].pos_ != 'ADV' and doc[i].pos_ != 'ADJ' and doc[i].pos_ != 'PART' and doc[i].pos_ != 'SCONJ' and
+                    (doc[i].pos_ != 'ADP' or (doc[i].tag_ == '助詞-副助詞' and doc[i].lemma_ != 'まで' and doc[i].lemma_ != 'だけ' and doc[i].lemma_ != 'か' and doc[i].lemma_ != 'って')) and doc[i].pos_ != 'ADV' and doc[i].pos_ != 'ADJ' and doc[i].pos_ != 'PART' and doc[i].pos_ != 'SCONJ' and
                     doc[i].norm_ != 'から' and
 #                    doc[i].dep_ != 'advcl' and
                     doc[i].tag_ != '補助記号-一般' and doc[i].tag_ != '名詞-普通名詞-副詞可能' and (len(doc) > i + 1 and doc[i].tag_ != '名詞-普通名詞-一般' or (doc[i + 1].pos_ == 'ADP' or doc[i + 1].pos_ == 'ADJ' or doc[i + 1].pos_ == 'SYM' or "名詞" in doc[i + 1].tag_ or "接頭辞" in doc[i + 1].tag_)) and doc[i].tag_ != '名詞-普通名詞-助数詞可能' and doc[i].tag_ != '接尾辞-名詞的-助数詞' and doc[i].tag_ != '名詞-普通名詞-助数詞可能'):
@@ -219,7 +220,7 @@ class ChunkExtractor:
             elif len(doc) > i + 3 and doc[i].orth_ == 'と' and doc[i + 1].pos_ == 'NOUN' and doc[i + 2].orth_ == 'が' and doc[i + 3].norm_ == '出来る':  # 名詞と名詞　＋　が　＋　できる
                 pre = doc[i].orth_ + pre
                 start_pt = i
-            elif i != 0 and (doc[i].tag_ == '補助記号-読点' and doc[i - 1].head.i == doc[i].i + 1 and doc[i - 1].pos_ != 'VERB' and doc[i - 1].pos_ != 'ADJ' and
+            elif i != 0 and "名詞-固有名詞" not in doc[pt].tag_ and (doc[i].tag_ == '補助記号-読点' and doc[i - 1].head.i == doc[i].i + 1 and doc[i - 1].pos_ != 'VERB' and doc[i - 1].pos_ != 'ADJ' and
                              doc[i - 1].tag_ != '名詞-普通名詞-助数詞可能' and doc[i - 1].tag_ != '接尾辞-名詞的-助数詞' and doc[i - 1].tag_ != '名詞-普通名詞-形状詞可能' and
                              doc[i - 2].tag_ != '名詞-普通名詞-助数詞可能' and doc[i - 2].tag_ != '接尾辞-名詞的-助数詞' and doc[i - 2].tag_ != '名詞-普通名詞-形状詞可能'):      # 〇〇、〇〇する　などの並列術部
                 pre = doc[i].orth_ + pre
@@ -736,6 +737,8 @@ class ChunkExtractor:
                             break
                         if len(doc) > token.i + 1 and token.pos_ == 'ADP' and token.lemma_ == 'の' and token.head.i < doc[token.i + 1].head.i and (doc[token.i + 1].lemma_ != '間' and doc[token.i + 1].lemma_ != '日'):    # 後方は　の　で切る　ただし、その先の語が　の　の前にかかるときはつなげる
                             break
+                        if len(doc) > token.i + 2 and token.pos_ == 'ADP' and token.lemma_ == 'の' and doc[token.i + 1].norm_ == '御' and doc[token.i + 2].tag_ == '名詞-普通名詞-サ変可能' and doc[token.i + 2].dep_ == "ROOT":
+                            break
                         if token.pos_ == 'CCONJ':
                             break
                         if len(doc) > token.i + 1 and (token.lemma_ == '。' or token.lemma_ == '!' or token.tag_ == '補助記号-読点') and doc[token.i + 1].tag_ != '補助記号-括弧閉':
@@ -764,7 +767,8 @@ class ChunkExtractor:
             # 後方が左カッコのほうが多いアンバランスな場合の処理
             if punc_ct < 0:
                 ret = ''
-                for token in doc[pt + 1:]:
+                end_pt = pt - 1
+                for token in doc[pt:]:
                     if token.tag_ == '補助記号-括弧開':
                         break
                     end_pt = end_pt + 1

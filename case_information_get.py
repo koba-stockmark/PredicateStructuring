@@ -92,8 +92,8 @@ class CaseExtractor:
                         if len(doc) > i + 2 and doc[i].lemma_ == 'と' and doc[i + 1].lemma_ == 'する' and doc[i + 2].lemma_ == 'て':
                             ret = ret + doc[i].lemma_ + 'して'
                             return ret + '-副詞的'
-                        elif doc[i].lemma_ == 'や':
-                            if doc[i + 1].pos_ == 'PUNCT':
+                        elif len(doc) > i + 1 and doc[i].lemma_ == 'や':
+                            if len(doc) > i + 2 and doc[i + 1].pos_ == 'PUNCT':
                                 re_nun = self.num_chunk(i + 2, *doc)
                             else:
                                 re_nun = self.num_chunk(i + 1, *doc)

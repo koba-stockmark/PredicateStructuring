@@ -51,7 +51,7 @@ class SubjectExtractor:
             else:
                 if doc[chek].dep_ == 'nsubj':  # 他の主語が見つかったらそちらを優先
                     break
-                if doc[doc[chek].i + 1].tag_ == '形状詞-助動詞語幹' and doc[doc[chek].i + 1].head.i == doc[doc[chek].i].i:
+                if len(doc) > doc[chek].i + 1 and doc[doc[chek].i + 1].tag_ == '形状詞-助動詞語幹' and doc[doc[chek].i + 1].head.i == doc[doc[chek].i].i:
                     break
                 if doc[chek].tag_ == '名詞-普通名詞-助数詞可能' and (doc[chek + 1].pos_ == 'ADP' and doc[chek + 1].lemma_ != 'の'):
                     break
@@ -59,10 +59,10 @@ class SubjectExtractor:
                     break
                 if (doc[chek].orth_[-2:] == "える" or doc[chek].orth_[-2:] == "れる") and doc[chek].dep_ == "acl":
                     break
-                if doc[chek].lemma_ != '運営' and doc[chek].lemma_ != '提携' and doc[chek].head.lemma_ != 'ほか':
+                if len(doc) > chek + 1 and doc[chek].lemma_ != '運営' and doc[chek].lemma_ != '提携' and doc[chek].head.lemma_ != 'ほか':
                     if ((doc[chek].morph.get("Inflection") and ('連体形' in doc[chek].morph.get("Inflection")[0] or '終止形' in doc[chek].morph.get("Inflection")[0])) or self.rentai_check(chek, *doc) or self.shuusi_check(chek, *doc) or
                             (doc[chek + 1].pos_ == 'AUX' and doc[chek + 1].morph.get("Inflection") and ('連体形' in doc[chek + 1].morph.get("Inflection")[0] or '終止形' in doc[chek + 1].morph.get("Inflection")[0])) or
-                            (doc[chek + 1].pos_ == 'AUX' and doc[chek + 2].pos_ == 'AUX' and doc[chek + 2].morph.get("Inflection") and ('連体形' in doc[chek + 2].morph.get("Inflection")[0] or '終止形' in doc[chek + 2].morph.get("Inflection")[0]))):
+                            (len(doc) > chek + 2 and doc[chek + 1].pos_ == 'AUX' and doc[chek + 2].pos_ == 'AUX' and doc[chek + 2].morph.get("Inflection") and ('連体形' in doc[chek + 2].morph.get("Inflection")[0] or '終止形' in doc[chek + 2].morph.get("Inflection")[0]))):
                         special_f = False   # 〇〇など　の特殊文節はパスを通す
                         for i in range(chek + 1, doc[chek].head.i):
                             if doc[i].pos_ == 'PUNCT' or doc[i].pos_ == 'VERB':
@@ -299,7 +299,7 @@ class SubjectExtractor:
                     candidate.append({'lemma': '', 'lemma_start': -1, 'lemma_end': -1})
                     return candidate
         # 〜をしている〇〇
-        if(doc[verb_end_pt].lemma_ == 'する' and doc[verb_end_pt - 1].lemma_ == 'を' and doc[verb_end_pt + 1].tag_ != '補助記号-句点' and
+        if(len(doc) > verb_end_pt + 1 and doc[verb_end_pt].lemma_ == 'する' and doc[verb_end_pt - 1].lemma_ == 'を' and doc[verb_end_pt + 1].tag_ != '補助記号-句点' and
                 ((self.rentai_check(doc[verb_end_pt].i, *doc) or (doc[verb_end_pt].morph.get("Inflection") and '連体形' in doc[verb_end_pt].morph.get("Inflection")[0])) or
                  (self.shuusi_check(doc[verb_end_pt].i, *doc) or (doc[verb_end_pt].morph.get("Inflection") and '終止' in doc[verb_end_pt].morph.get("Inflection")[0])))):
             if doc[verb_end_pt].head.i > verb_end_pt:
