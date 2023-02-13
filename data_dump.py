@@ -143,6 +143,8 @@ class DataDumpSave:
                         obj_w = data["lemma"]
                         case = data["case"]
                         phase = ""
+                        if "category" in chek_predicate:
+                            phase = chek_predicate["category"]
                         if "phase" in data:
                             phase = data["phase"]
                         if "category" in data:

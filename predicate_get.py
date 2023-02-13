@@ -22,7 +22,7 @@ class PredicateGet:
 
     def predicate_get(self, pt, *doc):
         token = doc[pt]
-        if doc[pt].tag_ == "補助記号-一般":
+        if "補助記号" in doc[pt].tag_:
             return {}
         if (len(doc) > token.i + 1 and doc[token.i + 1].tag_ == '接尾辞-名詞的-一般') or (len(doc) > token.i + 2 and doc[token.i + 1].pos_ == 'AUX' and doc[token.i + 2].tag_ == '接尾辞-名詞的-一般'):     # 生成名詞はNG
             return {}
@@ -33,6 +33,7 @@ class PredicateGet:
                 (len(doc) > token.i + 1 and token.pos_ == 'NOUN' and doc[token.i + 1].tag_ == '動詞-非自立可能') or
                 (len(doc) > token.i + 1 and token.pos_ == 'NOUN' and doc[token.i + 1].tag_ == '接尾辞-形状詞的') or
                 (len(doc) > token.i + 1 and token.pos_ == 'NOUN' and doc[token.i + 1].tag_ == '接尾辞-名詞的-サ変可能') or
+                (len(doc) > token.i + 1 and token.pos_ == 'NOUN' and doc[token.i + 1].tag_ == '助詞-終助詞') or
                 (len(doc) > token.i + 1 and token.tag_ == '名詞-普通名詞-形状詞可能' and doc[token.i + 1].tag_ == '補助記号-読点') or
                 (len(doc) > token.i + 1 and token.tag_ == '名詞-普通名詞-サ変可能' and token.dep_ == "dep" and doc[token.i + 1].tag_ == '補助記号-読点') or
                 (len(doc) > token.i + 2 and token.tag_ == '名詞-普通名詞-サ変可能' and token.dep_ == 'nmod' and token.head.dep_ == 'obj' and doc[token.i + 1].lemma_ == 'や' and self.rentai_check(token.i + 2, *doc)) or

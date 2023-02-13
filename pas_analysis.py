@@ -150,6 +150,8 @@ class PasAnalysis:
             #
             if token.i <= verb_end:
                 continue
+            if token.tag_ == "空白":
+                continue
             verb = self.predicate_get(token.i, *doc)
             if not verb or not verb["lemma"]:
                 continue
@@ -218,13 +220,13 @@ class PasAnalysis:
                     for check_p in append_predict:
                         if (check_p["lemma_start"] <= check_subj["lemma_start"] <= check_p["lemma_end"]) or (check_p["lemma_start"] <= check_subj["lemma_end"] <= check_p["lemma_end"]):
                             if ((len(doc) > check_p["lemma_end"] + 2 and doc[check_p["lemma_end"] + 1].pos_ == "AUX" and doc[check_p["lemma_end"] + 2].pos_ == "SCONJ" and doc[check_p["lemma_end"] + 2].tag_ == "助詞-準体助詞") or
-                                (len(doc) > check_p["lemma_end"] + 1 and doc[check_p["lemma_end"] + 2].pos_ == "SCONJ" and doc[check_p["lemma_end"] + 2].tag_ == "助詞-準体助詞")):
+                                (len(doc) > check_p["lemma_end"] + 2 and doc[check_p["lemma_end"] + 2].pos_ == "SCONJ" and doc[check_p["lemma_end"] + 2].tag_ == "助詞-準体助詞")):
                                 continue
                             ng_f = True
                             break
                     if ng_f:
                         continue
-                if not token.dep_ == "nsubj" or doc[check_subj['lemma_end'] + 1].lemma_ != 'も':  # 〇〇も　の例外処理でsubjを目的語にしている場合は自分自身をsubjにしない（省略されていると考える）
+                if not token.dep_ == "nsubj" or (len(doc) > check_subj['lemma_end'] + 1 and doc[check_subj['lemma_end'] + 1].lemma_ != 'も'):  # 〇〇も　の例外処理でsubjを目的語にしている場合は自分自身をsubjにしない（省略されていると考える）
                     ret_subj = check_subj
                     subject_w = ret_subj['lemma']
 
@@ -282,12 +284,14 @@ class PasAnalysis:
                         (doc[i].dep_ == 'advcl' and len(doc) > i + 1 and doc[i + 1].tag_ == '助動詞') or
                         (doc[i].dep_ == 'advcl' and len(doc) > i + 1 and doc[i + 1].tag_ == '動詞-非自立可能') or
                         (doc[i].dep_ == 'advmod' and doc[i].pos_ == 'ADV') or
-                        (doc[i].dep_ == 'amod' and doc[i].pos_ == 'ADJ') or
+                        ((doc[i].dep_ == 'amod' or doc[i].dep_ == 'acl') and doc[i].pos_ == 'ADJ') or
                         ((doc[i].dep_ == 'acl' or doc[i].dep_ == 'advcl' or doc[i].dep_ == 'ccomp') and doc[i].pos_ == 'VERB') or
                         (len(doc) > i + 1 and doc[i + 1].dep_ == 'case' and doc[i].orth_ != ret_subj["lemma"]) or
                         (len(doc) > i + 2 and doc[i + 1].tag_ == '補助記号-読点' and doc[i + 2].dep_ == 'case' and doc[i].orth_ != ret_subj["lemma"]) or
+                        (len(doc) > i + 2 and doc[i + 1].tag_ == '接尾辞-形容詞的' and doc[i + 2].tag_ == '接尾辞-名詞的-一般' and doc[i].pos_ == "VERB") or
                         (doc[i].dep_ == 'nsubj' and doc[i].orth_ != ret_subj["lemma"]) or
-                        (doc[i].lemma_ == '際' and doc[i].head.head.i == predicate_start) or
+                        (doc[i].lemma_ == '際' and predicate_start <= doc[i].head.i <= predicate_end) or
+                        (doc[i].lemma_ == '場合' and predicate_start <= doc[i].head.i <= predicate_end) or
                         ((doc[i].dep_ == "obl" or doc[i].dep_ == "nmod")and doc[i - 1].lemma_ != 'が' and
                          (len(doc) > i + 1 and (doc[i + 1].pos_ != 'AUX' or doc[i + 1].lemma_ == 'で' or doc[i + 1].tag_ == '助詞-格助詞' or doc[i + 1].tag_ == '補助記号-読点')) and
                          (doc[i].norm_ != 'そこ' and doc[i].norm_ != 'それ') and
@@ -397,7 +401,7 @@ class PasAnalysis:
                         #
                         # 項の獲得
                         #
-                        if ((doc[i].dep_ == 'advcl' or doc[i].dep_ == 'acl' or doc[i].dep_ == 'ccomp') and (doc[i].pos_ == 'ADJ' or doc[i].pos_ == 'AUX' or doc[i].pos_ == 'VERB')) or (len(doc) > i + 1 and doc[i].pos_ == 'VERB' and doc[i + 1].pos_ == 'AUX'):
+                        if ((doc[i].dep_ == 'advcl' or doc[i].dep_ == 'acl' or doc[i].dep_ == 'ccomp') and (doc[i].pos_ == 'ADJ' or doc[i].pos_ == 'AUX' or doc[i].pos_ == 'VERB')) or (len(doc) > i + 1 and doc[i].pos_ == 'VERB' and doc[i + 1].pos_ == 'AUX' and (len(doc) <= i + 2 or (len(doc) > i + 2 and doc[i + 2].pos_ != 'PART'))):
                             """
                             ret_obj = self.verb_chunk(i, *doc)
                             """
@@ -549,6 +553,7 @@ class PasAnalysis:
             ##########################################################################################
             verb_from_object = False
             split_f = False
+            add_arg = {}
             for re_arg in argument:
                 if predicate_id != re_arg["predicate_id"]:
                     continue
@@ -590,7 +595,7 @@ class PasAnalysis:
                         continue
                     if 'subject' in re_arg and re_arg['subject'] and re_arg['case'] != 'も':
                         continue
-                    dev_obj = self.object_devide(re_arg['lemma_start'], re_arg['lemma_end'], argument, append_predict, *doc)
+                    dev_obj = self.object_devide(re_arg['lemma_start'], re_arg['lemma_end'], re_arg['case'], argument, append_predict, *doc)
                     if dev_obj["verb"]:
                         re_arg["lemma"] = dev_obj["object"]
                         re_arg["lemma_end"] = dev_obj["verb_start"] - 2
@@ -634,6 +639,14 @@ class PasAnalysis:
                         sub_verb["lemma_start"] = dev_verb["sub_verb_start"]
                         sub_verb["lemma_end"] = dev_verb["sub_verb_end"]
                     new_verb = True
+                    if "object" in dev_verb:
+                        add_arg["lemma"] = dev_verb["object"]
+                        add_arg["lemma_start"] = dev_verb["obj_start"]
+                        add_arg["lemma_end"] = dev_verb["obj_end"]
+                        add_arg["case"] = "を"
+                        add_arg["subject"] = False
+                        add_arg["id"] = re_arg["id"] + 1
+                        add_arg["predicate_id"] = re_arg["predicate_id"]
 
                 ##########################################################################################################################################
                 #    目的語からの主述部がない場合は補助術部を主述部へもどす
@@ -702,7 +715,7 @@ class PasAnalysis:
                     else:
                         self.predicate_merge(append_predict, predicate, argument)
                         split_f = True
-                    if predicate_relation_id >= 0:
+                    if predicate_relation_id >= 0 and len(append_predict) > predicate_relation_id:
                         predicate["predicate_relation_from"] = predicate_relation_id
                         predicate_relation["from_id"] = predicate_relation_id
                         predicate_relation["to_id"] = predicate_id
@@ -710,6 +723,15 @@ class PasAnalysis:
                         predicate_relation["from_predicate"] = append_predict[predicate_relation_id]
                         predicate_relation["to_predicate"] = append_predict[predicate_id]
                         predicate_relations.append(copy.deepcopy(predicate_relation))
+                    # 述部に含まれた項の削除
+                    for del_arg in reversed(argument):
+                        if del_arg["predicate_id"] == predicate["id"] and del_arg["lemma_start"] >= predicate["lemma_start"] and del_arg["lemma_end"] <= predicate["lemma_end"]:
+                            del argument[argument.index(del_arg)]
+
+            #
+            if add_arg:
+                argument.append(add_arg)
+
             ##########################################################################################################################################
             #    目的語からの主述部がない場合は補助術部を主述部へもどす
             ##########################################################################################################################################
@@ -752,7 +774,7 @@ class PasAnalysis:
                     predicate["id"] = predicate["id"] - del_ct
                     pre_predicate_id = pre_predicate_id - del_ct
                 self.predicate_merge(append_predict, predicate, argument)
-                if predicate_relation_id >= 0:
+                if predicate_relation_id >= 0 and len(append_predict) > predicate_relation_id:
                     predicate["predicate_relation_from"] = predicate_relation_id
                     predicate_relation["from_id"] = predicate_relation_id
                     predicate_relation["to_id"] = predicate_id
@@ -760,6 +782,11 @@ class PasAnalysis:
                     predicate_relation["from_predicate"] = append_predict[predicate_relation_id]
                     predicate_relation["to_predicate"] = append_predict[predicate_id]
                     predicate_relations.append(copy.deepcopy(predicate_relation))
+                # 述部に含まれた項の削除
+                for del_arg in reversed(argument):
+                    if del_arg["predicate_id"] == predicate["id"] and del_arg["lemma_start"] >= predicate["lemma_start"] and del_arg["lemma_end"] <= predicate["lemma_end"]:
+                        del argument[argument.index(del_arg)]
+
         ##########################################################################################################################################
         #    メイン述部の判断
         #              目的語のかかる先が　メイン述部　か　メイン述部＋補助述部　かの判断

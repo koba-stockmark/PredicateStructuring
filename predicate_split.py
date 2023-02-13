@@ -66,15 +66,17 @@ class VerbSpliter:
             return True
         return False
 
+
+
     """
     目的語の中の述部を分割
 
     ret : 目的語　＋　主述部　＋　主述始点　＋　主述部終点
     """
-    def object_devide(self, start, end, argument, predicate, *doc):
+    def object_devide(self, start, end, case, argument, predicate, *doc):
         compound_word = ['商品', '技術', '製品', '無料', '限定', '特別', '本格', '社会', '新', '国内', '顧客', '一般', '全国', '早期', '事前']    # 複合動を作っても良い普通名詞
 
-        if start == end:
+        if start == end and "連体修飾" not in case:
             if (doc[start - 1].lemma_ == 'と' or doc[start - 1].lemma_ == 'や') and self.case_get(start, *doc) == 'を':
                 return {'object': '', 'verb': self.compaound(start, end, *doc) + 'する', 'verb_start': start, 'verb_end': end}
             else:
@@ -147,7 +149,18 @@ class VerbSpliter:
                         return {'object': new_obj["lemma"], 'verb': new_verb["lemma"], 'verb_start': new_verb["lemma_start"], 'verb_end': new_verb["lemma_end"], 'new_object_start': new_obj["lemma_start"], 'new_object_end': new_obj["lemma_end"]}
                     else:
                         return {'object': '', 'verb': new_verb["lemma"], 'verb_start': new_verb["lemma_start"], 'verb_end': new_verb["lemma_end"]}
-
+        p_id = -1
+        rentai_f = False
+        for c_arg in argument:
+            if start >= c_arg["lemma_start"] and start <= c_arg["lemma_end"]:
+                p_id = c_arg["predicate_id"]
+                break
+        for c_arg in argument:
+            if c_arg["predicate_id"] == p_id and "連体修飾" in c_arg["case"]:
+                rentai_f = True
+                break
+        if "連体修飾" in case or ((case == "の" or case == "を") and not rentai_f):
+                return {'object': "", 'verb': self.compaound(start, end, *doc) + 'する','verb_start': start, 'verb_end': end}
         return {'object': self.compaound(start, end, *doc), 'verb': '', 'verb_start': -1, 'verb_end': -1}
 
 
@@ -161,16 +174,25 @@ class VerbSpliter:
         if start == end:
             return {'verb': self.compaound(start, end, *doc), 'sub_verb': '', 'verb_start': start, 'verb_end': end, 'sub_verb_start': -1, 'sub_verb_end': -1}
         for i in reversed(range(start, end + 1)):
-            if i > start and doc[i - 1].tag_ == '動詞-一般':
+            if i > start and (doc[i - 1].tag_ == '動詞-一般' or doc[i - 1].tag_ == "名詞-普通名詞-形状詞可能"):
                 continue
             if doc[i].norm_ in s_v_dic.sub_verb_dic:
                 if doc[i - 1].tag_ != '名詞-普通名詞-サ変可能':  # 本格始動　など普通名詞との合成
                     if doc[end].lemma_ == 'ため' or doc[end].lemma_ == 'もの' or doc[end].lemma_ == 'とき' or doc[end].lemma_ == '際' or doc[end].lemma_ == 'こと' or doc[end].lemma_ == '場合' or doc[end].lemma_ == '人' or doc[end].lemma_ == 'とき':
                         return {'verb': '', 'sub_verb': self.compaound(i, end, *doc) + 'だ', 'verb_start': -1, 'verb_end': -1, 'sub_verb_start': i, 'sub_verb_end': end}
                     elif doc[end].tag_ == '名詞-普通名詞-サ変可能':
-                        if doc[i - 1].tag_ == '名詞-普通名詞-一般' or (doc[i - 1].tag_ == '形状詞-一般' and doc[i - 1].head.i == i):
-                            return {'verb': self.compaound(start, end, *doc), 'sub_verb': '', 'verb_start': start, 'verb_end': end, 'sub_verb_start': -1, 'sub_verb_end': -1}
-                        return {'verb': '', 'sub_verb': self.compaound(i, end, *doc) + 'する', 'verb_start': -1, 'verb_end': -1, 'sub_verb_start': i, 'sub_verb_end': end}
+                        # 京都にモデルハウス披露　→　京都に　モデルハウスを　披露する
+#                        if doc[i - 1].tag_ == '名詞-普通名詞-一般' or (doc[i - 1].tag_ == '形状詞-一般' and doc[i - 1].head.i == i):
+#                            return {'verb': self.compaound(start, end, *doc), 'sub_verb': '', 'verb_start': start, 'verb_end': end, 'sub_verb_start': -1, 'sub_verb_end': -1}
+#                        return {'verb': '', 'sub_verb': self.compaound(i, end, *doc) + 'する', 'verb_start': -1, 'verb_end': -1, 'sub_verb_start': i, 'sub_verb_end': end}
+                        if doc[i - 1].lemma_ == "初":
+                            return {'verb': '', 'sub_verb': self.compaound(i - 1, end, *doc) + 'する', 'verb_start': -1,
+                                    'verb_end': -1, 'sub_verb_start': i, 'sub_verb_end': end,
+                                    "object": self.compaound(start, i - 2, *doc), "obj_start": start, "obj_end": i - 2}
+                        else:
+                            return {'verb': '', 'sub_verb': self.compaound(i, end, *doc) + 'する', 'verb_start': -1,
+                                    'verb_end': -1, 'sub_verb_start': i, 'sub_verb_end': end,
+                                    "object":self.compaound(start, i - 1, *doc), "obj_start": start, "obj_end": i - 1}
                     elif doc[end].lemma_ == 'だ' or doc[end].lemma_ == 'です':
                         return {'verb': '', 'sub_verb': self.compaound(i, end, *doc) , 'verb_start': -1,'verb_end': -1, 'sub_verb_start': i, 'sub_verb_end': end}
                     elif doc[end].norm_ == '出来る':
