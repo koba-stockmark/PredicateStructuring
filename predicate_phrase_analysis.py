@@ -415,7 +415,7 @@ class PredicatePhraseExtractor:
             ###############################
             #    形容動詞がメイン述部
             ###############################
-            elif doc[pt].dep_ == "ROOT" and (doc[pt].tag_ == '接尾辞-名詞的-副詞可能' or doc[pt].tag_ == '名詞-普通名詞-形状詞可能'):
+            elif (doc[pt].dep_ == "ROOT" or doc[doc[pt].head.i].dep_ == "ROOT") and (doc[pt].tag_ == '接尾辞-名詞的-副詞可能' or doc[pt].tag_ == '名詞-普通名詞-形状詞可能'):
                 verb = self.num_chunk(doc[pt].i, *doc)
                 verb_w = verb["lemma"]
                 modality_w = [*self.modality_get(pt, *doc)]
@@ -510,9 +510,10 @@ class PredicatePhraseExtractor:
                 #
                 kanyouku = self.kanyouku_chek(doc[pt].i, *doc)
                 if len(kanyouku) > 0:
-                    verb_w = self.kanyouku_get(kanyouku, *doc)
-                    verb["lemma_start"] = kanyouku[0]
-                    verb["lemma_end"] = kanyouku[-1]
+                    if verb["lemma_start"] > kanyouku[0] or  verb["lemma_end"] < kanyouku[-1]:
+                        verb_w = self.kanyouku_get(kanyouku, *doc)
+                        verb["lemma_start"] = kanyouku[0]
+                        verb["lemma_end"] = kanyouku[-1]
                     rule_id = 38
                 else:
                     if len(doc) > doc[pt].i + 2 and doc[doc[pt].i + 1].lemma_ == 'と' and (doc[doc[pt].i + 2].norm_ == '為る' or doc[doc[pt].i + 2].norm_ == '成る'):

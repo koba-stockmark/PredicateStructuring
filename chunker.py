@@ -255,6 +255,9 @@ class ChunkExtractor:
             elif len(doc) > i + 1 and doc[i].pos_ == 'AUX' and doc[i].orth_ == 'な' and doc[i + 1].pos_ == 'NOUN':  # 〜な〇〇
                 pre = doc[i].orth_ + pre
                 start_pt = i
+            elif len(doc) > i + 1 and doc[i].pos_ == 'ADP' and doc[i].orth_ == 'の' and doc[i + 1].orth_ == 'とおり':  # 次のとおり
+                pre = doc[i].orth_ + pre
+                start_pt = i
             elif len(doc) > i + 1 and doc[i].pos_ == 'AUX' and doc[i].orth_ == 'よう' and doc[i + 1].orth_ == 'な':  # 〜ような〇〇
                 pre = doc[i].orth_ + pre
                 start_pt = i

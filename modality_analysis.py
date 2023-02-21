@@ -16,6 +16,10 @@ class ModalityAnalysis:
         ["です"],
         ["だ"]
     ]
+    # 不確実
+    fukakujitu_rule = [
+        ["か", "も"]
+    ]
     # 命令
     meirei_rule = [
         ["活用=命令形"],
@@ -143,7 +147,7 @@ class ModalityAnalysis:
     keizoku_rule = [
         [".*て", "いる"]
     ]
-    # 可能 [#] は [norm != orth] が条件でのorth
+    # 可能 [#] は [norm != orth] が条件でのorth , [%] は [norm == lemma] が条件でのorth
     kanou_rule = [
 #        ["!する", "れる"],
         ["D.*さ", "#.*れる"],
@@ -160,6 +164,7 @@ class ModalityAnalysis:
         ["D.*や", "ない"],
         ["D.*ら", "ない"],
         ["D.*わ", "ない"],
+        ["D%.*てる", "ない"],
         ["できる"],
         ["でき", "た"],
         ["られる"],
@@ -185,8 +190,8 @@ class ModalityAnalysis:
         ["#.*べ", "ず"],
         ["#.*め", "ず"],
         ["#.*れ", "ず"],
-        ["D活用=サ行変格;未然形-サ", "活用=未然形", "ない"],
-        ["活用=未然形", "ない"]
+        ["活用=未然形", "ない"],
+        ["D活用=サ行変格;未然形-サ", "活用=未然形", "ない"]
     ]
     # 疑問
     gimon_rule = [
@@ -256,11 +261,19 @@ class ModalityAnalysis:
             find = True
             for n_chek in chek:
                 not_f = False
+                lemma_chek = False
                 if n_chek[0] == "D":                # 削除
                     del_f = True
                     n_chek = n_chek[1:]
-                if n_chek[0] == "#":                # orth == norm
+                if n_chek[0] == "#":                # orth != norm
                     if doc[pt].orth_[-2:] == doc[pt].norm_[-2:]:
+                        del_f = False
+                        find = False
+                        break
+                    n_chek = n_chek[1:]
+                if n_chek[0] == "%":                # lemma == norm
+                    lemma_chek = True
+                    if doc[pt].lemma_[-2:] != doc[pt].norm_[-2:]:
                         del_f = False
                         find = False
                         break
@@ -282,8 +295,8 @@ class ModalityAnalysis:
                         del_f = False
                         break
                 elif (len(doc) > pt + baias and
-                        ((rule in self.orth_chek_rule and re.fullmatch(n_chek, doc[pt + baias].orth_)) or
-                        (rule not in self.orth_chek_rule and re.fullmatch(n_chek, doc[pt + baias].lemma_)))):
+                        ((rule in self.orth_chek_rule and not lemma_chek and re.fullmatch(n_chek, doc[pt + baias].orth_)) or
+                        ((rule not in self.orth_chek_rule or lemma_chek) and re.fullmatch(n_chek, doc[pt + baias].lemma_)))):
                     if not_f:
                         find = False
                         del_f = False
@@ -337,6 +350,9 @@ class ModalityAnalysis:
             # 過去
             if doc[sp].pos_ != "NOUN" or verb_in or (len(doc) > sp + 1 and doc[sp + 1].lemma_ == "を") or (len(doc) > sp + 1 and doc[sp + 1].orth_ == "だっ"):
                 self.rule_chek(self.kako_rule, "<過去>",  ret, delete, pt, *doc)
+
+            # 不確実
+            self.rule_chek(self.fukakujitu_rule, "<不確実>",  ret, delete, pt, *doc)
 
             # 命令
             self.rule_chek(self.meirei_rule, "<命令>",  ret, delete, pt, *doc)
