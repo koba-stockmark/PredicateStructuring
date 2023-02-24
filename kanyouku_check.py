@@ -18,24 +18,29 @@ class KanyoukuExtractor:
         pass_data = []
         for chek_kannyouku in k_dic.kanyouku_dic:
             chek_pt = pt
-            c_pt = 0
             find_f = False
-            for chek_w in chek_kannyouku:
-                find_f = False
+            chek_w_pt = 0
+            while chek_pt < len(doc) and chek_w_pt < len(chek_kannyouku):
+                chek_w = chek_kannyouku[chek_w_pt]
                 chek_w2 = chek_w
                 chek_w3 = chek_w
                 if chek_w == "が":
                     chek_w2 = "も"
                     chek_w3 = "は"
-                for i in range(c_pt, chek_pt + 1):
-                    if ((doc[i].norm_ == chek_w or doc[i].norm_ == chek_w2 or doc[i].norm_ == chek_w3) and
-                            (i == pt or doc[i].head.i == pt or doc[i].head.head.i == pt) and
-                            (not pass_data or doc[i].head.i in pass_data or doc[i].i - 1 in pass_data)):
-                        pass_data.append(i)
-                        c_pt = i + 1
-                        find_f = True
-                        break
-                if not find_f:
+                if ((doc[chek_pt].norm_ == chek_w or doc[chek_pt].norm_ == chek_w2 or doc[chek_pt].norm_ == chek_w3) and
+                        (chek_pt == pt or doc[chek_pt].head.i == pt or doc[chek_pt].head.head.i == chek_pt) and
+                        (not pass_data or doc[chek_pt].head.i in pass_data or doc[chek_pt].i - 1 in pass_data or doc[chek_pt].head.i == doc[pt].head.i)):
+                    pass_data.append(chek_pt)
+                    chek_w_pt = chek_w_pt + 1
+                    chek_pt = chek_pt + 1
+                    find_f = True
+                    continue
+                elif find_f and (doc[chek_pt].head.i == doc[chek_pt - 1].head.i or doc[chek_pt].head.i == doc[pt].head.i):
+                    chek_pt = chek_pt + 1
+                    continue
+                else:
+                    find_f = False
+                    pass_data = []
                     break
             if find_f:
                 break
