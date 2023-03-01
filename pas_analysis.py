@@ -4,7 +4,6 @@ from case_information_get import CaseExtractor
 from subject_get import SubjectExtractor
 from parallel_get import ParallelExtractor
 from predicate_split import VerbSpliter
-from phase_check import PhaseCheker
 from kanyouku_check import KanyoukuExtractor
 from predicate_phrase_analysis import PredicatePhraseExtractor
 from main_verb_check import MainVerbChek
@@ -39,9 +38,6 @@ class PasAnalysis:
         self.sub_verb_chek = v_s.sub_verb_chek
         self.object_devide = v_s.object_devide
         self.not_devide_case_dic = v_s.not_devide_case_dic
-        p_c = PhaseCheker()
-        self.phase_chek = p_c.phase_chek
-        self.single_phase_get = p_c.single_phase_get
         k = KanyoukuExtractor()
         self.kanyouku_chek = k.kanyouku_chek
         self.kanyouku_get = k.kanyouku_get
