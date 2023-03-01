@@ -24,17 +24,17 @@ def pas_get(debug, text):
     return ret
 
 # test
-articles = json.load(open('nikkei.json'))
-articles2 = json.load(open('nikkei_5000.json'))
-articles3 = json.load(open('gyoukai.json'))
-articles4 = json.load(open('datsutanso.json'))
-solution = open('solution_sentence.txt')
-error = open('error.txt')
+articles = json.load(open('data/nikkei.json'))
+articles2 = json.load(open('data/nikkei_5000.json'))
+articles3 = json.load(open('data/gyoukai.json'))
+articles4 = json.load(open('data/datsutanso.json'))
+solution = open('data/solution_sentence.txt')
+error = open('data/error.txt')
 #head = open('../DataClean/head_1line.txt')
 
-#out_file = open('result.tsv', 'w')
-out_file = open('result_nikkei.tsv', 'w')
-#out_file = open('result_head_1line.tsv', 'w')
+#out_file = open('data/result.tsv', 'w')
+out_file = open('data/result_nikkei.tsv', 'w')
+#out_file = open('data/result_head_1line.tsv', 'w')
 
 for doc in articles2:
     for sep_doc in doc.splitlines():
