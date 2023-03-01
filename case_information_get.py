@@ -38,7 +38,7 @@ class CaseExtractor:
                 sp = pt + 1
             cpt = sp
             for cpt in range(sp, len(doc)):
-                if (len(doc) > cpt + 1 and doc[cpt].lemma_ == 'て' and doc[cpt + 1].lemma_ == 'いる') or (doc[cpt - 1].lemma_ == 'て' and doc[cpt].lemma_ == 'いる'):     # 〇〇ている＋「格助詞」　は特別　ex.　できなくなっていると発表した
+                if (len(doc) > cpt + 1 and doc[cpt].lemma_ == 'て' and (doc[cpt + 1].lemma_ == 'いる' or doc[cpt + 1].lemma_ == 'くる')) or (doc[cpt - 1].lemma_ == 'て' and (doc[cpt].lemma_ == 'いる' or doc[cpt].lemma_ == 'くる')):     # 〇〇ている＋「格助詞」　は特別　ex.　できなくなっていると発表した
                     ret = ret + doc[cpt].orth_
                     continue
                 if len(doc) > cpt + 1 and doc[cpt - 1].orth_ == 'で' and doc[cpt].lemma_ == 'ある'and doc[cpt + 1].pos_ == 'SCONJ':     # 〇〇であれば

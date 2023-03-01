@@ -177,7 +177,7 @@ class VerbSpliter:
             if i > start and (doc[i - 1].tag_ == '動詞-一般' or doc[i - 1].tag_ == "名詞-普通名詞-形状詞可能"):
                 continue
             if doc[i].norm_ in s_v_dic.sub_verb_dic:
-                if doc[i - 1].tag_ != '名詞-普通名詞-サ変可能':  # 本格始動　など普通名詞との合成
+                if doc[i - 1].tag_ != '名詞-普通名詞-サ変可能' and doc[i - 1].pos_ != "SCONJ":  # 本格始動　など普通名詞との合成
                     if doc[end].lemma_ == 'ため' or doc[end].lemma_ == 'もの' or doc[end].lemma_ == 'とき' or doc[end].lemma_ == '際' or doc[end].lemma_ == 'こと' or doc[end].lemma_ == '場合' or doc[end].lemma_ == '人' or doc[end].lemma_ == 'とき':
                         return {'verb': '', 'sub_verb': self.compaound(i, end, *doc) + 'だ', 'verb_start': -1, 'verb_end': -1, 'sub_verb_start': i, 'sub_verb_end': end}
                     elif doc[end].tag_ == '名詞-普通名詞-サ変可能':
@@ -218,7 +218,10 @@ class VerbSpliter:
                         return {'verb': '', 'sub_verb': self.compaound(i, end, *doc), 'verb_start': -1, 'verb_end': -1, 'sub_verb_start': i, 'sub_verb_end': end}
                     else:
                         return {'verb': '', 'sub_verb': self.compaound(i, end, *doc) + 'する', 'verb_start': -1, 'verb_end': -1, 'sub_verb_start': i, 'sub_verb_end': end}
-                if doc[end].tag_ == '名詞-普通名詞-サ変可能':
+
+                if doc[end - 1].pos_ == "SCONJ":
+                    return {'verb': self.compaound(start, i - 2, *doc), 'sub_verb': self.compaound(i, end, *doc), 'verb_start': start, 'verb_end': i - 1, 'sub_verb_start': i, 'sub_verb_end': end}
+                elif doc[end].tag_ == '名詞-普通名詞-サ変可能':
                     return {'verb': self.compaound(start, i - 1, *doc) + 'する', 'sub_verb': self.compaound(i, end, *doc) + 'する', 'verb_start': start, 'verb_end': i - 1, 'sub_verb_start': i, 'sub_verb_end': end}
                 else:
                     return {'verb': self.compaound(start, i - 1, *doc) + 'する', 'sub_verb': self.compaound(i, end, *doc), 'verb_start': start, 'verb_end': i - 1, 'sub_verb_start': i, 'sub_verb_end': end}

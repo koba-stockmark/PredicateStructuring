@@ -46,6 +46,8 @@ class PredicateGet:
                         break
             if token.dep_ == 'fixed':
                 return {}
+            if doc[pt].lemma_ == "くる" and doc[pt - 1].lemma_ == "て":     # 〜てくる
+                return {}
 #            if token.dep_ == 'compound':
 #                return {}
             if token.tag_ == '接頭辞':

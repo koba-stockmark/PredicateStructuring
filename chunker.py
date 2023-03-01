@@ -273,7 +273,7 @@ class ChunkExtractor:
             elif doc[i].pos_ == 'ADJ' and doc[i].tag_ == "形状詞-一般" and doc[i].head.i == pt:  # 形状詞
                 pre = doc[i].orth_ + pre
                 start_pt = i
-            elif doc[pt].pos_ == "NOUN" and doc[i].tag_ == "名詞-普通名詞-助数詞可能" and doc[i].head.i == pt:  # 数字記号
+            elif doc[pt].pos_ == "NOUN" and doc[i].tag_ == "名詞-普通名詞-助数詞可能" and (doc[i].head.i == pt or doc[i].head.head.i == pt):  # 数字記号
                 pre = doc[i].orth_ + pre
                 start_pt = i
             elif doc[pt].pos_ == "NOUN" and doc[i].pos_ == 'SYM' and doc[i].tag_ == "補助記号-一般" and doc[i].head.i == pt:  # 数字記号
@@ -319,6 +319,7 @@ class ChunkExtractor:
         tail_o = ''     # モダリティ解析用の付属語
         tail_ct = 0     # 末尾単語数
         ret = ''        # チャンク結果
+        in_keishikimeishi = False #　形式名詞を含む
         for token in doc[pt + 1:]:
             if token.head.i != pt and doc[pt].head.i != token.i and doc[pt].head.i != token.head.i and (token.head.i < pt or token.head.i > token.i):
                 if doc[pt].pos_ == "NOUN" and doc[pt].dep_ == "ROOT" and (doc[token.i].head.i == pt or doc[doc[token.i].head.i].head.i == pt):
@@ -355,6 +356,7 @@ class ChunkExtractor:
                 end_pt = token.i + 2
                 tail_o = ''
                 tail_ct = 0
+                in_keishikimeishi = True
             elif ((token.lemma_ in self.keishki_meishi or (token.norm_ == '中' and token.tag_ == "名詞-普通名詞-副詞可能")) and
                   (doc[token.i - 1].lemma_ == 'いる' and doc[token.i - 2].lemma_ == 'て')):
                 if find_f:
@@ -604,10 +606,14 @@ class ChunkExtractor:
             else:
                 ret_lemma = pre + doc[pt].lemma_
             org_str = pre + doc[pt].orth_ + append_o + tail_o
-        if doc[pt].dep_ == 'nmod':
-            return {'lemma': ret_lemma, 'lemma_start': start_pt, 'lemma_end': end_pt, 'org_str': org_str, 'org_start': start_pt, 'org_end': end_pt + tail_ct, 'modality': [*self.modality_get(end_pt, *doc)]}
+        if in_keishikimeishi:
+            verb_end = pt
         else:
-            return {'lemma': ret_lemma, 'lemma_start': start_pt, 'lemma_end': end_pt, 'org_str': org_str, 'org_start': start_pt, 'org_end': end_pt + tail_ct, 'modality': [*self.modality_get(end_pt, *doc)]}
+            verb_end = end_pt
+        if doc[pt].dep_ == 'nmod':
+            return {'lemma': ret_lemma, 'lemma_start': start_pt, 'lemma_end': end_pt, 'org_str': org_str, 'org_start': start_pt, 'org_end': end_pt + tail_ct, 'modality': [*self.modality_get(verb_end, *doc)]}
+        else:
+            return {'lemma': ret_lemma, 'lemma_start': start_pt, 'lemma_end': end_pt, 'org_str': org_str, 'org_start': start_pt, 'org_end': end_pt + tail_ct, 'modality': [*self.modality_get(verb_end, *doc)]}
 
 
     """
@@ -658,7 +664,7 @@ class ChunkExtractor:
                     elif doc[i].orth_ == 'の' or ((doc[i].orth_ == 'に' or doc[i].orth_ == 'と') and doc[i + 1].lemma_ == 'する'):
                         ret = self.connect_word(doc[i].orth_, ret)
                         start_pt = i
-                    elif (doc[i].orth_ == 'て' or doc[i].orth_ == 'で') and (doc[i + 1].orth_ == 'いる' or doc[i + 1].orth_ == 'い' or doc[i + 1].orth_ == 'いく' or doc[i + 1].orth_ == 'いただく'):     # 〜していること
+                    elif (doc[i].orth_ == 'て' or doc[i].orth_ == 'で') and (doc[i + 1].orth_ == 'いる' or doc[i + 1].orth_ == 'い' or doc[i + 1].orth_ == 'いく' or doc[i + 1].orth_ == 'いただく' or doc[i + 1].orth_ == 'くる'):     # 〜していること
                         ret = self.connect_word(doc[i].orth_, ret)
                         start_pt = i
                     elif len(doc) > i + 1 and doc[i + 1].tag_ == '助詞-接続助詞' and (doc[i].pos_ == 'VERB' or doc[i].pos_ == 'AUX'):  # 〜ていくこと
