@@ -29,6 +29,7 @@ class PredicateGet:
         if (token.pos_ == 'VERB' or token.pos_ == 'ADJ' or token.pos_ == 'ADV' or token.dep_ == 'ROOT' or token.dep_ == 'ROOT' or token.dep_ == 'obl' or token.dep_ == 'acl' or token.dep_ == 'advcl' or token.tag_ == '名詞-普通名詞-副詞可能' or
                 (token.dep_ == 'nmod' and token.tag_ == "名詞-普通名詞-助数詞可能") or
                 (token.pos_ == 'NOUN' and doc[token.head.i].norm_ == '為る' and doc[token.head.i - 1].lemma_ != 'に') or
+                (len(doc) > token.i + 1 and token.pos_ == 'NUM' and doc[token.i + 1].tag_ == '補助記号-句点') or
                 (len(doc) > token.i + 1 and token.pos_ == 'NOUN' and doc[token.i + 1].pos_ == 'AUX') or
                 (len(doc) > token.i + 1 and token.pos_ == 'NOUN' and doc[token.i + 1].tag_ == '動詞-非自立可能') or
                 (len(doc) > token.i + 1 and token.pos_ == 'NOUN' and doc[token.i + 1].tag_ == '接尾辞-形状詞的') or

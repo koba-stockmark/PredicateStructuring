@@ -20,7 +20,7 @@ class KanyoukuExtractor:
             chek_pt = pt
             find_f = False
             chek_w_pt = len(chek_kannyouku) - 1
-            while chek_pt > 0 and chek_w_pt >= 0:
+            while chek_pt >= 0 and chek_w_pt >= 0:
                 chek_w = chek_kannyouku[chek_w_pt]
                 chek_w2 = chek_w
                 chek_w3 = chek_w
@@ -42,7 +42,7 @@ class KanyoukuExtractor:
                     find_f = False
                     pass_data = []
                     break
-            if find_f:
+            if find_f and chek_w_pt < 0:
                 break
             pass_data = []
         return pass_data[::-1]

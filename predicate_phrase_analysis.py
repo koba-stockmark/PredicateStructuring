@@ -446,10 +446,10 @@ class PredicatePhraseExtractor:
             #    普通名詞　〇〇　＋　を　＋　〇〇日
             ###############################
             elif len(doc) > doc[pt].i + 1 and doc[pt].tag_ == '名詞-数詞' and doc[doc[pt].i + 1].pos_ == 'PUNCT':
-                verb_w = ''
+                verb = self.verb_chunk(doc[pt].i, *doc)
+                modality_w = verb["modality"]
                 verb = self.num_chunk(doc[pt].i, *doc)
                 verb_w = verb["lemma"]
-                modality_w = ""
                 rule_id = 34
             ###############################
             #    〜を　形容詞　＋　できる
