@@ -159,7 +159,7 @@ class VerbSpliter:
             if c_arg["predicate_id"] == p_id and "連体修飾" in c_arg["case"]:
                 rentai_f = True
                 break
-        if "連体修飾" in case or ((case == "の" or case == "を") and not rentai_f):
+        if ("連体修飾" in case or ((case == "の" or case == "を") and not rentai_f) and "サ変可能" in doc[end].tag_):
                 return {'object': "", 'verb': self.compaound(start, end, *doc) + 'する','verb_start': start, 'verb_end': end}
         return {'object': self.compaound(start, end, *doc), 'verb': '', 'verb_start': -1, 'verb_end': -1}
 

@@ -220,7 +220,7 @@ class ChunkExtractor:
             elif len(doc) > i + 1 and doc[i].pos_ == 'VERB' and doc[i + 1].tag_ == '名詞-普通名詞-助数詞可能':  # 名詞　＋　方　（です）
                 pre = doc[i].orth_ + pre
                 start_pt = i
-            elif len(doc) > i + 1 and doc[i].tag_ == '補助記号-括弧閉' and doc[i + 1].tag_ == "動詞-非自立可能":  # 「〇〇」できる
+            elif len(doc) > i + 1 and doc[i].tag_ == '補助記号-括弧閉' and (doc[i + 1].tag_ == "動詞-非自立可能" and doc[i + 1].lemma_ != "出す"):  # 「〇〇」できる
                 pre = doc[i].orth_ + pre
                 start_pt = i
             elif len(doc) > i + 3 and doc[i].orth_ == 'と' and doc[i + 1].pos_ == 'NOUN' and doc[i + 2].orth_ == 'が' and doc[i + 3].norm_ == '出来る':  # 名詞と名詞　＋　が　＋　できる

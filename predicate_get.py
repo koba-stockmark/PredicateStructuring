@@ -103,7 +103,7 @@ class PredicateGet:
                 return self.predicate_phrase_get(token.i, *doc)
             #   〇〇　＋　を　＋　普通名詞。　　　体言止 連用中止
             #
-            if doc[token.i].lemma_ == 'もの' or doc[token.i].lemma_ == 'こと' or doc[token.i].lemma_ == 'ため' or doc[token.i].lemma_ == 'とき' or doc[token.i].lemma_ == '際' or doc[token.i].lemma_ == '人' or doc[token.i].lemma_ == '場合':
+            if doc[token.i].tag_ != "接尾辞-名詞的-一般" and (doc[token.i].lemma_ == 'もの' or doc[token.i].lemma_ == 'こと' or doc[token.i].lemma_ == 'ため' or doc[token.i].lemma_ == 'とき' or doc[token.i].lemma_ == '際' or doc[token.i].lemma_ == '人' or doc[token.i].lemma_ == '場合'):
                 return {}
             elif token.i > 0 and (doc[token.i - 1].pos_ == 'ADP' or doc[token.i - 1].pos_ == 'SCONJ') and (token.pos_ == 'NOUN' and ((token.dep_ == 'ROOT' and token.i == token.head.i) or (len(doc) > token.i + 1 and doc[token.i + 1].pos_ == 'SYM'))):
                 return self.predicate_phrase_get(token.i, *doc)

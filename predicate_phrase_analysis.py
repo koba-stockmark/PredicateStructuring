@@ -223,7 +223,7 @@ class PredicatePhraseExtractor:
             elif len(doc) > verb["lemma_end"] + 3 and doc[verb["lemma_end"] + 1].orth_ == "に" and doc[verb["lemma_end"] + 2].orth_ == "つい" and doc[verb["lemma_end"] + 3].orth_ == "て":
                 verb_w = verb["lemma"] + "について"
                 verb["lemma_end"] = verb["lemma_end"] + 3
-            elif doc[verb["lemma_end"]].tag_ == '接尾辞-名詞的-助数詞' or doc[verb["lemma_end"]].tag_ == '名詞-普通名詞-助数詞可能' or doc[verb["lemma_end"]].tag_ == '名詞-普通名詞-形状詞可能' or doc[verb["lemma_end"]].tag_ == '名詞-普通名詞-副詞可能' or (doc[verb["lemma_end"]].tag_ == '名詞-普通名詞-一般' and doc[verb["lemma_end"]].lemma_ != 'お知らせ'):
+            elif doc[verb["lemma_end"]].tag_ == '接尾辞-名詞的-一般' or doc[verb["lemma_end"]].tag_ == '接尾辞-名詞的-助数詞' or doc[verb["lemma_end"]].tag_ == '名詞-普通名詞-助数詞可能' or doc[verb["lemma_end"]].tag_ == '名詞-普通名詞-形状詞可能' or doc[verb["lemma_end"]].tag_ == '名詞-普通名詞-副詞可能' or (doc[verb["lemma_end"]].tag_ == '名詞-普通名詞-一般' and doc[verb["lemma_end"]].lemma_ != 'お知らせ'):
                 verb_w = verb["lemma"] + '(です)'
             elif doc[doc[pt].i].morph.get("Inflection") and '連用形' in doc[doc[pt].i].morph.get("Inflection")[0]:
                 verb_w = verb["lemma"]
