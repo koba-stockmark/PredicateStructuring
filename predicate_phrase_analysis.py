@@ -376,7 +376,7 @@ class PredicatePhraseExtractor:
             ###############################
             #    単独の動詞　普通名詞　A〇〇　＋　を　＋　B動詞(使い)　＋　形容詞(やすく)　＋　C〇〇　＋　する　ex.　使いやすくバージョンアップする。  A-B の係り関係から A-C を作る
             ###############################
-            elif len(doc) > doc[pt].i + 1 and doc[doc[pt].i + 1].pos_ == 'AUX'  and doc[pt].head.pos_ == 'NOUN' and len(doc) > doc[pt].head.i + 1 and doc[doc[pt].head.i + 1].lemma_ == 'する':
+            elif len(doc) > doc[pt].i + 1 and doc[doc[pt].i + 1].pos_ == 'AUX' and doc[doc[pt].i + 1].lemma_ != 'ます' and doc[pt].head.pos_ == 'NOUN' and len(doc) > doc[pt].head.i + 1 and doc[doc[pt].head.i + 1].lemma_ == 'する':
                 verb = self.verb_chunk(doc[pt].head.i, *doc)
                 verb_w = verb["lemma"] + 'する'
                 verb["lemma_end"] = verb["lemma_end"]

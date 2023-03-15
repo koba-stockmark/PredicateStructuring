@@ -620,7 +620,7 @@ class PasAnalysis:
                     dev_verb = self.verb_devide(verb["lemma_start"], verb["lemma_end"], *doc)
                 elif sub_verb and sub_verb['lemma']:
                     dev_verb = self.verb_devide(sub_verb["lemma_start"], sub_verb["lemma_end"], *doc)
-                if dev_verb and dev_verb["sub_verb"]:  # 補助述部がある
+                if dev_verb and dev_verb["sub_verb"] and dev_verb["verb"]:  # 補助述部がある
                     verb_w = dev_verb["verb"]
                     verb["lemma"] = verb_w
                     verb["lemma_start"] = dev_verb["verb_start"]

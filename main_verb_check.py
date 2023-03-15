@@ -95,4 +95,6 @@ class MainVerbChek:
             rule_id = 126
         elif doc[predic_head].pos_ == 'VERB' and doc[doc[predic_head].head.i].pos_ == 'ADJ' and doc[doc[predic_head].head.i].dep_ == "ROOT":  # 形容詞語幹 + 動詞
             rule_id = 127
+        elif doc[predic_head].pos_ == 'ADJ' and doc[doc[predic_head].head.i].dep_ == 'ROOT':  # 必要なこととは
+            rule_id = 128
         return rule_id

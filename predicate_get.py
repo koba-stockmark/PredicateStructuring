@@ -28,14 +28,15 @@ class PredicateGet:
             return {}
         if (token.pos_ == 'VERB' or token.pos_ == 'ADJ' or token.pos_ == 'ADV' or token.dep_ == 'ROOT' or token.dep_ == 'ROOT' or token.dep_ == 'obl' or token.dep_ == 'acl' or token.dep_ == 'advcl' or token.tag_ == '名詞-普通名詞-副詞可能' or
                 (token.dep_ == 'nmod' and token.tag_ == "名詞-普通名詞-助数詞可能") or
-                (token.pos_ == 'NOUN' and doc[token.head.i].norm_ == '為る' and doc[token.head.i - 1].lemma_ != 'に') or
+                ((token.pos_ == 'NOUN' or token.pos_ == 'PROPN') and doc[token.head.i].norm_ == '為る' and doc[token.head.i - 1].lemma_ != 'に') or
                 (len(doc) > token.i + 1 and token.pos_ == 'NUM' and doc[token.i + 1].tag_ == '補助記号-句点') or
-                (len(doc) > token.i + 1 and token.pos_ == 'NOUN' and doc[token.i + 1].pos_ == 'AUX') or
-                (len(doc) > token.i + 1 and token.pos_ == 'NOUN' and doc[token.i + 1].tag_ == '動詞-非自立可能') or
-                (len(doc) > token.i + 1 and token.pos_ == 'NOUN' and doc[token.i + 1].tag_ == '接尾辞-形状詞的') or
-                (len(doc) > token.i + 1 and token.pos_ == 'NOUN' and doc[token.i + 1].tag_ == '接尾辞-名詞的-サ変可能') or
-                (len(doc) > token.i + 1 and token.pos_ == 'NOUN' and doc[token.i + 1].tag_ == '助詞-終助詞') or
-                (len(doc) > token.i + 1 and token.tag_ == '名詞-普通名詞-形状詞可能' and doc[token.i + 1].tag_ == '補助記号-読点') or
+                (len(doc) > token.i + 1 and (token.pos_ == 'NOUN' or token.pos_ == 'PROPN') and doc[token.i + 1].pos_ == 'AUX') or
+                (len(doc) > token.i + 1 and (token.pos_ == 'NOUN' or token.pos_ == 'PROPN') and doc[token.i + 1].tag_ == '動詞-非自立可能') or
+                (len(doc) > token.i + 1 and (token.pos_ == 'NOUN' or token.pos_ == 'PROPN') and doc[token.i + 1].tag_ == '接尾辞-形状詞的') or
+                (len(doc) > token.i + 1 and (token.pos_ == 'NOUN' or token.pos_ == 'PROPN') and doc[token.i + 1].tag_ == '接尾辞-名詞的-サ変可能') or
+                (len(doc) > token.i + 1 and (token.pos_ == 'NOUN' or token.pos_ == 'PROPN') and doc[token.i + 1].tag_ == '助詞-終助詞') or
+#                (len(doc) > token.i + 1 and token.tag_ == '名詞-普通名詞-形状詞可能' and doc[token.i + 1].tag_ == '補助記号-読点') or
+                (len(doc) > token.i + 1 and (token.pos_ == 'NOUN' or token.pos_ == 'PROPN') and doc[token.i + 1].tag_ == '補助記号-読点') or
                 (len(doc) > token.i + 1 and token.tag_ == '名詞-普通名詞-サ変可能' and token.dep_ == "dep" and doc[token.i + 1].tag_ == '補助記号-読点') or
                 (len(doc) > token.i + 2 and token.tag_ == '名詞-普通名詞-サ変可能' and token.dep_ == 'nmod' and token.head.dep_ == 'obj' and doc[token.i + 1].lemma_ == 'や' and self.rentai_check(token.i + 2, *doc)) or
                 (len(doc) > token.i + 1 and token.tag_ == '名詞-普通名詞-サ変可能' and token.dep_ == 'nmod' and (doc[token.i + 1].lemma_ == '、' or doc[token.i + 1].lemma_ == '：'))):
@@ -65,15 +66,15 @@ class PredicateGet:
                 return self.predicate_phrase_get(token.i, *doc)
             elif token.dep_ == 'acl' and token.tag_ == '動詞-一般':  # 連体修飾
                 return self.predicate_phrase_get(token.i, *doc)
-            elif token.dep_ == 'advcl' and token.pos_ == 'NOUN' and token.tag_ != "補助記号-一般" and len(doc) > token.i + 1 and doc[token.i + 1].tag_ == '補助記号-読点':  # 〇〇が〇〇円
+            elif token.dep_ == 'advcl' and (token.pos_ == 'NOUN' or token.pos_ == 'PROPN') and token.tag_ != "補助記号-一般" and len(doc) > token.i + 1 and doc[token.i + 1].tag_ == '補助記号-読点':  # 〇〇が〇〇円
                 return self.predicate_phrase_get(token.i, *doc)
-            elif token.dep_ == 'nmod' and token.pos_ == 'NOUN' and doc[token.head.i].dep_ == 'ROOT' and len(doc) > token.i + 1 and doc[token.i + 1].tag_ == '補助記号-読点':  # 〇〇を〇〇円、〇〇を〇〇円
+            elif token.dep_ == 'nmod' and (token.pos_ == 'NOUN' or token.pos_ == 'PROPN') and doc[token.head.i].dep_ == 'ROOT' and len(doc) > token.i + 1 and doc[token.i + 1].tag_ == '補助記号-読点':  # 〇〇を〇〇円、〇〇を〇〇円
                 return self.predicate_phrase_get(token.i, *doc)
             elif token.dep_ == 'obl' and len(doc) > token.i + 2 and doc[token.i + 1].lemma_ == 'と' and doc[token.i + 2].pos_ == 'AUX':  # 〇〇とする
                 return self.predicate_phrase_get(token.i, *doc)
-            elif len(doc) > token.i + 1 and token.pos_ == 'NOUN' and doc[token.i + 1].pos_ == 'AUX':
+            elif len(doc) > token.i + 1 and (token.pos_ == 'NOUN' or token.pos_ == 'PROPN') and doc[token.i + 1].pos_ == 'AUX':
                 return self.predicate_phrase_get(token.i, *doc)
-            elif len(doc) > token.i + 2 and token.pos_ == 'NOUN' and doc[token.i + 1].pos_ == 'PUNCT' and doc[token.i + 2].pos_ == 'AUX':
+            elif len(doc) > token.i + 2 and (token.pos_ == 'NOUN' or token.pos_ == 'PROPN') and doc[token.i + 1].pos_ == 'PUNCT' and doc[token.i + 2].pos_ == 'AUX':
                 return self.predicate_phrase_get(token.i, *doc)
             elif is_meishi_syuusyoku:     # 〇〇が〇〇で、　名詞が格を伴って名詞を修飾している場合
                 return self.predicate_phrase_get(token.i, *doc)
@@ -87,11 +88,11 @@ class PredicateGet:
             #
             #   普通名詞 + する　のかたちの最終述部
             #
-            elif len(doc) > token.i + 1 and (token.pos_ == 'NOUN' or token.pos_ == 'VERB') and token.dep_ == 'ROOT' and doc[token.i + 1].lemma_ == 'する':
+            elif len(doc) > token.i + 1 and ((token.pos_ == 'NOUN' or token.pos_ == 'PROPN') or token.pos_ == 'VERB') and token.dep_ == 'ROOT' and doc[token.i + 1].lemma_ == 'する':
                 return self.predicate_phrase_get(token.i, *doc)
             #   〇〇 + を + 〇〇 + に、... 　
             #
-            elif token.i > 0 and doc[token.i - 1].lemma_ == 'を' and len(doc) > token.i + 2 and token.pos_ == 'NOUN' and doc[token.i + 1].lemma_ == 'に' and doc[token.i + 2].tag_ == '補助記号-読点':
+            elif token.i > 0 and doc[token.i - 1].lemma_ == 'を' and len(doc) > token.i + 2 and (token.pos_ == 'NOUN' or token.pos_ == 'PROPN') and doc[token.i + 1].lemma_ == 'に' and doc[token.i + 2].tag_ == '補助記号-読点':
                 return self.predicate_phrase_get(token.i, *doc)
             #   〇〇 + を + 〇〇 + の... 　
             #
@@ -105,11 +106,11 @@ class PredicateGet:
             #
             if doc[token.i].tag_ != "接尾辞-名詞的-一般" and (doc[token.i].lemma_ == 'もの' or doc[token.i].lemma_ == 'こと' or doc[token.i].lemma_ == 'ため' or doc[token.i].lemma_ == 'とき' or doc[token.i].lemma_ == '際' or doc[token.i].lemma_ == '人' or doc[token.i].lemma_ == '場合'):
                 return {}
-            elif token.i > 0 and (doc[token.i - 1].pos_ == 'ADP' or doc[token.i - 1].pos_ == 'SCONJ') and (token.pos_ == 'NOUN' and ((token.dep_ == 'ROOT' and token.i == token.head.i) or (len(doc) > token.i + 1 and doc[token.i + 1].pos_ == 'SYM'))):
+            elif token.i > 0 and (doc[token.i - 1].pos_ == 'ADP' or doc[token.i - 1].pos_ == 'SCONJ') and ((token.pos_ == 'NOUN' or token.pos_ == 'PROPN') and ((token.dep_ == 'ROOT' and token.i == token.head.i) or (len(doc) > token.i + 1 and doc[token.i + 1].pos_ == 'SYM'))):
                 return self.predicate_phrase_get(token.i, *doc)
             elif len(doc) > token.i + 1 and (token.tag_ == '形状詞-一般' or token.tag_ == '接尾辞-形状詞的') and doc[token.i + 1].tag_ == '助動詞':
                 return self.predicate_phrase_get(token.i, *doc)
-            elif len(doc) > token.i + 1 and token.pos_ == 'NOUN' and doc[token.i + 1].tag_ == '動詞-非自立可能':
+            elif len(doc) > token.i + 1 and (token.pos_ == 'NOUN' or token.pos_ == 'PROPN') and doc[token.i + 1].tag_ == '動詞-非自立可能':
                 return self.predicate_phrase_get(token.i, *doc)
             elif token.dep_ == 'ROOT' and doc[len(doc) - 1].head.i == token.i:
                 return self.predicate_phrase_get(token.i, *doc)

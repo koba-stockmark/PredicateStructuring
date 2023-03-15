@@ -393,7 +393,7 @@ class ChunkExtractor:
                 end_pt = token.i
             # VERB　＋　VERB 複合動詞
 #            elif tail_ct == 0 and doc[token.i - 1].pos_ == 'VERB' and doc[token.i].pos_ == 'VERB' and doc[token.i - 1].dep_ != 'advcl':
-            elif tail_ct == 0 and doc[token.i - 1].pos_ == 'VERB' and doc[token.i].pos_ == 'VERB':
+            elif tail_ct == 0 and (doc[token.i - 1].pos_ == 'VERB' or doc[token.i - 1].pos_ == 'NOUN') and doc[token.i].pos_ == 'VERB':
                 if find_f:
                     ret = ret + append_o
                 find_f = True
