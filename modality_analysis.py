@@ -67,12 +67,28 @@ class ModalityAnalysis:
                     elif n_chek[0] == "!":            # 否定
                         n_chek = n_chek[1:]
                         not_f = True
+                    elif n_chek[0] == "！":            # !
+                        n_chek = "!"
+                    if n_chek.startswith("POS"):      # POS
+                        if n_chek[4:] == doc[pt].pos_:
+                            if not_f:
+                                find = False
+                                del_f = False
+                                break
+                            baias = baias + 1
+                            continue
+                        else:
+                            find = False
+                            del_f = False
+                            break
                     if n_chek.startswith("活用"):      # 活用
                         if doc[pt].morph.get("Inflection") and n_chek[3:] in doc[pt].morph.get("Inflection")[0]:
                             if not_f:
                                 find = False
                                 del_f = False
                                 break
+                            baias = baias + 1
+                            continue
                         else:
                             find = False
                             del_f = False

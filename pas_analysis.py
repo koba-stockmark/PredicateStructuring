@@ -286,6 +286,7 @@ class PasAnalysis:
                         (len(doc) > i + 2 and doc[i + 1].tag_ == '補助記号-読点' and doc[i + 2].dep_ == 'case' and doc[i].orth_ != ret_subj["lemma"]) or
                         (len(doc) > i + 2 and doc[i + 1].tag_ == '接尾辞-形容詞的' and doc[i + 2].tag_ == '接尾辞-名詞的-一般' and doc[i].pos_ == "VERB") or
                         (doc[i].dep_ == 'nsubj' and doc[i].orth_ != ret_subj["lemma"]) or
+                        (doc[i].dep_ == 'compound' and verb["lemma_start"] <= doc[i].head.i <= verb["lemma_end"]) or
                         (doc[i].lemma_ == '際' and predicate_start <= doc[i].head.i <= predicate_end) or
                         (doc[i].lemma_ == '場合' and predicate_start <= doc[i].head.i <= predicate_end) or
                         ((doc[i].dep_ == "obl" or doc[i].dep_ == "nmod")and doc[i - 1].lemma_ != 'が' and
