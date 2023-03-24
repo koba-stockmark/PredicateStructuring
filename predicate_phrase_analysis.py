@@ -196,7 +196,10 @@ class PredicatePhraseExtractor:
         elif (len(doc) > doc[pt].i + 1 and (doc[pt].pos_ == 'NOUN' and doc[pt].tag_ != '接尾辞-名詞的-副詞可能' and doc[pt].tag_ != '接尾辞-名詞的-助数詞' and doc[pt].tag_ != '名詞-普通名詞-助数詞可能') and
               doc[pt].tag_ != '名詞-普通名詞-形状詞可能' and doc[pt].tag_ != '名詞-普通名詞-副詞可能' and doc[doc[pt].i + 1].tag_ == '補助記号-読点' and doc[doc[pt].i - 1].lemma_ != 'の'):
             verb = self.verb_chunk(doc[pt].i, *doc)
-            verb_w = verb["lemma"] + '(する)'
+            if doc[pt].tag_ == "名詞-普通名詞-サ変可能":
+                verb_w = verb["lemma"] + '(する)'
+            else:
+                verb_w = verb["lemma"] + '(です)'
             modality_w = verb["modality"]
             rule_id = 16
         #

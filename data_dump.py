@@ -164,19 +164,22 @@ class DataDumpSave:
         for predic in predicate:
             modality_w = predic["modality"]
             modal = ', '.join([str(x) for x in modality_w])
+            category_w = ""
+            if "category" in predic:
+                category_w = predic["category"]
             if predic["main"]:
                 if "main_rule_id" in predic:
-                    print("ID = %d 【%s - (%s) 】 modality = %s ruleID = %d\t main_ruleID= %d" % (predic["id"], predic["lemma"], predic["sub_lemma"], modal, predic["rule_id"], predic["main_rule_id"]))
+                    print("ID = %d 【%s - (%s) 】 modality = %s  category = %s ruleID = %d\t main_ruleID= %d" % (predic["id"], predic["lemma"], predic["sub_lemma"], modal, category_w, predic["rule_id"], predic["main_rule_id"]))
                     predic_ret = predic["lemma"] + '\t' + predic["sub_lemma"] + '\t' + modal + '\t' + str(predic["rule_id"]) + '\t' + str(predic["main_rule_id"]) + '\t'
                 else:
-                    print("ID = %d 【%s - (%s) 】 modality = %s ruleID = %d\t main_ruleID= " % (predic["id"], predic["lemma"], predic["sub_lemma"], modal, predic["rule_id"]))
+                    print("ID = %d 【%s - (%s) 】 modality = %s  category = %s ruleID = %d\t main_ruleID= " % (predic["id"], predic["lemma"], predic["sub_lemma"], modal, category_w, predic["rule_id"]))
                     predic_ret = predic["lemma"] + '\t' + predic["sub_lemma"] + '\t' + modal + '\t' + str(predic["rule_id"]) + '\t' + '\t'
             else:
                 if "main_rule_id" in predic:
-                    print("ID = %d sub_【%s - (%s) 】 modality = %s ruleID = %d\t main_ruleID= %d" % (predic["id"], predic["lemma"], predic["sub_lemma"], modal, predic["rule_id"],predic["main_rule_id"]))
+                    print("ID = %d sub_【%s - (%s) 】 modality = %s  category = %s ruleID = %d\t main_ruleID= %d" % (predic["id"], predic["lemma"], predic["sub_lemma"], modal, category_w, predic["rule_id"],predic["main_rule_id"]))
                     predic_ret = predic["lemma"] + '\t' + predic["sub_lemma"] + '\t' + modal + '\t' + str(predic["rule_id"]) + '\t' + str(predic["main_rule_id"]) + '\t'
                 else:
-                    print("ID = %d sub_【%s - (%s) 】 modality = %s ruleID = %d\t main_ruleID= " % (predic["id"], predic["lemma"], predic["sub_lemma"], modal, predic["rule_id"]))
+                    print("ID = %d sub_【%s - (%s) 】 modality = %s  category = %s ruleID = %d\t main_ruleID= " % (predic["id"], predic["lemma"], predic["sub_lemma"], modal, category_w, predic["rule_id"]))
                     predic_ret = predic["lemma"] + '\t' + predic["sub_lemma"] + '\t' + modal + '\t' + str(predic["rule_id"]) + '\t' + '\t'
             ret_subj = "\t"
             subject_only = 0

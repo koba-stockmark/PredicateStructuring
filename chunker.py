@@ -270,7 +270,7 @@ class ChunkExtractor:
             elif len(doc) > i + 2 and (doc[i].pos_ == 'ADJ' or doc[i].tag_ == '接尾辞-形状詞的') and doc[i + 1].pos_ == 'AUX' and doc[i + 1].orth_ == 'な' and doc[i + 2].pos_ == 'NOUN':  # 〜な〇〇
                 pre = doc[i].orth_ + pre
                 start_pt = i
-            elif doc[i].pos_ == 'ADJ' and doc[i].tag_ == "形状詞-一般" and doc[i].head.i == pt:  # 形状詞
+            elif doc[i].pos_ == 'ADJ' and doc[i].tag_ == "形状詞-一般" and (doc[i].head.i == pt or (len(doc) > i + 1 and doc[i + 1].tag_ == "接尾辞-名詞的-サ変可能")):  # 形状詞
                 pre = doc[i].orth_ + pre
                 start_pt = i
             elif doc[pt].pos_ == "NOUN" and doc[i].tag_ == "名詞-普通名詞-助数詞可能" and (doc[i].head.i == pt or doc[i].head.head.i == pt):  # 数字記号

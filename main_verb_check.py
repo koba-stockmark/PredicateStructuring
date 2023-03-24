@@ -52,7 +52,7 @@ class MainVerbChek:
             rule_id = 104
         elif (doc[predic_head].pos_ == 'NOUN' or doc[predic_head].pos_ == 'PROPN') and doc[predic_head].dep_ == 'ROOT' and doc[predic_head].i == doc[predic_head].head.i:  # 文末が　体言止
             rule_id = 105
-        elif doc[predic_head].head.tag_ == '名詞-普通名詞-サ変可能' and doc[predic_head].head.dep_ == 'ROOT' and doc[predic_head].head.i == doc[doc[predic_head].head.i].head.i and (len(doc) > predic_head + 1 and doc[predic_head + 1].orth_ != 'で'):  # 文末が　体言止
+        elif doc[predic_head].tag_ == '名詞-普通名詞-サ変可能' and doc[predic_head].head.tag_ == '名詞-普通名詞-サ変可能' and doc[predic_head].head.dep_ == 'ROOT' and doc[predic_head].head.i == doc[doc[predic_head].head.i].head.i and (len(doc) > predic_head + 1 and doc[predic_head + 1].orth_ != 'で'):  # 文末が　体言止
             rule_id = 107
         elif len(doc) > predic_head + 2 and doc[predic_head].pos_ == 'NOUN' and doc[predic_head + 1].pos_ == 'AUX' and doc[predic_head + 1].lemma_ == 'する' and doc[predic_head + 2].lemma_ == 'ます':  # 〇〇します
             rule_id = 108
@@ -67,7 +67,7 @@ class MainVerbChek:
         elif len(doc) > doc[predic_head].i + 1 and doc[predic_head].pos_ == 'NOUN' and doc[doc[predic_head].i + 1].lemma_ == 'いたす':  # 〇〇いたします。
             rule_id = 113
 #        elif len(doc) > doc[predic_head].i + 1 and doc[predic_head].pos_ == 'NOUN' and doc[doc[predic_head].head.i].dep_ == 'ROOT' and (doc[doc[predic_head].i + 1].pos_ == 'AUX' or doc[doc[predic_head].i + 1].pos_ == 'PUNCT'):  # 〇〇します。 がROOTになっていないときの例外処理
-        elif (len(doc) > doc[predic_head].i + 1 and doc[predic_head].pos_ == 'NOUN' and doc[doc[predic_head].head.i].dep_ == 'ROOT' and
+        elif (len(doc) > doc[predic_head].i + 1 and doc[predic_head].pos_ == 'NOUN'  and ('サ変可能' in doc[predic_head].tag_ or '形状詞可能' in doc[predic_head].tag_)  and doc[doc[predic_head].head.i].dep_ == 'ROOT' and
               ((doc[doc[predic_head].i + 1].pos_ == 'AUX' and (not doc[predic_head + 1].morph.get("Inflection") or (doc[predic_head + 1].morph.get("Inflection") and '仮定形' not in doc[predic_head + 1].morph.get("Inflection")[0]))) or
                doc[doc[predic_head].i + 1].pos_ == 'PUNCT')):  # 〇〇します。 がROOTになっていないときの例外処理
             rule_id = 114
@@ -95,6 +95,6 @@ class MainVerbChek:
             rule_id = 126
         elif doc[predic_head].pos_ == 'VERB' and doc[doc[predic_head].head.i].pos_ == 'ADJ' and doc[doc[predic_head].head.i].dep_ == "ROOT":  # 形容詞語幹 + 動詞
             rule_id = 127
-        elif doc[predic_head].pos_ == 'ADJ' and doc[doc[predic_head].head.i].dep_ == 'ROOT':  # 必要なこととは
+        elif doc[predic_head].pos_ == 'ADJ' and doc[doc[predic_head].head.i].dep_ == 'ROOT' and doc[doc[predic_head].head.i].lemma_ == 'こと':  # 必要なこととは
             rule_id = 128
         return rule_id
