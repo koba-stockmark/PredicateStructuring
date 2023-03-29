@@ -46,7 +46,8 @@ class PredicateGet:
                     if doc[chp].head.i == pt and pt > chp + 1 and doc[pt + 1].tag_ != "助詞-副助詞" and doc[chp + 1].pos_ == "ADP" and doc[chp + 1].lemma_ != "の" and doc[chp + 1].lemma_ != "や" and doc[chp + 1].lemma_ != "と":
                         is_meishi_syuusyoku = True
                         break
-            if token.dep_ == 'fixed':
+#            if token.dep_ == 'fixed':
+            if token.dep_ == 'fixed' and not self.rentai_check(token.i, *doc) and (not doc[token.i].morph.get("Inflection") or '連体形' not in doc[token.i].morph.get("Inflection")[0]):
                 return {}
             if doc[pt].lemma_ == "くる" and doc[pt - 1].lemma_ == "て":     # 〜てくる
                 return {}
@@ -104,7 +105,7 @@ class PredicateGet:
                 return self.predicate_phrase_get(token.i, *doc)
             #   〇〇　＋　を　＋　普通名詞。　　　体言止 連用中止
             #
-            if doc[token.i].tag_ != "接尾辞-名詞的-一般" and (doc[token.i].lemma_ == 'もの' or doc[token.i].lemma_ == 'こと' or doc[token.i].lemma_ == 'ため' or doc[token.i].lemma_ == 'とき' or doc[token.i].lemma_ == '際' or doc[token.i].lemma_ == '人' or doc[token.i].lemma_ == '場合'):
+            if doc[token.i].tag_ != "接尾辞-名詞的-一般" and (doc[token.i].lemma_ == 'もの' or doc[token.i].lemma_ == 'こと' or doc[token.i].lemma_ == 'ため' or doc[token.i].lemma_ == 'とき' or doc[token.i].lemma_ == '際' or doc[token.i].lemma_ == '人' or doc[token.i].lemma_ == '場合') and doc[token.i].dep_ != "ROOT":
                 return {}
             elif token.i > 0 and (doc[token.i - 1].pos_ == 'ADP' or doc[token.i - 1].pos_ == 'SCONJ') and ((token.pos_ == 'NOUN' or token.pos_ == 'PROPN') and ((token.dep_ == 'ROOT' and token.i == token.head.i) or (len(doc) > token.i + 1 and doc[token.i + 1].pos_ == 'SYM'))):
                 return self.predicate_phrase_get(token.i, *doc)

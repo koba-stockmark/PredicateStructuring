@@ -289,7 +289,7 @@ class PasAnalysis:
                         (doc[i].dep_ == 'compound' and verb["lemma_start"] <= doc[i].head.i <= verb["lemma_end"]) or
                         (doc[i].lemma_ == '際' and predicate_start <= doc[i].head.i <= predicate_end) or
                         (doc[i].lemma_ == '場合' and predicate_start <= doc[i].head.i <= predicate_end) or
-                        ((doc[i].dep_ == "obl" or doc[i].dep_ == "nmod")and doc[i - 1].lemma_ != 'が' and
+                        ((doc[i].dep_ == "obl" or doc[i].dep_ == "nmod" or doc[i].pos_ == "PROPN")and doc[i - 1].lemma_ != 'が' and
                          (len(doc) > i + 1 and (doc[i + 1].pos_ != 'AUX' or doc[i + 1].lemma_ == 'で' or doc[i + 1].tag_ == '助詞-格助詞' or doc[i + 1].tag_ == '補助記号-読点')) and
                          (doc[i].norm_ != 'そこ' and doc[i].norm_ != 'それ') and
                          (doc[i].tag_ != '名詞-普通名詞-副詞可能' or doc[i].norm_ == '為' or doc[i].norm_ == '下' or doc[i].norm_ == '中' or doc[i].norm_ == 'うち' or doc[i].norm_ == 'もと' or doc[i].norm_ == '間') and (doc[i].norm_ != '度' or doc[i - 1].pos_ == 'NUM'))):  # この度　はNG
@@ -320,6 +320,10 @@ class PasAnalysis:
                         elif doc[i].head.lemma_ == '共同' and doc[doc[i].head.i -1].lemma_ == 'と' and predicate_start <= doc[i].head.head.i <= predicate_end: # 〇〇と共同で　はかかり関係が特殊なので襟外処理
                             pass
                         elif len(doc) > i + 1 and doc[i + 1].dep_ == 'case' and doc[i + 1].lemma_ == 'から' and doc[i].dep_ != 'nsubj' and self.predicate_connect_check(verb["lemma_start"] ,i ,  *doc):
+                            pass
+                        elif doc[i].head.i == doc[predicate_start].head.i and doc[predicate_start].pos_ == "ADJ" and doc[doc[i].head.i].pos_ == "NOUN": # 助手席まで美しいコクピットを先行公開
+                            pass
+                        elif doc[predicate_start].dep_ == "fixed" and doc[predicate_start].head.pos_ == "ADP" and doc[predicate_start].head.head.i == i:  # 太郎による車の写真を見る。
                             pass
                         else:
                             continue
@@ -809,9 +813,10 @@ class PasAnalysis:
         #
         attribute = {}
         for ch_predic in append_predict:
-            if self.rentai_check(ch_predic["lemma_start"], *doc):
+            if self.rentai_check(ch_predic["lemma_start"], *doc) or ((doc[ch_predic["lemma_start"]].morph.get("Inflection") and '連体形' in doc[ch_predic["lemma_start"]].morph.get("Inflection")[0])):
                 for ch_arg in argument:
-                    if ch_arg["lemma_start"] <= doc[ch_predic["lemma_start"]].head.i <= ch_arg["lemma_end"]:
+                    if ((ch_arg["lemma_start"] <= doc[ch_predic["lemma_start"]].head.i <= ch_arg["lemma_end"]) or
+                            (doc[ch_predic["lemma_start"]].dep_ == "fixed" and ch_arg["lemma_start"] <= doc[ch_predic["lemma_start"]].head.head.i <= ch_arg["lemma_end"])):
                         attribute["predicate_id"] = ch_predic["id"]
                         attribute["argument_id"] = ch_arg["id"]
                         attributs.append(copy.deepcopy(attribute))
