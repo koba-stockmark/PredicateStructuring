@@ -176,7 +176,7 @@ class CaseExtractor:
             elif token.pos_ == 'SCONJ':  # 〜ば
                 ret = ret + token.orth_
                 is_fukushiteki = True
-            elif len(doc) > token.i + 1 and doc[token.i - 1].lemma_ == "だ" and token.lemma_ == 'ある' and doc[token.i + 1].pos_ == "SCONJ":  # 〜であれば
+            elif len(doc) > token.i + 1 and doc[token.i - 1].lemma_ == "だ" and token.lemma_ == 'ある' and (doc[token.i + 1].pos_ == "SCONJ" or doc[token.i + 1].pos_ == "ADP"):  # 〜であれば
                 ret = ret + token.orth_
                 is_fukushiteki = True
             elif token.lemma_ == 'ない' and doc[token.i - 1].lemma_ == "は" and doc[token.i - 2].lemma_ == "だ":  # 〜ではなく

@@ -368,7 +368,7 @@ class ChunkExtractor:
                 tail_o = ''
                 tail_ct = 0
             # 用言で修飾した体言止
-            elif token.tag_ == '名詞-普通名詞-副詞可能' and token.dep_ == 'ROOT':
+            elif token.tag_ == '名詞-普通名詞-副詞可能' and (token.dep_ == 'ROOT' or token.dep_ == 'advcl'):
                 if find_f:
                     ret = ret + append_o
                 find_f = True
@@ -889,6 +889,8 @@ class ChunkExtractor:
                         break
                     if doc[i].orth_ == 'の' and doc[i - 1].lemma_ == '、' and  doc[i - 2].lemma_ != '」':
                         break
+                    if doc[i].orth_ == 'を' and doc[i - 1].pos_ == 'NOUN' and i < pt -1 and len(doc) > i + 1 and doc[i + 1].pos_ == "VERB":
+                        break
                     if (doc[i].pos_ == 'NOUN' or doc[i].pos_ == 'ADV') and ((doc[i].norm_ == '中' and doc[i].tag_ == "名詞-普通名詞-副詞可能") or doc[i].lemma_ == 'うち' or doc[i].lemma_ == 'ため' or doc[i].lemma_ == 'もと' or doc[i].lemma_ == '今後'):
                         break
                     if doc[i].pos_ == 'ADJ' and not self.head_connect_check(pt, i, *doc):   # objを修飾しない形容詞
@@ -981,6 +983,12 @@ class ChunkExtractor:
                     start_pt = i
                     ret = self.connect_word(doc[i].orth_, ret)
                 elif doc[i].pos_ == 'VERB' and len(doc) > i + 1 and doc[i + 1].lemma_ == 'の':  # 泳ぐの意味　動詞＋の
+                    start_pt = i
+                    ret = self.connect_word(doc[i].orth_, ret)
+                elif doc[pt].tag_ == "名詞-普通名詞-副詞可能" and doc[i].pos_ == 'AUX' and doc[doc[i].head.i].head.i == pt:  # 「〇〇したまま」をまとめる
+                    start_pt = i
+                    ret = self.connect_word(doc[i].orth_, ret)
+                elif doc[pt].tag_ == "名詞-普通名詞-副詞可能" and doc[i].pos_ == 'VERB' and doc[i].head.i == pt:  # 「〇〇したまま」をまとめる
                     start_pt = i
                     ret = self.connect_word(doc[i].orth_, ret)
                 else:
