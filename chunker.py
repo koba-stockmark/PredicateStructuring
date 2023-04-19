@@ -220,6 +220,9 @@ class ChunkExtractor:
             elif len(doc) > i + 1 and doc[i].pos_ == 'VERB' and doc[i + 1].tag_ == '名詞-普通名詞-助数詞可能':  # 名詞　＋　方　（です）
                 pre = doc[i].orth_ + pre
                 start_pt = i
+            elif len(doc) > i + 1 and doc[i].pos_ == 'VERB' and doc[i + 1].tag_ == '動詞-非自立可能':  # 動詞　＋　非自立動詞
+                pre = doc[i].orth_ + pre
+                start_pt = i
             elif len(doc) > i + 1 and doc[i].tag_ == '補助記号-括弧閉' and (doc[i + 1].tag_ == "動詞-非自立可能" and doc[i + 1].lemma_ != "出す"):  # 「〇〇」できる
                 pre = doc[i].orth_ + pre
                 start_pt = i
@@ -611,9 +614,9 @@ class ChunkExtractor:
         else:
             verb_end = end_pt
         if doc[pt].dep_ == 'nmod':
-            return {'lemma': ret_lemma, 'lemma_start': start_pt, 'lemma_end': end_pt, 'org_str': org_str, 'org_start': start_pt, 'org_end': end_pt + tail_ct, 'modality': [*self.modality_get(verb_end, *doc)]}
+            return {'lemma': ret_lemma, 'lemma_start': start_pt, 'lemma_end': end_pt, 'org_str': org_str, 'org_start': start_pt, 'org_end': end_pt + tail_ct, 'modality': [*self.modality_get(start_pt, *doc)]}
         else:
-            return {'lemma': ret_lemma, 'lemma_start': start_pt, 'lemma_end': end_pt, 'org_str': org_str, 'org_start': start_pt, 'org_end': end_pt + tail_ct, 'modality': [*self.modality_get(verb_end, *doc)]}
+            return {'lemma': ret_lemma, 'lemma_start': start_pt, 'lemma_end': end_pt, 'org_str': org_str, 'org_start': start_pt, 'org_end': end_pt + tail_ct, 'modality': [*self.modality_get(start_pt, *doc)]}
 
 
     """

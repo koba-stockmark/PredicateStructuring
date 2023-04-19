@@ -297,6 +297,7 @@ class PasAnalysis:
                         continue
                     if len(doc) > i + 1 and doc[i].tag_ == "名詞-普通名詞-助数詞可能" and doc[i + 1].tag_ == "補助記号-読点" and doc[doc[i].head.i].tag_ == "名詞-普通名詞-助数詞可能":   # 〇〇円、…は〇〇円
                         continue
+                    """ # 岸田首相、Ｈ３ロケット「敬意を表し、次の成功を期待」。 に対応するためコメントアウト
                     if len(doc) > i + 1 and doc[i + 1].lemma_ == '「':   #  〇〇「〇〇　カッコの外から中にかかる場合は　NG
                         kakko_f = True
                         for cpt in range(i + 2, len(doc)):
@@ -306,6 +307,7 @@ class PasAnalysis:
                                 break
                         if kakko_f:
                             continue
+                    """
                     if doc[i].head.i < predicate_start or doc[i].head.i > predicate_end:  # 述部に直接かからない
                         if doc[i].head.head.i == token.i and (doc[i].head.morph.get("Inflection") and '連用形' not in doc[i].head.morph.get("Inflection")[0]):  # 連用形接続でもつながらない
                             if (doc[doc[i].head.i + 1].tag_ != '接尾辞-形容詞的' and (doc[doc[i].head.i].tag_ != '名詞-普通名詞-副詞可能' or doc[doc[i].head.i].lemma_ == 'ため' or doc[doc[i].head.i].lemma_ == 'もと' or doc[doc[i].head.i].lemma_ == '前')) or doc[i].head.head.pos_ == 'NOUN':
@@ -324,6 +326,8 @@ class PasAnalysis:
                         elif doc[i].head.i == doc[predicate_start].head.i and doc[predicate_start].pos_ == "ADJ" and doc[doc[i].head.i].pos_ == "NOUN": # 助手席まで美しいコクピットを先行公開
                             pass
                         elif doc[predicate_start].dep_ == "fixed" and doc[predicate_start].head.pos_ == "ADP" and doc[predicate_start].head.head.i == i:  # 太郎による車の写真を見る。
+                            pass
+                        elif doc[i].pos_ == "NOUN" and (i + 1 < len(doc) and doc[i + 1].pos_ != "ADP") and doc[doc[i].head.i].pos_ == "NOUN"  and (doc[i].head.i + 1 < len(doc) and doc[doc[i].head.i + 1].pos_ != "ADP")and doc[i].head.head.i == predicate_start and doc[predicate_start].dep_ == "ROOT":
                             pass
                         else:
                             continue
@@ -701,6 +705,9 @@ class PasAnalysis:
                     del_ct = self.short_predicate_delete(append_predict, predicate, argument)
                     if del_ct > 0:  # 新しい述部より短い過去の述部を削除
                         predicate_id = predicate_id - del_ct
+                        for ch_predic in append_predict:
+                            if "predicate_relation_to" in ch_predic and ch_predic["predicate_relation_to"] == pre_predicate_id:
+                                ch_predic["predicate_relation_to"] = pre_predicate_id - del_ct
                         pre_predicate_id = pre_predicate_id - del_ct
                         predicate["id"] = predicate["id"] - del_ct
                     if split_f:
@@ -773,6 +780,9 @@ class PasAnalysis:
                 if del_ct > 0:  # 新しい述部より短い過去の述部を削除
                     predicate_id = predicate_id - del_ct
                     predicate["id"] = predicate["id"] - del_ct
+                    for ch_predic in append_predict:
+                        if "predicate_relation_to" in ch_predic and ch_predic["predicate_relation_to"] == pre_predicate_id:
+                            ch_predic["predicate_relation_to"] = pre_predicate_id - del_ct
                     pre_predicate_id = pre_predicate_id - del_ct
                 self.predicate_merge(append_predict, predicate, argument)
                 if predicate_relation_id >= 0 and len(append_predict) > predicate_relation_id:

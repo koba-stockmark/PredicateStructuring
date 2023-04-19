@@ -85,7 +85,7 @@ class MainVerbChek:
             rule_id = 121
         elif (doc[predic_head].pos_ == 'NOUN' or doc[predic_head].pos_ == 'PRON')and doc[predic_head].head.i <= predic_head:  # 体言どめ
             rule_id = 122
-        elif doc[predic_head].pos_ == 'ADP' and doc[doc[predic_head].head.i].dep_ == "ROOT":  # 体言どめ + 助詞
+        elif (doc[predic_head].pos_ == 'ADP' or doc[predic_head].pos_ == 'PART') and doc[doc[predic_head].head.i].dep_ == "ROOT":  # 体言どめ + 助詞
             rule_id = 123
         elif doc[predic_head].pos_ == 'SCONJ' and doc[doc[predic_head].head.i].pos_ == 'ADP' and doc[doc[doc[predic_head].head.i].head.i].dep_ == "ROOT":  # 体言どめ + 助詞
             rule_id = 124
