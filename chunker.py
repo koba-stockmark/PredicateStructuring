@@ -155,7 +155,7 @@ class ChunkExtractor:
                     (doc[i].pos_ != 'AUX' or doc[i].orth_ == 'する' or doc[i].orth_ == 'な') and
                     (doc[pt].pos_ != 'NOUN' or doc[pt].tag_ == '名詞-普通名詞-副詞可能' or doc[i].pos_ != 'VERB') and
                     (not doc[i].morph.get("Inflection") or '連体形' not in doc[i].morph.get("Inflection")[0]) and
-                    (doc[i].pos_ != 'ADP' or (doc[i].tag_ == '助詞-副助詞' and doc[i].lemma_ != 'まで' and doc[i].lemma_ != 'しか' and doc[i].lemma_ != 'だけ' and doc[i].lemma_ != 'か' and doc[i].lemma_ != 'って')) and doc[i].pos_ != 'ADV' and doc[i].pos_ != 'ADJ' and doc[i].pos_ != 'PART' and doc[i].pos_ != 'SCONJ' and
+                    (doc[i].pos_ != 'ADP' or (doc[i].tag_ == '助詞-副助詞' and ((i + 1 < len(doc) and doc[i + 1].tag_ == "動詞-非自立可能") or (doc[i].lemma_ != 'など' and doc[i].lemma_ != 'まで' and doc[i].lemma_ != 'しか' and doc[i].lemma_ != 'だけ' and doc[i].lemma_ != 'か' and doc[i].lemma_ != 'って')))) and doc[i].pos_ != 'ADV' and doc[i].pos_ != 'ADJ' and doc[i].pos_ != 'PART' and doc[i].pos_ != 'SCONJ' and
                     doc[i].norm_ != 'から' and
 #                    doc[i].dep_ != 'advcl' and
                     doc[i].tag_ != '補助記号-一般' and doc[i].tag_ != '名詞-普通名詞-副詞可能' and (len(doc) > i + 1 and doc[i].tag_ != '名詞-普通名詞-一般' or (doc[i + 1].pos_ == 'ADP' or doc[i + 1].pos_ == 'ADJ' or doc[i + 1].pos_ == 'SYM' or "名詞" in doc[i + 1].tag_ or "接頭辞" in doc[i + 1].tag_)) and doc[i].tag_ != '名詞-普通名詞-助数詞可能' and doc[i].tag_ != '接尾辞-名詞的-助数詞' and doc[i].tag_ != '名詞-普通名詞-助数詞可能'):
@@ -740,7 +740,11 @@ class ChunkExtractor:
                 ret = ''
             # 後方のチャンク
             for token in doc[pt+1:]:
-                if (self.head_connect_check(pt, token.head.i, *doc)) or token.head.i == end_pt or punc_ct < 0 or (doc[pt].head.i == pt + 1 and doc[pt].head.pos_ == 'NOUN') or (token.i == doc[pt].head.i and token.tag_ == '名詞-普通名詞-副詞可能'):
+                if ((self.head_connect_check(pt, token.head.i, *doc)) or token.head.i == end_pt or punc_ct < 0 or
+                        (doc[pt].head.i == pt + 1 and doc[pt].head.pos_ == 'NOUN') or
+                        (token.i == doc[pt].head.i and token.tag_ == '名詞-普通名詞-副詞可能') or
+                        (doc[token.i].head.i == doc[pt].head.i and token.i == pt + 1 and doc[token.i].pos_ == 'NOUN') or
+                        (doc[token.i].head.i == doc[pt].head.i and token.i > 0 and doc[token.i - 1].pos_ == 'NOUN' and doc[token.i].pos_ == 'NOUN')):
                     if punc_ct >= 0:
                         if token.pos_ == 'ADP' and (token.lemma_ == 'を' or token.lemma_ == 'は' or token.lemma_ == 'が' or token.lemma_ == 'で' or token.lemma_ == 'も' or token.lemma_ == 'に' or token.lemma_ == 'にて' or token.orth_ == 'で' or token.orth_ == 'より'):  # 名詞の名詞　名詞と名詞　は接続させたい
                             if len(doc) > token.i + 1 and doc[token.i + 1].tag_ != '補助記号-括弧閉':

@@ -39,7 +39,7 @@ class PredicateGet:
                 (len(doc) > token.i + 1 and (token.pos_ == 'NOUN' or token.pos_ == 'PROPN') and doc[token.i + 1].tag_ == '補助記号-読点') or
                 (len(doc) > token.i + 1 and token.tag_ == '名詞-普通名詞-サ変可能' and token.dep_ == "dep" and doc[token.i + 1].tag_ == '補助記号-読点') or
                 (len(doc) > token.i + 2 and token.tag_ == '名詞-普通名詞-サ変可能' and token.dep_ == 'nmod' and token.head.dep_ == 'obj' and doc[token.i + 1].lemma_ == 'や' and self.rentai_check(token.i + 2, *doc)) or
-                (len(doc) > token.i + 1 and token.tag_ == '名詞-普通名詞-サ変可能' and token.dep_ == 'nmod' and (doc[token.i + 1].lemma_ == '、' or doc[token.i + 1].lemma_ == '：'))):
+                (len(doc) > token.i + 1 and token.tag_ == '名詞-普通名詞-サ変可能' and (token.dep_ == 'nmod' or token.dep_ == 'dep') and (doc[token.i + 1].lemma_ == '、' or doc[token.i + 1].lemma_ == '：' or doc[token.i + 1].lemma_ == '/'))):
             is_meishi_syuusyoku = False
             if len(doc) > pt + 1 and doc[pt + 1].pos_ != "VERB" and doc[pt + 1].lemma_ != "に" != "VERB" and doc[pt + 1].lemma_ != "と":
                 for chp in range(0, pt):

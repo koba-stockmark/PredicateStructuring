@@ -97,4 +97,6 @@ class MainVerbChek:
             rule_id = 127
         elif doc[predic_head].pos_ == 'ADJ' and doc[doc[predic_head].head.i].dep_ == 'ROOT' and doc[doc[predic_head].head.i].lemma_ == 'こと':  # 必要なこととは
             rule_id = 128
+        elif len(doc) > doc[predic_head].i + 1 and doc[predic_head].pos_ == 'NOUN' and doc[doc[predic_head].i + 1].lemma_ == '、' and (doc[doc[predic_head].head.i].dep_ == 'ROOT' or doc[doc[predic_head].head.i].dep_ == 'obl') and doc[doc[predic_head].head.i].pos_ == 'NOUN':  # 〇〇、〇〇に〇〇。　体言どめへの「体言どめ＋、」のかかり
+            rule_id = 129
         return rule_id
