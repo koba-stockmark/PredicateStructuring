@@ -28,6 +28,7 @@ class PredicateGet:
             return {}
         if (token.pos_ == 'VERB' or token.pos_ == 'ADJ' or token.pos_ == 'ADV' or token.dep_ == 'ROOT' or token.dep_ == 'ROOT' or token.dep_ == 'obl' or token.dep_ == 'acl' or token.dep_ == 'advcl' or token.tag_ == '名詞-普通名詞-副詞可能' or
                 (token.dep_ == 'nmod' and token.tag_ == "名詞-普通名詞-助数詞可能") or
+                (token.dep_ == 'nmod' and token.tag_ == "名詞-普通名詞-サ変可能" and len(doc) > token.i + 1 and doc[token.i + 1].tag_ == '補助記号-句点') or
                 ((token.pos_ == 'NOUN' or token.pos_ == 'PROPN') and doc[token.head.i].norm_ == '為る' and doc[token.head.i - 1].lemma_ != 'に') or
                 (len(doc) > token.i + 1 and token.pos_ == 'NUM' and doc[token.i + 1].tag_ == '補助記号-句点') or
                 (len(doc) > token.i + 1 and (token.pos_ == 'NOUN' or token.pos_ == 'PROPN') and doc[token.i + 1].pos_ == 'AUX') or
@@ -53,7 +54,7 @@ class PredicateGet:
                 return {}
 #            if token.dep_ == 'compound':
 #                return {}
-            if token.tag_ == '接頭辞':
+            if token.tag_ == '接頭辞' and token.dep_ != "ROOT":
                 return {}
             if doc[token.i - 1].lemma_ != 'を' and doc[token.i - 1].lemma_ != 'に' and doc[token.i - 1].lemma_ != 'と' and doc[token.i - 1].pos_ != 'ADJ' and doc[token.i].morph.get("Inflection") and '連用形' in doc[token.i].morph.get("Inflection")[0] and len(doc) > token.i + 1 and doc[token.i + 1].pos_ == 'NOUN':   # 連用名　お届けキャンペーン　
                 return {}
@@ -69,7 +70,7 @@ class PredicateGet:
                 return self.predicate_phrase_get(token.i, *doc)
             elif token.dep_ == 'advcl' and (token.pos_ == 'NOUN' or token.pos_ == 'PROPN') and token.tag_ != "補助記号-一般" and len(doc) > token.i + 1 and doc[token.i + 1].tag_ == '補助記号-読点':  # 〇〇が〇〇円
                 return self.predicate_phrase_get(token.i, *doc)
-            elif token.dep_ == 'nmod' and (token.pos_ == 'NOUN' or token.pos_ == 'PROPN') and doc[token.head.i].dep_ == 'ROOT' and len(doc) > token.i + 1 and doc[token.i + 1].tag_ == '補助記号-読点':  # 〇〇を〇〇円、〇〇を〇〇円
+            elif token.dep_ == 'nmod' and (token.pos_ == 'NOUN' or token.pos_ == 'PROPN') and token.tag_ != "名詞-普通名詞-副詞可能" and doc[token.head.i].dep_ == 'ROOT' and len(doc) > token.i + 1 and doc[token.i + 1].tag_ == '補助記号-読点':  # 〇〇を〇〇円、〇〇を〇〇円
                 return self.predicate_phrase_get(token.i, *doc)
             elif token.dep_ == 'obl' and len(doc) > token.i + 2 and doc[token.i + 1].lemma_ == 'と' and doc[token.i + 2].pos_ == 'AUX':  # 〇〇とする
                 return self.predicate_phrase_get(token.i, *doc)

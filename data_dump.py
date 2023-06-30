@@ -115,6 +115,7 @@ class DataDumpSave:
                                 if subject_w != data["lemma"]:
                                     continue
                             case = data["case"]
+                            deep_case = data["deep_case"]
                             if "phase" in data and data["phase"] not in phase:
                                 phase = phase + data["phase"]
                             if "category" in data and data["category"] not in phase:
@@ -128,10 +129,10 @@ class DataDumpSave:
                                     else:
                                         phase = data["category"]
                             if dummy_subject:
-                                print('【%s(%s) - %s - (%s)】 subj = 【%s(省略)】 フェーズ = 【%s】modality = %s rule_id = %d' % (obj_w, case, verb_w, sub_verb_w, dummy_subject, phase, modal, rule_id))
+                                print('【%s(%s) - %s - (%s, %s)】 subj = 【%s(省略)】 フェーズ = 【%s】modality = %s rule_id = %d' % (obj_w, case, deep_case, verb_w, sub_verb_w, dummy_subject, phase, modal, rule_id))
                                 ret = ret + text + '\tMain\t' + dummy_subject + '(省略)\t' + subject_case + "\t" + obj_w + '\t' + case + '\t' + verb_w + '\t' + sub_verb_w + '\t' + phase + '\t' + modal + '\t' + str(rule_id) + '\n'
                             else:
-                                print('【%s(%s) - %s - (%s)】 subj = 【%s】 フェーズ = 【%s】modality = %s rule_id = %d' % (obj_w, case, verb_w, sub_verb_w, subject_w, phase, modal, rule_id))
+                                print('【%s(%s) - %s - (%s, %s)】 subj = 【%s】 フェーズ = 【%s】modality = %s rule_id = %d' % (obj_w, case, deep_case, verb_w, sub_verb_w, subject_w, phase, modal, rule_id))
                                 ret = ret + text + '\tMain\t' + subject_w + '\t' + subject_case + "\t" + obj_w + '\t' + case + '\t' + verb_w + '\t' + sub_verb_w + '\t' + phase + '\t' + modal + '\t' + str(rule_id) + '\n'
                     else:
                         continue
@@ -142,6 +143,7 @@ class DataDumpSave:
                             continue
                         obj_w = data["lemma"]
                         case = data["case"]
+                        deep_case = data["deep_case"]
                         phase = ""
                         if "category" in chek_predicate:
                             phase = chek_predicate["category"]
@@ -150,10 +152,10 @@ class DataDumpSave:
                         if "category" in data:
                             phase = data["category"]
                         if dummy_subject:
-                            print('【%s(%s) - %s - (%s)】 subj = 【%s(省略)】 フェーズ = 【%s】modality = %s rule_id = %d' % (obj_w, case, verb_w, sub_verb_w, dummy_subject, phase, modal, rule_id))
+                            print('【%s(%s) - %s - (%s, %s)】 subj = 【%s(省略)】 フェーズ = 【%s】modality = %s rule_id = %d' % (obj_w, case, deep_case, verb_w, sub_verb_w, dummy_subject, phase, modal, rule_id))
                             ret = ret + text + '\tMain\t' + dummy_subject + '(省略)\t' + subject_case + "\t" + obj_w + '\t' + case + '\t' + verb_w + '\t' + sub_verb_w + '\t' + phase + '\t' + modal + '\t' + str(rule_id) + '\n'
                         else:
-                            print('【%s(%s) - %s - (%s)】 subj = 【%s】 フェーズ = 【%s】modality = %s rule_id = %d' % (obj_w, case, verb_w, sub_verb_w, subject_w, phase, modal, rule_id))
+                            print('【%s(%s) - %s - (%s, %s)】 subj = 【%s】 フェーズ = 【%s】modality = %s rule_id = %d' % (obj_w, case, deep_case, verb_w, sub_verb_w, subject_w, phase, modal, rule_id))
                             ret = ret + text + '\tMain\t' + subject_w + '\t' + subject_case + "\t" + obj_w + '\t' + case + '\t' + verb_w + '\t' + sub_verb_w + '\t' + phase + '\t' + modal + '\t' + str(rule_id) + '\n'
         return ret
 
@@ -201,57 +203,58 @@ class DataDumpSave:
                     if "category" in arg:
                         phase = arg["category"]
                     if arg["subject"]:
-                        print("\tID = %d %s(%s)_主語 phase = %s" % (a_id, arg["lemma"], arg["case"], phase))
+                        print("\tID = %d %s(%s, %s)_主語 phase = %s" % (a_id, arg["lemma"], arg["case"], arg["deep_case"], phase))
                         if subject_only == 1:
                             if predic["main"]:
-                                ret = ret + text + "\t" + str(predic["id"]) + '\t' + 'Main' + '\t' + arg["lemma"] + "\t" + arg["case"] +  '\t\t\t' + predic_ret + phase + "\n"
+                                ret = ret + text + "\t" + str(predic["id"]) + '\t' + 'Main' + '\t' + arg["lemma"] + "\t" + arg["case"]+ "\t" + arg["deep_case"] +  '\t\t\t' + predic_ret + phase + "\n"
                             else:
-                                ret = ret + text + "\t" + str(predic["id"]) + '\t' + "ー" + '\t' + arg["lemma"] + "\t" + arg["case"] + '\t\t\t' + predic_ret + phase + "\n"
+                                ret = ret + text + "\t" + str(predic["id"]) + '\t' + "ー" + '\t' + arg["lemma"] + "\t" + arg["case"] + "\t" + arg["deep_case"] + '\t\t\t' + predic_ret + phase + "\n"
                     else:
-                        print("\tID = %d %s(%s) phase = %s" % (a_id, arg["lemma"], arg["case"], phase))
+                        print("\tID = %d %s(%s, %s) phase = %s" % (a_id, arg["lemma"], arg["case"], arg["deep_case"], phase))
                         if subjects:
                             for ret_subject in subjects:
                                 if predic["main"]:
-                                    ret = ret + text + "\t" + str(predic["id"]) + '\t' + 'Main' + '\t' + ret_subject + "\t" + arg["lemma"] + "\t" + arg["case"] + '\t' + predic_ret + phase + "\n"
+                                    ret = ret + text + "\t" + str(predic["id"]) + '\t' + 'Main' + '\t' + ret_subject + "\t" + arg["lemma"] + "\t" + arg["case"] + "\t" + arg["deep_case"] + '\t' + predic_ret + phase + "\n"
                                 else:
-                                    ret = ret + text + "\t" + str(predic["id"]) + '\t' + "ー" + '\t' + ret_subject + "\t" + arg["lemma"] + "\t" + arg["case"] + '\t' + predic_ret + phase + "\n"
+                                    ret = ret + text + "\t" + str(predic["id"]) + '\t' + "ー" + '\t' + ret_subject + "\t" + arg["lemma"] + "\t" + arg["case"] + "\t" + arg["deep_case"] + '\t' + predic_ret + phase + "\n"
                         else:
                             if predic["main"]:
-                                ret = ret + text + "\t" + str(predic["id"]) + '\t' + 'Main' + '\t' + "\t" + "\t" + arg["lemma"] + "\t" + arg["case"] + '\t' + predic_ret + phase + "\n"
+                                ret = ret + text + "\t" + str(predic["id"]) + '\t' + 'Main' + '\t' + "\t" + "\t" + arg["lemma"] + "\t" + arg["case"] + "\t" + arg["deep_case"] + '\t' + predic_ret + phase + "\n"
                             else:
-                                ret = ret + text + "\t" + str(predic["id"]) + '\t' + "ー" + "\t" + '\t' + "\t" + arg["lemma"] + "\t" + arg["case"] + '\t' + predic_ret + phase + "\n"
+                                ret = ret + text + "\t" + str(predic["id"]) + '\t' + "ー" + "\t" + '\t' + "\t" + arg["lemma"] + "\t" + arg["case"] + "\t" + arg["deep_case"] + '\t' + predic_ret + phase + "\n"
         return ret
 
     def data_dump_and_save4(self, text, argument, predicate):
         print(text)
         ret = text + "\n"
         for predic in predicate:
+            p_modality = ', '.join([str(x) for x in predic["modality"]])
             if predic["main"]:
                 if "main_rule_id" in predic:
                     print("ID = %d 【%s - (%s) 】 modality = %s ruleID = %d\t main_ruleID= %d" % (
                     predic["id"], predic["lemma"], predic["sub_lemma"], predic["modality"], predic["rule_id"],
                     predic["main_rule_id"]))
                     ret = ret + "\t" + str(predic["id"]) + '\t' + 'Main\t' + predic["lemma"] + '\t' + predic[
-                        "sub_lemma"] + '\t\t\t\t\t' + predic["modality"] + '\t' + str(predic["rule_id"]) + '\t' + str(
+                        "sub_lemma"] + '\t\t\t\t\t' + p_modality + '\t' + str(predic["rule_id"]) + '\t' + str(
                         predic["main_rule_id"]) + '\n'
                 else:
                     print("ID = %d 【%s - (%s) 】 modality = %s ruleID = %d\t main_ruleID= " % (
                     predic["id"], predic["lemma"], predic["sub_lemma"], predic["modality"], predic["rule_id"]))
                     ret = ret + "\t" + str(predic["id"]) + '\t' + 'Main\t' + predic["lemma"] + '\t' + predic[
-                        "sub_lemma"] + '\t\t\t\t\t' + predic["modality"] + '\t' + str(predic["rule_id"]) + '\t' + '\n'
+                        "sub_lemma"] + '\t\t\t\t\t' + p_modality + '\t' + str(predic["rule_id"]) + '\t' + '\n'
             else:
                 if "main_rule_id" in predic:
                     print("ID = %d sub_【%s - (%s) 】 modality = %s ruleID = %d\t main_ruleID= %d" % (
                     predic["id"], predic["lemma"], predic["sub_lemma"], predic["modality"], predic["rule_id"],
                     predic["main_rule_id"]))
                     ret = ret + "\t" + str(predic["id"]) + '\t' + '\t' + predic["lemma"] + '\t' + predic[
-                        "sub_lemma"] + '\t\t\t\t\t' + predic["modality"] + '\t' + str(predic["rule_id"]) + '\t' + str(
+                        "sub_lemma"] + '\t\t\t\t\t' + p_modality + '\t' + str(predic["rule_id"]) + '\t' + str(
                         predic["main_rule_id"]) + '\n'
                 else:
                     print("ID = %d sub_【%s - (%s) 】 modality = %s ruleID = %d\t main_ruleID= " % (
                     predic["id"], predic["lemma"], predic["sub_lemma"], predic["modality"], predic["rule_id"]))
                     ret = ret + "\t" + str(predic["id"]) + '\t' + '\t' + predic["lemma"] + '\t' + predic[
-                        "sub_lemma"] + '\t\t\t\t\t' + predic["modality"] + '\t' + str(predic["rule_id"]) + '\t' + '\n'
+                        "sub_lemma"] + '\t\t\t\t\t' + p_modality + '\t' + str(predic["rule_id"]) + '\t' + '\n'
             for a_id, arg in enumerate(argument):
                 if predic["id"] == arg["predicate_id"]:
                     phase = ''

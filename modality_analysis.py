@@ -69,6 +69,18 @@ class ModalityAnalysis:
                         not_f = True
                     elif n_chek[0] == "！":            # !
                         n_chek = "!"
+                    if n_chek.startswith("TAG"):      # Tag
+                        if n_chek[4:] in doc[pt].tag_:
+                            if not_f:
+                                find = False
+                                del_f = False
+                                break
+                            baias = baias + 1
+                            continue
+                        else:
+                            find = False
+                            del_f = False
+                            break
                     if n_chek.startswith("POS"):      # POS
                         if n_chek[4:] == doc[pt].pos_:
                             if not_f:

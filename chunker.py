@@ -220,6 +220,9 @@ class ChunkExtractor:
             elif len(doc) > i + 1 and doc[i].pos_ == 'VERB' and doc[i + 1].tag_ == '名詞-普通名詞-助数詞可能':  # 名詞　＋　方　（です）
                 pre = doc[i].orth_ + pre
                 start_pt = i
+            elif len(doc) > i + 1 and doc[i].pos_ == 'VERB' and doc[i + 1].tag_ == '接尾辞-名詞的-一般':  # 動詞　＋　方　（です）
+                pre = doc[i].orth_ + pre
+                start_pt = i
             elif len(doc) > i + 1 and doc[i].pos_ == 'VERB' and doc[i + 1].tag_ == '動詞-非自立可能':  # 動詞　＋　非自立動詞
                 pre = doc[i].orth_ + pre
                 start_pt = i
@@ -614,9 +617,9 @@ class ChunkExtractor:
         else:
             verb_end = end_pt
         if doc[pt].dep_ == 'nmod':
-            return {'lemma': ret_lemma, 'lemma_start': start_pt, 'lemma_end': end_pt, 'org_str': org_str, 'org_start': start_pt, 'org_end': end_pt + tail_ct, 'modality': [*self.modality_get(start_pt, *doc)]}
+            return {'lemma': ret_lemma, 'lemma_start': start_pt, 'lemma_end': end_pt, 'org_str': org_str, 'org_start': start_pt, 'org_end': end_pt + tail_ct, 'modality': [*self.modality_get(end_pt, *doc)]}
         else:
-            return {'lemma': ret_lemma, 'lemma_start': start_pt, 'lemma_end': end_pt, 'org_str': org_str, 'org_start': start_pt, 'org_end': end_pt + tail_ct, 'modality': [*self.modality_get(start_pt, *doc)]}
+            return {'lemma': ret_lemma, 'lemma_start': start_pt, 'lemma_end': end_pt, 'org_str': org_str, 'org_start': start_pt, 'org_end': end_pt + tail_ct, 'modality': [*self.modality_get(end_pt, *doc)]}
 
 
     """
@@ -630,7 +633,7 @@ class ChunkExtractor:
         tail = ''
         punc_ct = 0  # カッコのバランス　０：均衡　＋：右カッコが多い　ー：左カッコが多い
         pre_punc_ct = 0
-        if doc[pt].lemma_ in self.keishki_meishi or (doc[pt].norm_ == '中' and doc[pt].tag_ == "名詞-普通名詞-副詞可能"):
+        if (doc[pt].lemma_ in self.keishki_meishi and pt > 0 and doc[pt - 1].morph.get("Inflection") and '連用形' not in doc[pt - 1].morph.get("Inflection")[0]) or (doc[pt].norm_ == '中' and doc[pt].tag_ == "名詞-普通名詞-副詞可能"):
             if len(doc) > pt + 1 and (doc[pt + 1].tag_ == '補助記号-括弧閉' or doc[pt + 1].lemma_ == '＂') and doc[pt + 1].head.i == doc[pt].i:
                 ret = self.connect_word(ret, doc[pt + 1].orth_)
                 for i in reversed(range(0, pt)):

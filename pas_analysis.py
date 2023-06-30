@@ -1,6 +1,7 @@
 import copy
 from chunker import ChunkExtractor
 from case_information_get import CaseExtractor
+from deep_case_get import DeepCaseExtractor
 from subject_get import SubjectExtractor
 from parallel_get import ParallelExtractor
 from predicate_split import VerbSpliter
@@ -28,6 +29,8 @@ class PasAnalysis:
         self.shuusi_check = chunker.shuusi_check
         c_get = CaseExtractor()
         self.case_get = c_get.case_get
+        dc_get = DeepCaseExtractor()
+        self.deep_case_get = dc_get.deep_case_get
         s_g = SubjectExtractor()
         self.subject_get = s_g.subject_get
         p_g = ParallelExtractor()
@@ -289,7 +292,7 @@ class PasAnalysis:
                         (doc[i].dep_ == 'compound' and verb["lemma_start"] <= doc[i].head.i <= verb["lemma_end"]) or
                         (doc[i].lemma_ == '際' and predicate_start <= doc[i].head.i <= predicate_end) or
                         (doc[i].lemma_ == '場合' and predicate_start <= doc[i].head.i <= predicate_end) or
-                        ((doc[i].dep_ == "obl" or doc[i].dep_ == "nmod" or doc[i].pos_ == "PROPN")and doc[i - 1].lemma_ != 'が' and
+                        ((doc[i].dep_ == "obl" or doc[i].dep_ == "nmod" or doc[i].dep_ == "dep" or doc[i].pos_ == "PROPN")and doc[i - 1].lemma_ != 'が' and
                          (len(doc) > i + 1 and (doc[i + 1].pos_ != 'AUX' or doc[i + 1].lemma_ == 'で' or doc[i + 1].tag_ == '助詞-格助詞' or doc[i + 1].tag_ == '補助記号-読点')) and
                          (doc[i].norm_ != 'そこ' and doc[i].norm_ != 'それ') and
                          (doc[i].tag_ != '名詞-普通名詞-副詞可能' or doc[i].norm_ == '為' or doc[i].norm_ == '下' or doc[i].norm_ == '中' or doc[i].norm_ == 'うち' or doc[i].norm_ == 'もと' or doc[i].norm_ == '間') and (doc[i].norm_ != '度' or doc[i - 1].pos_ == 'NUM'))):  # この度　はNG
@@ -831,6 +834,11 @@ class PasAnalysis:
                         attribute["argument_id"] = ch_arg["id"]
                         attributs.append(copy.deepcopy(attribute))
 
+        #
+        # 表層格から深層格の獲得
+        #
+        for set_arg in argument:
+            set_arg["deep_case"] = self.deep_case_get(set_arg["case"], set_arg["lemma_end"], *doc)
         ret["argument"] = argument
         ret["predicate"] = append_predict
         ret["argument_attribute"] = attributs
