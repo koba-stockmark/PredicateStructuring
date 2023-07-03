@@ -92,11 +92,11 @@ class VerbSpliter:
                 if doc[end].tag_ == '名詞-普通名詞-サ変可能' and i + 4 >= end:    # 述部の複合語を4語まで許す
                     if doc[end - 1].pos_ == 'NOUN' and doc[end - 1].tag_ != '名詞-普通名詞-サ変可能' and doc[end - 1].lemma_ not in compound_word and not self.all_katakana(doc[end - 1].lemma_, doc[end].lemma_):
                         break
-                    return {'object': self.compaound(start, i - 1, *doc), 'verb': self.compaound(i + 1, end, *doc) + 'する', 'verb_start': i + 1, 'verb_end': end}
+                    return {'object': self.compaound(start, i - 1, *doc), 'verb': self.compaound(i + 1, end, *doc) + 'する', 'verb_start': i + 1, 'verb_end': end, "case": "の"}
                 elif doc[end].tag_ == '補助記号-括弧閉' and doc[end - 1].tag_ == '名詞-普通名詞-サ変可能' and i + 4 >= end:  # 述部の複合語を4語まで許す カッコ付きの目的語
                     if doc[end - 2].pos_ == 'NOUN' and doc[end - 2].tag_ != '名詞-普通名詞-サ変可能' and doc[end - 2].lemma_ not in compound_word and not self.all_katakana(doc[end - 2].lemma_, doc[end - 1].lemma_):
                         break
-                    return {'object': self.compaound(start, i - 1, *doc) + doc[end].orth_, 'verb': self.compaound(i + 1, end - 1, *doc) + 'する', 'verb_start': i + 1, 'verb_end': end - 1}
+                    return {'object': self.compaound(start, i - 1, *doc) + doc[end].orth_, 'verb': self.compaound(i + 1, end - 1, *doc) + 'する', 'verb_start': i + 1, 'verb_end': end - 1, "case": "の"}
             elif doc[i].lemma_ == 'こと' and len(doc) > i + 1 and (doc[i + 1].lemma_ == 'の' or doc[i + 1].lemma_ == 'を' or doc[i + 1].lemma_ == 'が'):         # 〇〇することの発表を＋行う
                 not_special = False
                 for c_pt in reversed(range(0, i - 1)):

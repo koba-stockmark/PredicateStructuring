@@ -607,7 +607,10 @@ class PasAnalysis:
                     if dev_obj["verb"]:
                         re_arg["lemma"] = dev_obj["object"]
                         re_arg["lemma_end"] = dev_obj["verb_start"] - 2
-                        re_arg["case"] = "を"
+                        if "case" in dev_obj:
+                            re_arg["case"] = dev_obj["case"]
+                        else:
+                            re_arg["case"] = "を"
                         if "new_object_start" in dev_obj:
                             re_arg["lemma_start"] = dev_obj["new_object_start"]
                             re_arg["lemma_end"] = dev_obj["new_object_end"]
